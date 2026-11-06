@@ -74,6 +74,9 @@ def mats_init():
     M("GoodsC",     (0.90,0.72,0.35), 0.85)
     M("Soil",       (0.30,0.24,0.18), 1.0)
     M("LeafGreen",  (0.38,0.52,0.30), 0.98)
+    M("BanhTrang",  (0.92,0.82,0.60), 0.9)
+    M("CoffeeDark", (0.16,0.10,0.06), 0.55)
+    M("CharGlow",   (0.95,0.35,0.10), 0.7, 0.0, emit=(0.95,0.30,0.08), ei=0.8)
     for i, c in enumerate([(0.72,0.32,0.40),(0.85,0.60,0.22),(0.65,0.28,0.38),
                            (0.88,0.86,0.82),(0.75,0.42,0.22),(0.55,0.35,0.55)]):
         M("Flower%d" % i, c, 0.9)
@@ -255,6 +258,29 @@ def build_stall():
     pot = cyl("Pot", 0.40, 0.34, 0.30, (-0.9, -0.15, 1.30), MATS["PotMetal"], verts=16)
     lid = cyl("PotLid", 0.30, 0.40, 0.10, (-0.9, -0.15, 1.50), MATS["PotMetal"], verts=16)
     sphere("PotKnob", 0.06, (-0.9, -0.15, 1.58), MATS["WoodDark"])
+    # --- PROP RIÊNG QUẦY BÁNH TRÁNG: vỉ nướng than + bánh tráng trên vỉ (web hiện theo def.prop='grill') ---
+    grill_parts = []
+    grill_parts.append(box("tmpGrillBody", (0.95, 0.60, 0.20), (0.85, -0.10, 1.25), MATS["MetalDark"], 0.02))
+    grill_parts.append(box("tmpGrillCoal", (0.85, 0.50, 0.05), (0.85, -0.10, 1.37), MATS["CharGlow"], 0.01))
+    for i in range(6):
+        grill_parts.append(box("tmpGrillBar", (0.90, 0.045, 0.035), (0.85, -0.32 + i * 0.09, 1.42), MATS["PotMetal"], 0.0))
+    for sx in (-0.35, 0.35):
+        grill_parts.append(box("tmpGrillLeg", (0.07, 0.07, 0.22), (0.85 + sx, -0.10, 1.06), MATS["MetalDark"], 0.01))
+    join_into(grill_parts, "Grill")
+    cyl("GrillCake", 0.27, 0.27, 0.035, (0.85, -0.10, 1.46), MATS["BanhTrang"], verts=18)
+    sphere("GrillCakeTop", 0.13, (0.78, -0.16, 1.49), MATS["GoodsA"], scale=(1, 1, 0.45))
+    # --- PROP RIÊNG QUẦY CÀ PHÊ: chồng phin xếp + ly thuỷ tinh có phin đang nhỏ giọt (web hiện theo def.prop='phin') ---
+    phin_parts = []
+    for i in range(3):  # chồng 3 phin
+        phin_parts.append(cyl("tmpPhinBody", 0.105, 0.085, 0.075, (1.30, 0.42, 1.19 + i * 0.085), MATS["PotMetal"], verts=14))
+        phin_parts.append(cyl("tmpPhinRim", 0.115, 0.115, 0.02, (1.30, 0.42, 1.155 + i * 0.085), MATS["PotMetal"], verts=14))
+    phin_parts.append(cyl("tmpPhinLid", 0.10, 0.10, 0.025, (1.30, 0.42, 1.46), MATS["PotMetal"], verts=14))
+    sphere("tmpPhinKnob", 0.03, (1.30, 0.42, 1.49), MATS["WoodDark"])
+    join_into(phin_parts, "PhinStack")
+    cyl("PhinGlass", 0.075, 0.06, 0.15, (0.95, 0.42, 1.23), MATS["Glass"], verts=12)
+    cyl("PhinCoffee", 0.068, 0.055, 0.07, (0.95, 0.42, 1.19), MATS["CoffeeDark"], verts=12)
+    cyl("PhinOnGlass", 0.105, 0.085, 0.075, (0.95, 0.42, 1.345), MATS["PotMetal"], verts=14)
+    box("PhinBag", (0.34, 0.24, 0.42), (0.45, 0.45, 1.36), MATS["GoodsB"], 0.03)
     # đèn lồng giấy treo trước quầy (đối chiếu ref-online-02: lồng đèn cam dưới mái)
     for sx in (-1.5, 1.5):
         cyl("LanternCord", 0.015, 0.015, 0.34, (sx, -1.12, 2.05), MATS["WoodDark"], verts=6)
