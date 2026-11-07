@@ -8,6 +8,7 @@ Quy ước mặt tiền khi export glTF (glTF.z = -blender.y):
 Mỗi model export 1 file .glb vào ../assets/
 """
 import bpy, math, os, random
+import bmesh
 from mathutils import Matrix, Vector
 
 random.seed(42)
@@ -77,8 +78,42 @@ def mats_init():
     M("BanhTrang",  (0.92,0.82,0.60), 0.9)
     M("CoffeeDark", (0.16,0.10,0.06), 0.55)
     M("CharGlow",   (0.95,0.35,0.10), 0.7, 0.0, emit=(0.95,0.30,0.08), ei=0.8)
-    for i, c in enumerate([(0.72,0.32,0.40),(0.85,0.60,0.22),(0.65,0.28,0.38),
-                           (0.88,0.86,0.82),(0.75,0.42,0.22),(0.55,0.35,0.55)]):
+    # --- V4: material theo hồ sơ ảnh thật (research/11) ---
+    M("Peach",      (0.78,0.42,0.23), 0.95)                       # băng hồng đào mặt tiền chợ (V4.1: đậm hơn hẳn)
+    M("ZigBack",    (0.52,0.49,0.44), 0.95)                       # nền dải zigzag (V4.1: xám đậm để zigzag trắng bật)
+    M("SignLetters",(0.62,0.13,0.09), 0.6, 0.0, emit=(0.85,0.10,0.07), ei=0.35)  # chữ CHỢ ĐÀ LẠT đỏ (web tăng emissive ban đêm)
+    M("ElevGlass",  (0.35,0.62,0.45), 0.25, 0.1)                  # kính tháp thang máy xanh lá
+    M("AdGreen",    (0.30,0.60,0.30), 0.8)
+    M("AdYellow",   (0.93,0.74,0.24), 0.8)
+    M("AdWhite",    (0.92,0.90,0.84), 0.8)
+    M("AdLED",      (0.70,0.10,0.10), 0.6, 0.0, emit=(1.0,0.14,0.10), ei=1.1)   # biển LED đỏ cửa chính
+    M("StripeA",    (0.18,0.43,0.64), 0.95)                       # bạt sọc xanh dương
+    M("StripeB",    (0.96,0.96,0.94), 0.95)                       # bạt sọc trắng
+    M("WhiteConc",  (0.90,0.89,0.85), 0.95)                       # bê tông sơn trắng (cầu thang ngoài trời)
+    M("StatueStone",(0.52,0.50,0.47), 0.98)                       # đá xám tượng đài bùng binh
+    M("BenchWhite", (0.90,0.89,0.86), 0.95)
+    M("StatueWhite",(0.93,0.92,0.88), 0.9)                        # tượng trang trí trắng sân thượng
+    M("VehDark",    (0.12,0.12,0.13), 0.6, 0.3)
+    M("TireMat",    (0.08,0.08,0.09), 0.95)
+    M("BikeBody",   (0.55,0.16,0.14), 0.5, 0.15)                  # web tô lại theo xe
+    M("RiderShirt", (0.30,0.45,0.62), 0.95)                       # web tô lại
+    M("Helmet",     (0.85,0.72,0.20), 0.45, 0.1)                  # web tô lại
+    M("CarBody",    (0.88,0.87,0.85), 0.45, 0.2)                  # web tô lại
+    M("HeadLamp",   (1.0,0.92,0.62), 0.35, 0.0, emit=(1.0,0.85,0.50), ei=0.4)
+    # --- V4 bổ sung 09:57: khách sạn + quán vỉa hè ---
+    M("HotelWhite", (0.90,0.89,0.86), 0.95)
+    M("HotelWinA",  (0.30,0.26,0.20), 0.4, 0.0, emit=(1.0,0.62,0.25), ei=0.0)  # web: sáng mạnh đêm
+    M("HotelWinB",  (0.30,0.26,0.20), 0.4, 0.0, emit=(1.0,0.62,0.25), ei=0.0)  # web: sáng vừa đêm
+    M("HotelWinC",  (0.16,0.19,0.22), 0.35, 0.1)                              # cửa sổ tối
+    M("VIBWall",    (0.55,0.60,0.66), 0.7, 0.1)
+    M("VIBGlass",   (0.20,0.30,0.42), 0.25, 0.3)
+    M("HSYellow",   (0.45,0.32,0.08), 0.6, 0.0, emit=(1.0,0.74,0.20), ei=0.3)  # biển nóc phát sáng (web boost đêm)
+    M("HSWhite",    (0.40,0.42,0.45), 0.6, 0.0, emit=(0.92,0.96,1.0), ei=0.3)
+    M("HSBlue",     (0.10,0.20,0.40), 0.6, 0.0, emit=(0.35,0.62,1.0), ei=0.3)
+    M("ShopWall",   (0.80,0.72,0.60), 0.95)
+    M("ShopAwn",    (0.55,0.45,0.35), 0.95)   # web tô lại / sọc theo quán
+    for i, c in enumerate([(0.78,0.24,0.32),(0.90,0.55,0.15),(0.70,0.22,0.32),
+                           (0.92,0.90,0.85),(0.80,0.38,0.18),(0.60,0.30,0.60)]):
         M("Flower%d" % i, c, 0.9)
 
 # ---------------- helpers ----------------
@@ -115,8 +150,8 @@ def cyl(name, r1, r2, h, loc, mat=None, verts=14, bevel=0.01, rot=None):
 def cone(name, r, h, loc, mat=None, verts=12, bevel=0.0):
     return cyl(name, 0.01, r, h, loc, mat, verts, bevel)
 
-def sphere(name, r, loc, mat=None, scale=(1,1,1)):
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=r, location=loc, segments=14, ring_count=10)
+def sphere(name, r, loc, mat=None, scale=(1,1,1), seg=14, ring=10):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=r, location=loc, segments=seg, ring_count=ring)
     o = bpy.context.object; o.name = name; o.scale = scale
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     return finish_obj(o, mat, 0.0)
@@ -138,68 +173,185 @@ def join_into(objs, name):
     o.select_set(False)
     return o
 
+def trim_front_below(obj, z_cut, y_front=-0.02):
+    """V4.1: cắt bỏ geometry nằm TRƯỚC mặt (y < y_front) và DƯỚI z_cut (toạ độ
+    thế giới của nhân vật). Dùng cho tóc/mũ dạng cầu: phần cầu phồng ra trước
+    trán dưới đường cắt sẽ bị xoá -> không còn dải tối che mắt khi nhìn từ
+    trên/trước, mũ thành dạng vòm ôm đỉnh đầu như mũ thật."""
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    bm = bmesh.new(); bm.from_mesh(obj.data)
+    kill = [v for v in bm.verts if v.co.z < z_cut and v.co.y < y_front]
+    if kill:
+        bmesh.ops.delete(bm, geom=kill, context='VERTS')
+    bm.to_mesh(obj.data); bm.free()
+    obj.select_set(False)
+    return obj
+
+def sector(name, r0, r1, a0, a1, z0, z1, mat, seg=7):
+    """V4.1: mảng quạt vành khăn đặc (r0..r1, góc a0..a1, dày z0..z1) — thảm
+    hoa/cỏ LIỀN MẢNG cho bùng binh, thay cho hoa chấm thưa rời rạc."""
+    verts = []
+    for z in (z0, z1):
+        for r in (r0, r1):
+            for i in range(seg + 1):
+                a = a0 + (a1 - a0) * i / seg
+                verts.append((math.cos(a) * r, math.sin(a) * r, z))
+    n = seg + 1
+    faces = []
+    for i in range(seg):  # mặt trên (z1) + mặt dưới (z0)
+        faces.append((2 * n + i, 2 * n + i + 1, 3 * n + i + 1, 3 * n + i))
+        faces.append((i, n + i, n + i + 1, i + 1))
+        # mặt ngoài (r1) + mặt trong (r0)
+        faces.append((n + i, 3 * n + i, 3 * n + i + 1, n + i + 1))
+        faces.append((i, i + 1, 2 * n + i + 1, 2 * n + i))
+    faces.append((0, n, 3 * n, 2 * n))                                # nắp đầu a0
+    faces.append((seg, 2 * n + seg, 3 * n + seg, n + seg))            # nắp cuối a1 (i=seg)
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    o = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(o)
+    bm = bmesh.new(); bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(me); bm.free()
+    return finish_obj(o, mat, 0.0)
+
 def export(name):
     path = os.path.join(OUT, name + ".glb")
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_apply=True)
     print("EXPORTED", path, os.path.getsize(path))
 
+# ---------------- V4 helpers: chữ nổi 3D + dải zigzag ----------------
+_FONT = None
+def get_font():
+    global _FONT
+    if _FONT is None:
+        p = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
+        if os.path.exists(p):
+            _FONT = bpy.data.fonts.load(p)
+    return _FONT
+
+def text_obj(body, size, loc, rot, mat, extrude=0.16, name="SignLetters"):
+    """Chữ nổi 3D. Mặt +Y (tiền chợ): rot=(-pi/2,0,pi); mặt -Y: rot=(pi/2,0,0)."""
+    cu = bpy.data.curves.new("txt", 'FONT')
+    cu.body = body
+    f = get_font()
+    if f: cu.font = f
+    cu.size = size
+    cu.align_x = 'CENTER'; cu.align_y = 'CENTER'
+    cu.extrude = extrude
+    cu.resolution_u = 3
+    cu.bevel_depth = 0.008; cu.bevel_resolution = 1
+    ob = bpy.data.objects.new(name, cu)
+    bpy.context.collection.objects.link(ob)
+    ob.location = loc; ob.rotation_euler = rot
+    if mat: ob.data.materials.append(mat)
+    ob.select_set(False)
+    return ob
+
+def chevron_row(x0, x1, y, z, mat, step=2.0, arm=1.35, thick=0.34, tall=0.45, lift=0.0):
+    """Một hàng hoa văn zigzag ^^^ trong mặt phẳng X-Z tại độ sâu y. Trả về list obj."""
+    parts = []
+    n = int(round((x1 - x0) / step))
+    for i in range(n):
+        xu = x0 + step * (i + 0.5)
+        a = box("tmpChev", (arm, thick, tall), (xu - 0.47, y, z), mat, 0.0)
+        a.rotation_euler = (0, 0.60, 0)
+        b = box("tmpChev", (arm, thick, tall), (xu + 0.47, y, z), mat, 0.0)
+        b.rotation_euler = (0, -0.60, 0)
+        parts += [a, b]
+    return parts
+
+def wheel(name, r, wdt, loc, mat, hub_mat=None):
+    """Bánh xe: trục dọc X (đã bake vào geometry để web quay rotation.x), origin tại tâm."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=18, radius=r, depth=wdt, location=loc)
+    o = bpy.context.object; o.name = name
+    o.data.transform(Matrix.Rotation(math.pi / 2, 4, 'Y'))
+    o.data.materials.append(mat)
+    if hub_mat:
+        bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=r * 0.45, depth=wdt + 0.03, location=loc)
+        h = bpy.context.object; h.name = "tmpHub"
+        h.data.transform(Matrix.Rotation(math.pi / 2, 4, 'Y'))
+        h.data.materials.append(hub_mat)
+        o = join_into([o, h], name)
+    o.select_set(False)
+    return o
+
 mats_init()
 
 # ============================================================
-#  NHÂN VẬT CHIBI (chuẩn Niệm Phật Online): đầu to tròn ~45% chiều cao, thân nhỏ,
-#  mặt đơn giản dễ thương (mắt chấm + má hồng + miệng nhỏ). Part riêng có pivot
-#  tại khớp (hông/vai) để web vung tay/chân. Mặt hướng -Y blender (= +Z three).
+#  NHÂN VẬT CHIBI (chuẩn ảnh chốt): đầu to tròn ~50% chiều cao (đợt model 07/11),
+#  thân ngắn rộng, mặt đơn giản dễ thương (mắt chấm + má hồng + miệng nhỏ). Part
+#  riêng có pivot tại khớp (hông/vai) để web vung tay/chân. Mặt hướng -Y blender (= +Z three).
 # ============================================================
 def build_character():
     clear_scene()
     skin, shirt, pants = MATS["Skin"], MATS["Shirt"], MATS["Pants"]
-    # --- chân ngắn: pivot tại hông z=0.50, geometry dịch xuống -0.20 ---
+    # ĐỢT MODEL (07/11): tỉ lệ chibi theo ẢNH CHỐT — đầu r=0.45 (0.90..1.80, ~50%
+    # chiều cao 1.80), thân ngắn RỘNG, chân ngắn. Đo trên GLB cũ: đầu 0.877 /
+    # phần dưới đầu 1.06 (mặt 0.57 : dưới-mặt 1.06 = 1:1.86) — "cao/thanh".
+    # Bản mới: đầu 0.90 / dưới đầu 0.90; mặt (cằm 0.90 -> trán 1.47) 0.57 :
+    # dưới mặt 0.90 = 1 : 1.58 ~ 1:1.6 của research/13 theo cách đo mặt.
+    # --- chân ngắn: pivot tại hông z=0.40, geometry dịch xuống -0.17 (đáy giày GIỮ 0..0.12 như cũ) ---
     for side, sx in (("L", -0.12), ("R", 0.12)):
-        leg = box("tmpLeg", (0.20, 0.22, 0.52), (sx, 0, 0.50), pants, 0.05)
-        leg.data.transform(Matrix.Translation((0, 0, -0.20)))
-        shoe = box("tmpShoe", (0.22, 0.36, 0.12), (sx, -0.06, 0.06), MATS["Shoe"], 0.04)
+        leg = box("tmpLeg", (0.21, 0.23, 0.42), (sx, 0, 0.40), pants, 0.07)
+        leg.data.transform(Matrix.Translation((0, 0, -0.17)))
+        shoe = box("tmpShoe", (0.23, 0.37, 0.12), (sx, -0.06, 0.06), MATS["Shoe"], 0.04)
         join_into([leg, shoe], "Leg" + side)
-    # --- thân nhỏ bo tròn: hộp bo lớn + bụng cầu dẹt ---
-    torso = box("tmpTorso", (0.62, 0.34, 0.55), (0, 0, 0.82), shirt, 0.10)
-    belly = sphere("tmpBelly", 0.30, (0, -0.02, 0.80), shirt, scale=(1.05, 0.68, 0.92))
-    join_into([torso, belly], "Torso")
-    collar = torus("tmpCollar", 0.16, 0.05, (0, 0, 1.08), shirt, scale=(1, 0.85, 0.7))
-    # --- tay ngắn: pivot tại vai z=1.02, geometry dịch xuống -0.18 ---
-    for side, sx in (("L", -0.38), ("R", 0.38)):
-        arm = box("tmpArm", (0.15, 0.17, 0.48), (sx, 0, 1.02), shirt, 0.06)
-        arm.data.transform(Matrix.Translation((0, 0, -0.18)))
-        hand = sphere("tmpHand", 0.085, (sx, 0, 1.02 - 0.42), skin)
+    # --- thân NGẮN RỘNG bo tròn: hộp bo lớn + bụng cầu dẹt ---
+    torso = box("tmpTorso", (0.68, 0.36, 0.50), (0, 0, 0.66), shirt, 0.13)
+    belly = sphere("tmpBelly", 0.31, (0, -0.02, 0.65), shirt, scale=(1.08, 0.70, 0.95))
+    # cầu vai bo tròn — giảm cảm giác "hộp" ở vai/thân
+    shL = sphere("tmpShoulder", 0.14, (-0.35, 0, 0.86), shirt)
+    shR = sphere("tmpShoulder", 0.14, (0.35, 0, 0.86), shirt)
+    join_into([torso, belly, shL, shR], "Torso")
+    collar = torus("tmpCollar", 0.17, 0.055, (0, 0, 0.905), shirt, scale=(1, 0.85, 0.7))
+    # --- tay ngắn: pivot tại vai z=0.88. GIỮ hình học LOCAL như bản cũ (bàn tay
+    # ở local -0.42) để mọi neo AR/ARMS của tủ đồ KHÔNG phải dịch chuyển. ---
+    for side, sx in (("L", -0.40), ("R", 0.40)):
+        arm = box("tmpArm", (0.16, 0.18, 0.46), (sx, 0, 0.88), shirt, 0.08)
+        arm.data.transform(Matrix.Translation((0, 0, -0.17)))
+        hand = sphere("tmpHand", 0.085, (sx, 0, 0.88 - 0.42), skin)
         join_into([arm, hand], "Arm" + side)
-    # --- ĐẦU TO TRÒN r=0.42 (1.06..1.90): da + tóc + mắt chấm + má hồng + miệng ---
-    head = sphere("Head", 0.42, (0, 0, 1.48), skin)
-    hair = sphere("tmpHair", 0.435, (0, 0.045, 1.53), MATS["HairDark"], scale=(1, 1, 0.9))
-    nose = cone("tmpNose", 0.035, 0.07, (0, -0.415, 1.46), skin, verts=8)
+    # --- ĐẦU TO TRÒN r=0.45 (0.90..1.80): da + tóc + mắt chấm + má hồng + miệng ---
+    # V4.1: tóc/mũ dạng cầu PHẢI cắt bỏ phần trước-dưới (trim_front_below) —
+    # cầu nguyên khối phồng ra trước mặt, che mắt thành "dải tối + mảng đỏ"
+    # như render v4-03/04 đã bị bác. Sau khi cắt: tóc/mũ ôm đỉnh đầu, mặt sạch.
+    head = sphere("Head", 0.45, (0, 0, 1.35), skin)
+    hair = sphere("tmpHair", 0.455, (0, 0.06, 1.415), MATS["HairDark"], scale=(1, 1, 0.9))
+    trim_front_below(hair, 1.50)
+    nose = cone("tmpNose", 0.035, 0.07, (0, -0.445, 1.325), skin, verts=8)
     nose.rotation_euler = (-math.pi/2, 0, 0)
-    mouth = sphere("tmpMouth", 0.022, (0, -0.408, 1.40), MATS["HairDark"], scale=(1.6, 0.5, 0.9))
+    mouth = sphere("tmpMouth", 0.022, (0, -0.437, 1.265), MATS["HairDark"], scale=(1.6, 0.5, 0.9))
     parts = [head, hair, nose, mouth]
-    for sx in (-0.40, 0.40):
-        parts.append(sphere("tmpEar", 0.075, (sx, 0, 1.44), skin, scale=(0.5, 0.85, 0.95)))
-    for sx in (-0.15, 0.15):
-        parts.append(sphere("tmpEye", 0.045, (sx, -0.385, 1.52), MATS["HairDark"]))
-    for sx in (-0.26, 0.26):
-        parts.append(sphere("tmpCheek", 0.055, (sx, -0.315, 1.40), MATS["Blush"], scale=(1, 0.4, 0.8)))
+    for sx in (-0.435, 0.435):
+        parts.append(sphere("tmpEar", 0.075, (sx, 0, 1.31), skin, scale=(0.5, 0.85, 0.95)))
+    for sx in (-0.16, 0.16):
+        parts.append(sphere("tmpEye", 0.052, (sx, -0.42, 1.395), MATS["HairDark"]))
+    for sx in (-0.275, 0.275):
+        parts.append(sphere("tmpCheek", 0.055, (sx, -0.34, 1.265), MATS["Blush"], scale=(1, 0.4, 0.8)))
     join_into(parts, "Head")
-    # --- mũ nón lá vành rộng phủ đầu to ---
-    brim = cone("tmpNonLa", 0.68, 0.34, (0, 0, 1.86), MATS["Straw"], verts=18)
-    tip = sphere("tmpNonLaTip", 0.06, (0, 0, 2.05), MATS["WoodDark"])
+    # --- mũ nón lá vành rộng phủ đầu to (đầu mới r=0.45, đỉnh 1.80) ---
+    brim = cone("tmpNonLa", 0.72, 0.35, (0, 0, 1.73), MATS["Straw"], verts=18)
+    tip = sphere("tmpNonLaTip", 0.06, (0, 0, 1.93), MATS["WoodDark"])
     join_into([brim, tip], "HatNonLa")
-    # --- mũ beanie len + pom (đội cao hơn đỉnh đầu 1.90) ---
-    dome = sphere("tmpBeanie", 0.45, (0, 0, 1.56), MATS["Beanie"], scale=(1, 1, 0.85))
-    ring = cyl("tmpBeanieRing", 0.455, 0.465, 0.12, (0, 0, 1.42), MATS["Beanie"], verts=18)
-    pom = sphere("tmpPom", 0.10, (0, 0, 2.00), MATS["CanvasOld"])
+    # --- mũ beanie len + pom: vòm dẹt ôm đỉnh đầu, vành nằm TRÊN mắt (z>=1.44) ---
+    dome = sphere("tmpBeanie", 0.47, (0, 0.02, 1.52), MATS["Beanie"], scale=(1, 1, 0.62))
+    trim_front_below(dome, 1.46)
+    ring = cyl("tmpBeanieRing", 0.465, 0.475, 0.10, (0, 0, 1.49), MATS["Beanie"], verts=18)
+    pom = sphere("tmpPom", 0.10, (0, 0, 1.845), MATS["CanvasOld"])
     join_into([dome, ring, pom], "HatBeanie")
-    # --- mũ lưỡi trai ---
-    capdome = sphere("tmpCap", 0.44, (0, 0, 1.58), MATS["CapBlue"], scale=(1, 1, 0.78))
-    capbrim = box("tmpCapBrim", (0.36, 0.26, 0.045), (0, -0.46, 1.44), MATS["CapBlue"], 0.02)
+    # --- mũ lưỡi trai: vòm dẹt ôm đỉnh + vành ở trán (z~1.44), không che mặt ---
+    capdome = sphere("tmpCap", 0.465, (0, 0.01, 1.50), MATS["CapBlue"], scale=(1, 1, 0.66))
+    trim_front_below(capdome, 1.44)
+    capbrim = box("tmpCapBrim", (0.38, 0.27, 0.045), (0, -0.475, 1.435), MATS["CapBlue"], 0.02, rot=(-0.18, 0, 0))
     join_into([capdome, capbrim], "HatCap")
-    # --- khăn quàng (chỉ nhân vật chính bật) ---
-    scarf = torus("Scarf", 0.26, 0.09, (0, 0, 1.10), MATS["Scarf"], scale=(1, 0.95, 0.8))
-    tail = box("tmpScarfTail", (0.17, 0.05, 0.34), (0.17, -0.20, 0.94), MATS["Scarf"], 0.03)
+    # --- khăn quàng (chỉ nhân vật chính bật) — cổ mới ở z~0.90..0.96 ---
+    scarf = torus("Scarf", 0.27, 0.095, (0, 0, 0.96), MATS["Scarf"], scale=(1, 0.95, 0.8))
+    tail = box("tmpScarfTail", (0.17, 0.05, 0.32), (0.18, -0.21, 0.80), MATS["Scarf"], 0.03)
     join_into([scarf, tail], "Scarf")
     bpy.data.objects["Scarf"].hide_viewport = False
     export("character")
@@ -299,83 +451,157 @@ def build_market():
     clear_scene()
     wall, trim, conc, concD = MATS["WallCream"], MATS["TrimBrown"], MATS["Concrete"], MATS["ConcreteDk"]
     colM = M("ColumnCream", (0.78, 0.72, 0.62), 0.95)
-    # --- sàn các tầng (nhô ra làm ban công) ---
+    # --- sàn các tầng (GIỮ neo: cao 0.25 / 6.55 / 12.85, nóc 19.15) ---
     box("Floor0", (70, 18, 0.5), (0, 0, 0.25), MATS["Concrete"], 0.02)
-    box("Floor1", (70, 18.6, 0.45), (0, 0.3, 6.55), colM, 0.02)
-    box("Floor2", (70, 18.6, 0.45), (0, 0.3, 12.85), colM, 0.02)
-    box("RoofSlab", (71, 19.2, 0.6), (0, 0.3, 19.15), trim, 0.03)
-    # gờ mái kính lấy sáng (gợi ý A4/A6: mái kính lớn của nhà lồng)
-    sk1 = box("Skylight", (40, 3.4, 0.18), (0, -1.15, 20.0), MATS["Glass"], 0.01, rot=(0.5, 0, 0))
-    sk2 = box("Skylight", (40, 3.4, 0.18), (0, 1.75, 20.0), MATS["Glass"], 0.01, rot=(-0.5, 0, 0))
+    # ĐỢT MODEL (07/11): KHOÉT GIẾNG THANG TRONG NHÀ ở góc đông (web x 28.6..33.65,
+    # tường đông áp vào x>=33.65) để đầu người chơi hết chạm mép sàn khi đi thang:
+    # - Floor2 khoét web z 11.3..15.6 (blender y 4.4..8.7): đầu chuyến 1 (12.6 -> 6.55).
+    #   Tại mép giếng z=15.6 đầu người (chân 9.575 + cao 1.80) = 11.38 < đáy slab 12.625.
+    # - Floor1 khoét web z 18.2..23.8 (blender y -3.8..1.8): chiếu nghỉ giữa (6.55)
+    #   + đầu chuyến 2; tại mép z=23.8 đầu (chân 3.53 + 1.80) = 5.33 < đáy slab 6.325.
+    # Floor1 (mặt 6.775) — 4 mảnh quanh giếng y -3.8..1.8
+    box("Floor1", (63.6, 17.2, 0.45), (-3.2, 0.1, 6.55), colM, 0.02)
+    box("Floor1E", (6.4, 6.9, 0.45), (31.8, 5.25, 6.55), colM, 0.02)
+    box("Floor1E", (6.4, 4.7, 0.45), (31.8, -6.15, 6.55), colM, 0.02)
+    box("Floor1E", (1.35, 5.6, 0.45), (34.325, -1.0, 6.55), colM, 0.02)
+    # Floor2 (mặt 13.075) — 3 mảnh quanh giếng y 4.4..8.7
+    box("Floor2", (63.6, 17.2, 0.45), (-3.2, 0.1, 12.85), colM, 0.02)
+    box("Floor2E", (6.4, 12.9, 0.45), (31.8, -2.05, 12.85), colM, 0.02)
+    box("Floor2E", (1.35, 4.3, 0.45), (34.325, 6.55, 12.85), colM, 0.02)
+    # viền miệng giếng (fascia bê tông tối bọc mép cắt, dày 0.5 giữa slab)
+    box("WellTrim1W", (0.16, 5.6, 0.5), (28.6, -1.0, 6.55), MATS["ConcreteDk"], 0.0)
+    box("WellTrim1S", (5.05, 0.16, 0.5), (31.125, -3.8, 6.55), MATS["ConcreteDk"], 0.0)
+    box("WellTrim1N", (5.05, 0.16, 0.5), (31.125, 1.8, 6.55), MATS["ConcreteDk"], 0.0)
+    box("WellTrim2W", (0.16, 4.3, 0.5), (28.6, 6.55, 12.85), MATS["ConcreteDk"], 0.0)
+    box("WellTrim2S", (5.05, 0.16, 0.5), (31.125, 4.4, 12.85), MATS["ConcreteDk"], 0.0)
+    # lan can miệng giếng Floor2 (mép tây + mép nam, kiểu RoofRail): trụ + 2 tay vịn
+    box("WellRail2WT", (0.07, 4.1, 0.07), (28.55, 6.55, 13.60), MATS["MetalDark"], 0.0)
+    box("WellRail2WM", (0.06, 4.1, 0.06), (28.55, 6.55, 13.33), MATS["MetalDark"], 0.0)
+    for py in (4.7, 6.0, 7.3, 8.5):
+        box("WellRail2P", (0.06, 0.06, 0.55), (28.55, py, 13.35), MATS["MetalDark"], 0.0)
+    box("WellRail2ST", (4.8, 0.07, 0.07), (31.1, 4.35, 13.60), MATS["MetalDark"], 0.0)
+    box("WellRail2SM", (4.8, 0.06, 0.06), (31.1, 4.35, 13.33), MATS["MetalDark"], 0.0)
+    for px in (29.0, 30.6, 32.2, 33.4):
+        box("WellRail2P", (0.06, 0.06, 0.55), (px, 4.35, 13.35), MATS["MetalDark"], 0.0)
+    box("RoofSlab", (71, 17.6, 0.6), (0, 0.2, 19.15), trim, 0.03)
+    # gờ mái kính lấy sáng
+    box("Skylight", (40, 3.4, 0.18), (0, -1.15, 20.0), MATS["Glass"], 0.01, rot=(0.5, 0, 0))
+    box("Skylight", (40, 3.4, 0.18), (0, 1.75, 20.0), MATS["Glass"], 0.01, rot=(-0.5, 0, 0))
     box("SkylightCap", (40, 0.5, 0.22), (0, 0.3, 20.82), trim, 0.01)
-    box("RooftopBox", (10, 7, 2.2), (-8, -1, 20.4), conc, 0.04)
-    box("Parapet", (71, 0.5, 0.9), (0, 9.6, 19.8), trim, 0.02)
-    box("ParapetB", (71, 0.5, 0.9), (0, -9.0, 19.8), trim, 0.02)
+    # hộp kính sân thượng (thay khối bê tông cũ)
+    box("RooftopGlass", (12, 6, 2.3), (-14, -0.5, 20.6), MATS["Glass"], 0.02)
+    box("RooftopGlassCap", (12.6, 6.6, 0.25), (-14, -0.5, 21.85), trim, 0.02)
+    box("Parapet", (71, 0.45, 0.85), (0, 8.85, 19.0), trim, 0.02)
+    box("ParapetB", (71, 0.45, 0.85), (0, -8.6, 19.0), trim, 0.02)
+    # lan can sân thượng mặt tiền: trụ + 2 tay vịn
+    box("RoofRailTop", (68, 0.09, 0.09), (0, 8.55, 20.30), MATS["MetalDark"], 0.0)
+    box("RoofRailMid", (68, 0.07, 0.07), (0, 8.55, 19.90), MATS["MetalDark"], 0.0)
+    rposts = []
+    for x in range(-33, 34, 3):
+        rposts.append(box("tmpRailP", (0.07, 0.07, 0.85), (x, 8.55, 19.88), MATS["MetalDark"], 0.0))
+    join_into(rposts, "RoofRailPosts")
+    # hàng THÔNG CỘT (thông bút chì) dọc sân thượng + tượng trắng trang trí (ảnh 01)
+    for x in range(-31, 32, 6):
+        cyl("PencilPineTrunk", 0.05, 0.07, 0.5, (x, 8.15, 19.7), MATS["Trunk"], verts=6)
+        cone("PencilPine", 0.30, 2.5, (x, 8.15, 21.15), MATS["PineDark"], verts=8)
+    for x in (-19, 1, 21):
+        cyl("RoofStatue", 0.11, 0.15, 0.62, (x, 8.15, 19.78), MATS["StatueWhite"], verts=8)
+        sphere("RoofStatueHead", 0.11, (x, 8.15, 20.18), MATS["StatueWhite"])
     # --- tường hông + tường sau (-Y) ---
     box("WallL", (0.7, 16, 19), (-34, 0, 9.5), wall, 0.02)
     box("WallR", (0.7, 16, 19), (34, 0, 9.5), wall, 0.02)
     box("WallBack", (68, 0.7, 19), (0, -7.8, 9.5), wall, 0.02)
-    # sọc trang trí tường hông
     for sx in (-34.45, 34.45):
         for zz in (4.5, 10.5, 16.5):
             box("SideTrim", (0.15, 15.6, 0.5), (sx, 0, zz), trim, 0.01)
-    # --- cột mặt tiền +Y, x -32..32 bước 8 ---
+    # --- cột mặt tiền +Y (GIỮ y=7.8 khớp collider web), x -32..32 bước 8 ---
     for x in range(-32, 33, 8):
         box("Column", (0.9, 0.9, 19), (x, 7.8, 9.5), colM, 0.04)
         box("ColBase", (1.2, 1.2, 0.8), (x, 7.8, 0.4), concD, 0.03)
         box("ColCap", (1.15, 1.15, 0.5), (x, 7.8, 18.6), colM, 0.03)
-    # --- vách kính tầng 2 & 3 + khung chia ô ---
-    for fz in (9.6, 15.9):
-        glass = box("GlassWin", (66, 0.25, 5.4), (0, 7.75, fz), MATS["MarketWin"], 0.0)
-        for x in range(-32, 33, 4):
-            box("Mullion", (0.14, 0.3, 5.4), (x, 7.8, fz), MATS["MetalDark"], 0.0)
-        box("Sill", (67, 0.5, 0.35), (0, 7.8, fz - 2.85), colM, 0.02)
-    # --- LƯỚI HOA GIÓ mặt tiền tầng 2-3 (đối chiếu ref-cho-dem-da-lat: mặt đứng
-    #     nhà lồng có lưới ô vuông trang trí rất đặc trưng, phủ trước vách kính) ---
-    lat = []
-    for fz in (9.6, 15.9):
-        for x in range(-33, 34, 3):
-            lat.append(box("tmpLatV", (0.10, 0.14, 5.6), (x, 8.02, fz), colM, 0.0))
-        for dz in (-2.7, -1.35, 0.0, 1.35, 2.7):
-            lat.append(box("tmpLatH", (66.5, 0.14, 0.10), (0, 8.02, fz + dz), colM, 0.0))
-        lat.append(box("tmpLatFrame", (67, 0.2, 0.28), (0, 8.0, fz + 2.85), trim, 0.0))
-        lat.append(box("tmpLatFrame", (67, 0.2, 0.28), (0, 8.0, fz - 2.85), trim, 0.0))
-    join_into(lat, "Lattice")
-    # --- tầng trệt: cửa cuốn / ô cửa tối giữa các cột ---
+    # ============ MẶT TIỀN theo ảnh 01 (từ dưới lên) ============
+    # Tầng trệt: ô cửa tối giữa các cột + cửa cuốn
     for x in range(-28, 29, 8):
-        box("ShopDark", (5.6, 0.18, 3.6), (x, 7.85, 1.85), MATS["GlassDark"], 0.01)
-        box("Shutter", (5.6, 0.22, 0.5), (x, 7.85, 3.85), MATS["MetalDark"], 0.01)
+        box("ShopDark", (5.6, 0.18, 3.6), (x, 8.02, 1.85), MATS["GlassDark"], 0.01)
+        box("Shutter", (5.6, 0.22, 0.5), (x, 8.02, 3.85), MATS["MetalDark"], 0.01)
         for i in range(4):
-            box("ShutterLine", (5.6, 0.24, 0.07), (x, 7.86, 0.7 + i * 0.8), MATS["MetalDark"], 0.0)
-    # --- lan can ban công 2 tầng ---
-    for ry in (7.6, 13.9):
-        box("RailTop", (68, 0.18, 0.16), (0, 8.15, ry), MATS["WoodDark"], 0.01)
-        posts = []
-        for x in range(-32, 33, 4):
-            posts.append(box("tmpRailPost", (0.12, 0.12, 1.0), (x, 8.15, ry - 0.5), MATS["WoodDark"], 0.0))
-        join_into(posts, "RailPosts")
-    # --- mái hiên cong tầng trệt (hiên uốn bằng dải segment) ---
-    import math as _m
-    for i in range(9):
-        t0 = i / 9; t1 = (i + 1) / 9
-        yc = 8.2 + (t0 + t1) / 2 * 4.2; zc = 4.9 - _m.sin((t0 + t1) / 2 * _m.pi * 0.5) * 0.85
-        seg = box("AwningSeg", (72, 0.55, 0.16), (0, yc, zc), MATS["CanvasOld"], 0.01)
-        seg.rotation_euler = (-0.5 + (t0 + t1) / 2 * 0.55, 0, 0)
-    for x in range(-32, 33, 8):
-        box("AwnPost", (0.14, 0.14, 4.1), (x, 12.15, 2.05), MATS["MetalDark"], 0.0)
-    # --- dầm trần nội thất + cột trong ---
+            box("ShutterLine", (5.6, 0.24, 0.07), (x, 8.03, 0.7 + i * 0.8), MATS["MetalDark"], 0.0)
+    box("Entrance", (6.5, 0.3, 4.4), (0, 7.75, 2.1), MATS["GlassDark"], 0.01)
+    # Dải BIỂN QUẢNG CÁO nhiều màu liền mạch trên ki-ốt + LED đỏ ở giữa (ảnh 01)
+    ad_mats = [MATS["AdGreen"], MATS["AdYellow"], MATS["AdWhite"], MATS["AdGreen"],
+               MATS["AdLED"],
+               MATS["AdYellow"], MATS["AdGreen"], MATS["AdWhite"], MATS["AdYellow"]]
+    for i, x in enumerate(range(-32, 33, 8)):
+        box("AdBand", (7.5, 0.14, 0.95), (x, 8.22, 4.42), ad_mats[i], 0.01)
+    box("AdTrimT", (67, 0.2, 0.14), (0, 8.18, 4.95), trim, 0.0)
+    box("AdTrimB", (67, 0.2, 0.14), (0, 8.18, 3.90), trim, 0.0)
+    # Dải ZIGZAG trắng — chi tiết nhận diện mạnh nhất (ảnh 01 + chợ 1937)
+    # V4.1: nền cao hơn (1.42) + xám đậm, chevron cao/dày hơn -> tương phản mạnh
+    box("ZigzagBack", (66.5, 0.18, 1.42), (0, 8.04, 5.48), MATS["ZigBack"], 0.0)
+    join_into(chevron_row(-33, 33, 8.30, 5.48, M("ZigWhite", (0.96, 0.94, 0.89), 0.9),
+                          step=2.0, arm=1.42, thick=0.42, tall=0.62), "Zigzag")
+    # Băng HỒNG ĐÀO + cửa sổ tầng 2 (kính MarketWin để web phát sáng đêm)
+    # V4.1: băng đậm màu + 3 rãnh ngang tối mô phỏng lam sọc của băng thật
+    box("PeachBand", (67, 0.38, 0.92), (0, 8.06, 6.72), MATS["Peach"], 0.01)
+    for sz in (6.50, 6.72, 6.94):
+        box("PeachSlat", (67, 0.44, 0.055), (0, 8.08, sz), M("PeachDk", (0.58, 0.30, 0.15), 0.95), 0.0)
+    box("GlassWin2", (66, 0.25, 2.5), (0, 7.85, 8.35), MATS["MarketWin"], 0.0)
+    for x in range(-32, 33, 4):
+        box("Mullion2", (0.14, 0.3, 2.5), (x, 7.9, 8.35), MATS["MetalDark"], 0.0)
+    box("Sill2", (67, 0.5, 0.3), (0, 7.9, 7.02), colM, 0.02)
+    box("Head2", (67, 0.5, 0.3), (0, 7.9, 9.72), colM, 0.02)
+    # Dải LAM TRẮNG (louver) tầng 3: kính sau + lam ngang trắng dày
+    box("GlassWin3", (66, 0.22, 3.0), (0, 7.82, 11.7), MATS["MarketWin"], 0.0)
+    louvers = []
+    for i in range(8):
+        louvers.append(box("tmpLouver", (66.5, 0.16, 0.13), (0, 8.34, 10.38 + i * 0.39), M("LouverWhite", (0.95, 0.93, 0.88), 0.9), 0.0))
+    join_into(louvers, "Louvers")
+    box("LouverFrameT", (67, 0.24, 0.26), (0, 8.3, 13.32), trim, 0.0)
+    box("LouverFrameB", (67, 0.24, 0.26), (0, 8.3, 10.12), trim, 0.0)
+    # Tường kem + CHỮ NỔI 3D "CHỢ ĐÀ LẠT" ĐỎ (ảnh 01) — material SignLetters
+    box("LetterWall", (67, 0.5, 3.3), (0, 7.85, 15.15), wall, 0.01)
+    text_obj("CHỢ ĐÀ LẠT", 2.6, (0, 8.12, 15.2), (math.pi / 2, 0, math.pi), MATS["SignLetters"], extrude=0.17)
+    box("Cornice", (68, 0.4, 0.35), (0, 8.0, 17.05), trim, 0.01)
+    # zigzag lặp lại BÊN TRONG nhà (tường trong trên lối đi đặc sản, ảnh 16)
+    box("ZigzagBackIn", (60, 0.15, 1.0), (0, 7.30, 5.62), MATS["ZigBack"], 0.0)
+    join_into(chevron_row(-30, 30, 7.12, 5.62, M("ZigWhite", (0.96, 0.94, 0.89), 0.9), step=2.4, arm=1.6), "ZigzagIn")
+    # ============ MẶT SAU (hướng đồi/cầu — ảnh 02, 03) ============
+    # Chữ nổi đỏ gỉ lớn hơn trên tường sau
+    text_obj("CHỢ ĐÀ LẠT", 3.1, (3, -8.22, 15.4), (math.pi / 2, 0, 0), MATS["SignLetters"], extrude=0.20)
+    box("BackGlassBand", (56, 0.22, 2.6), (3, -8.28, 11.4), MATS["MarketWin"], 0.0)
+    # THÁP THANG MÁY KÍNH xanh lá cạnh cửa sau (nhận diện cực mạnh, ảnh 02)
+    box("ElevShaft", (3.2, 1.6, 21.5), (-9, -9.0, 10.75), MATS["ElevGlass"], 0.02)
+    for ex in (-10.5, -7.5):
+        for ey in (-9.75, -8.25):
+            box("ElevPost", (0.18, 0.18, 21.5), (ex, ey, 10.75), MATS["MetalDark"], 0.0)
+    for zz in (3.5, 7.0, 10.5, 14.0, 17.5, 21.0):
+        box("ElevBand", (3.4, 1.8, 0.18), (-9, -9.0, zz), MATS["MetalDark"], 0.0)
+    box("ElevCap", (3.7, 2.1, 0.4), (-9, -9.0, 21.7), trim, 0.02)
+    # cửa sau + BẠT SỌC xanh–trắng (ảnh 02, 03)
+    box("BackDoor", (4.5, 0.3, 3.2), (3, -8.2, 1.6), MATS["GlassDark"], 0.01)
+    awn_parts = []
+    for i in range(12):
+        m = MATS["StripeA"] if i % 2 == 0 else MATS["StripeB"]
+        p = box("tmpAwnStripe", (0.55, 2.0, 0.06), (3 + (i - 5.5) * 0.55, -9.05, 3.75), m, 0.0)
+        p.rotation_euler = (-0.5, 0, 0)
+        awn_parts.append(p)
+    join_into(awn_parts, "HillAwning")
+    # CẦU THANG TRẮNG ngoài trời bên hông mặt sau (ảnh 03)
+    for i in range(10):
+        box("BackStairs", (2.2, 0.55, 0.35), (-20, -8.75 - i * 0.30, 6.1 - i * 0.62), MATS["WhiteConc"], 0.01)
+    rail = box("BackStairsRail", (0.09, 0.09, 6.2), (-21.15, -10.1, 3.85), MATS["WhiteConc"], 0.0)
+    rail.rotation_euler = (2.69, 0, 0)
+    # biển tròn shop hai bên cửa sau (ảnh 02)
+    for bx, bm in ((-3.5, MATS["AdYellow"]), (9.5, MATS["AdGreen"])):
+        c = cyl("ShopDisc", 0.85, 0.85, 0.14, (bx, -8.35, 4.6), bm, verts=20)
+        c.rotation_euler = (math.pi / 2, 0, 0)
+    # --- dầm trần nội thất + cột trong (giữ nguyên) ---
     for zz in (6.3, 12.6):
         box("BeamIn", (68, 15, 0.4), (0, 0, zz), concD, 0.01)
     for x in range(-24, 25, 12):
         for yy in (-3.5, 3.5):
             box("ColIn", (0.7, 0.7, 6.3), (x, yy, 3.4), conc, 0.03)
-    # --- bảng hiệu lớn trên nóc + bảng phụ (web áp canvas) ---
-    box("SignBoard", (35, 0.5, 5.2), (0, 7.95, 21.6), MATS["SignBoard"], 0.04)
-    box("SignBoard2", (20, 0.4, 2.4), (0, 7.9, 17.6), MATS["SignBoard"], 0.03)
-    box("SignPost", (0.4, 0.4, 2.2), (-14, 7.9, 20.2), MATS["MetalDark"], 0.0)
-    box("SignPost", (0.4, 0.4, 2.2), (14, 7.9, 20.2), MATS["MetalDark"], 0.0)
-    # --- sân thượng tầng 2 (khối phụ phía đông, three local x 14..21, z 7..12) ---
-    # three local (17.5, 6.3, -10.5) -> blender (17.5, +10.5, 6.3)
+    # --- sân thượng tầng 2 (GIỮ NGUYÊN vị trí/kích thước — neo cầu nổi của web) ---
     box("Terrace", (7, 5, 12.6), (17.5, 10.5, 6.3), M("TerraceMat", (0.76, 0.70, 0.60), 0.95), 0.03)
     box("TerraceRail", (7, 0.18, 0.9), (17.5, 13.1, 13.05), MATS["WoodDark"], 0.01)
     export("market")
@@ -509,24 +735,68 @@ def build_roundabout():
     clear_scene()
     cyl("Base", 6.6, 6.9, 0.55, (0, 0, 0.28), MATS["Stone"], verts=28)
     cyl("Soil", 5.9, 5.9, 0.30, (0, 0, 0.62), MATS["Soil"], verts=28)
+    cyl("Lawn", 5.85, 5.85, 0.18, (0, 0, 0.84), MATS["LeafGreen"], verts=28)
+    hedge = torus("Hedge", 5.85, 0.30, (0, 0, 0.95), MATS["LeafGreen"], scale=(1, 1, 0.72))
     cyl("InnerRing", 2.0, 2.2, 0.5, (0, 0, 0.75), MATS["Stone"], verts=20)
-    # vòng hoa: 3 vòng bán kính 2.8 / 4.2 / 5.3, mỗi hoa = cầu dẹt + lá
+    # THẢM HOA HỌA TIẾT QUẠT quanh tượng (ảnh 04): 8 quạt — quạt chẵn là THẢM
+    # HOA LIỀN MẢNG đặc màu + hoa nhỏ rải dày trên mặt, quạt lẻ thảm cỏ đậm.
+    # (V4 chấm hoa thưa rời rạc đọc như rắc muối — V4.1 thay bằng mảng liền.)
     fmats = [MATS["Flower%d" % i] for i in range(6)]
-    k = 0
-    for ring, n in ((2.8, 12), (4.2, 18), (5.3, 22)):
-        for i in range(n):
-            a = (i / n) * math.pi * 2 + ring
-            x, y = math.cos(a) * ring, math.sin(a) * ring
-            sphere("Flower", 0.21, (x, y, 0.92), fmats[k % 6], scale=(1, 1, 0.72)); k += 1
-            sphere("Leaf", 0.26, (x * 0.97, y * 0.97, 0.80), MATS["LeafGreen"], scale=(1, 1, 0.5))
-    # GÒ HOA trung tâm (chuẩn NP khóa: mau-np-01 + A3 — gò xanh phủ hoa giữa
-    # vòng hoa, không tượng/đài phun như các bản tham khảo bán thực trước)
-    sphere("Mound", 1.55, (0, 0, 1.02), MATS["LeafGreen"], scale=(1, 1, 0.52))
-    fm2 = [MATS["Flower%d" % i] for i in range(6)]
-    for i in range(7):
-        a2 = i / 7 * math.pi * 2
-        sphere("MoundFlower", 0.17, (math.cos(a2) * 0.85, math.sin(a2) * 0.85, 1.62), fm2[i % 6], scale=(1, 1, 0.75))
-    sphere("MoundFlower", 0.20, (0, 0, 1.80), fm2[1], scale=(1, 1, 0.75))
+    for s in range(8):
+        a0 = s * math.pi / 4 + 0.035; a1 = (s + 1) * math.pi / 4 - 0.035
+        if s % 2 == 0:
+            sector("FlowerCarpet", 2.32, 5.72, a0, a1, 0.90, 1.01, fmats[(s // 2) % 6])
+        else:
+            sector("GrassCarpet", 2.32, 5.72, a0, a1, 0.88, 0.97, MATS["PineMid"])
+    for s in range(0, 8, 2):
+        fmat = fmats[(s // 2) % 6]
+        for ring, cnt, rr in ((3.05, 9, 0.15), (4.05, 12, 0.16), (5.05, 15, 0.15)):
+            for i in range(cnt):
+                a = s * math.pi / 4 + (i + 0.5) / cnt * (math.pi / 4)
+                x, y = math.cos(a) * ring, math.sin(a) * ring
+                sphere("Flower", rr, (x, y, 1.07), MATS["AdWhite"] if i % 4 == 3 else fmat, scale=(1, 1, 0.7), seg=8, ring=6)
+    # vòng hoa nhỏ sát bệ tượng
+    for i in range(16):
+        a = i / 16 * math.pi * 2
+        sphere("Flower", 0.15, (math.cos(a) * 2.45, math.sin(a) * 2.45, 1.05), fmats[i % 6], scale=(1, 1, 0.72), seg=8, ring=6)
+    # ============ TƯỢNG ĐÀI ĐÁ XÁM ở tâm (ảnh 01, 05) ============
+    # V4.1: tượng cũ (người tí hon + thông đá cao) đọc thành THÁP CHÙA. Làm lại:
+    # bệ thấp lại, CỤM 3 NGƯỜI lớn (thân thuôn + vai + đầu đọc rõ) là chủ thể,
+    # thông đá thu nhỏ thành điểm nhấn phía trên cụm người.
+    st = MATS["StatueStone"]
+    parts = []
+    b1 = box("tmpStBase", (4.8, 4.8, 0.7), (0, 0, 1.30), st, 0.02)
+    b2 = box("tmpStBase", (3.6, 3.6, 0.7), (0, 0, 1.95), st, 0.02); b2.rotation_euler = (0, 0, math.pi / 4)
+    b3 = box("tmpStBase", (2.6, 2.6, 0.6), (0, 0, 2.55), st, 0.02)
+    parts += [b1, b2, b3]
+    parts.append(box("tmpStPed", (1.8, 1.8, 1.35), (0, 0, 3.52), st, 0.03))
+    # cụm 3 tượng người trừu tượng đứng sát nhau quanh trục (đỉnh bệ z=4.20)
+    for i in range(3):
+        a = i / 3 * math.pi * 2 + 0.5
+        fx, fy = math.cos(a) * 0.52, math.sin(a) * 0.52
+        parts.append(cyl("tmpFigRobe", 0.30, 0.44, 1.55, (fx, fy, 4.98), st, verts=12))
+        parts.append(sphere("tmpFigShoulder", 0.40, (fx, fy, 5.82), st, scale=(1.1, 1.1, 0.72)))
+        parts.append(sphere("tmpFigHead", 0.27, (fx, fy, 6.28), st))
+        arm = box("tmpFigArm", (0.13, 0.13, 0.85), (fx * 1.55, fy * 1.55, 5.55), st, 0.02)
+        arm.rotation_euler = (math.sin(a) * 0.85, -math.cos(a) * 0.85, 0)
+        parts.append(arm)
+    # thông đá thu nhỏ trên đỉnh (điểm nhấn, không lấn át cụm người)
+    parts.append(cyl("tmpStTrunk", 0.09, 0.13, 1.1, (0, 0, 6.35), st, verts=8))
+    for r, h, z in ((0.60, 0.75, 7.15), (0.44, 0.65, 7.70), (0.28, 0.55, 8.15)):
+        parts.append(cone("tmpStPine", r, h, (0, 0, z), st, verts=9))
+    join_into([p for p in parts if p is not None], "Statue")
+    # GHẾ ĐÁ TRẮNG quanh bùng binh (ảnh 01)
+    for i in range(4):
+        a = math.pi / 4 + i * math.pi / 2
+        bx, by = math.cos(a) * 8.3, math.sin(a) * 8.3
+        seat = box("BenchSeat", (1.9, 0.5, 0.14), (bx, by, 0.55), MATS["BenchWhite"], 0.02)
+        back = box("BenchBack", (1.9, 0.12, 0.55), (bx + math.cos(a) * 0.24, by + math.sin(a) * 0.24, 0.92), MATS["BenchWhite"], 0.02)
+        back.rotation_euler = (0, 0, a + math.pi / 2)
+        seat.rotation_euler = (0, 0, a + math.pi / 2)
+        for sgn in (-0.7, 0.7):
+            lx = bx + math.cos(a + math.pi / 2) * sgn
+            ly = by + math.sin(a + math.pi / 2) * sgn
+            box("BenchLeg", (0.42, 0.42, 0.48), (lx, ly, 0.24), MATS["BenchWhite"], 0.02)
     export("roundabout")
 
 # ============================================================
@@ -572,33 +842,214 @@ def build_bridge():
 #  world z_three = -(blender y) - 16 ; chiều cao blender z = world y.
 # ============================================================
 def build_stairs():
+    # V4.5 (research/16 mục 4.1): thang RỘNG 22 (từ 11) = làn đi giữa 7 + 2 dải
+    # "khán đài" ngồi ăn; chiếu nghỉ nới sâu 2.5 -> 4 (rút mỗi chuyến kề 0.75).
+    # Bậc bỏ bevel (nén GLB — bevel 0.01 không đọc được ở tỉ lệ này).
+    # LandingTop hạ cho MẶT TẤM = đúng stairH (bản cũ cao hơn 0.345: chân chìm).
     clear_scene()
     stone, stone2 = MATS["Stone"], MATS["Concrete"]
+    W = 22
     def flight(y_top, run_total, steps, h_top, h_bot):
         run = run_total / steps
         for i in range(steps):
             h = h_top + (h_bot - h_top) * (i / steps)
             yc = y_top - run * (i + 0.5)
-            box("Step", (11, run + 0.06, max(h, 0.25)), (0, yc, max(h, 0.25) / 2), stone if i % 2 else stone2, 0.01)
-    # chuyến A: y +14..+6 (world -30..-22), 17 -> 11.33
-    flight(14, 8, 10, 17, 11.33)
-    # chiếu nghỉ 1: y +6..+3.5 (world -22..-19.5), h 11.33
-    box("Landing1", (13, 2.5, 11.33), (0, 4.75, 11.33 / 2), stone2, 0.01)
-    box("Landing1Top", (11, 2.5, 0.35), (0, 4.75, 11.5), MATS["CanvasOld"], 0.01)
-    # chuyến B: y +3.5..-4.5 (world -19.5..-11.5), 11.33 -> 5.67
-    flight(3.5, 8, 10, 11.33, 5.67)
-    # chiếu nghỉ 2: y -4.5..-7 (world -11.5..-9), h 5.67
-    box("Landing2", (13, 2.5, 5.67), (0, -5.75, 5.67 / 2), stone2, 0.01)
-    box("Landing2Top", (11, 2.5, 0.35), (0, -5.75, 5.84), MATS["CanvasOld"], 0.01)
-    # chuyến C: y -7..-14 (world -9..-2), 5.67 -> 0
-    flight(-7, 7, 10, 5.67, 0)
+            box("Step", (W, run + 0.06, max(h, 0.25)), (0, yc, max(h, 0.25) / 2), stone if i % 2 else stone2, 0.0)
+    # chuyến A: y +14..+6.75 (world -30..-22.75), 17 -> 11.33
+    flight(14, 7.25, 10, 17, 11.33)
+    # chiếu nghỉ 1: y +6.75..+2.75 (world -22.75..-18.75), h 11.33
+    box("Landing1", (W + 2, 4, 11.33), (0, 4.75, 11.33 / 2), stone2, 0.0)
+    box("Landing1Top", (W, 4, 0.35), (0, 4.75, 11.33 - 0.175), MATS["CanvasOld"], 0.01)
+    # chuyến B: y +2.75..-3.75 (world -18.75..-12.25), 11.33 -> 5.67
+    flight(2.75, 6.5, 10, 11.33, 5.67)
+    # chiếu nghỉ 2: y -3.75..-7.75 (world -12.25..-8.25), h 5.67
+    box("Landing2", (W + 2, 4, 5.67), (0, -5.75, 5.67 / 2), stone2, 0.0)
+    box("Landing2Top", (W, 4, 0.35), (0, -5.75, 5.67 - 0.175), MATS["CanvasOld"], 0.01)
+    # chuyến C: y -7.75..-14 (world -8.25..-2), 5.67 -> 0
+    flight(-7.75, 6.25, 10, 5.67, 0)
     # vách hông dốc 2 bên (khối nghiêng theo sườn tổng)
-    for sx in (-5.85, 5.85):
+    for sx in (-11.35, 11.35):
         wall = box("SideWall", (0.5, 33, 1.6), (sx, 0, 8.0), MATS["ConcreteDk"], 0.02)
         wall.rotation_euler = (math.atan2(17, 28), 0, 0)
-        rail = box("HandRail", (0.16, 31, 0.16), (sx * 0.96, 0, 9.3), MATS["WoodDark"], 0.01)
+        rail = box("HandRail", (0.16, 31, 0.16), (sx * 0.985, 0, 9.3), MATS["WoodDark"], 0.01)
         rail.rotation_euler = (math.atan2(17, 28), 0, 0)
     export("stairs")
+
+# ============================================================
+#  XE CỘ (V4 MỚI) — vehicle.glb gồm 2 group gốc: "Moto" (xe máy + người lái
+#  chibi) và "Car" (bán tải). Mặt trước -Y blender (= +Z three) như nhân vật.
+#  Bánh xe là object riêng (WheelF/WheelR/WheelFL...) để web quay theo tốc độ.
+# ============================================================
+def build_vehicle():
+    clear_scene()
+    dark, tire, pot = MATS["VehDark"], MATS["TireMat"], MATS["PotMetal"]
+    # ---------- MOTO ----------
+    wf = wheel("WheelF", 0.33, 0.09, (0, -0.78, 0.33), tire, pot)
+    wr = wheel("WheelR", 0.33, 0.09, (0, 0.72, 0.33), tire, pot)
+    body = []
+    body.append(box("tmpBikeFloor", (0.34, 0.80, 0.10), (0, 0.02, 0.40), dark, 0.02))
+    shield = box("tmpBikeShield", (0.42, 0.10, 0.64), (0, -0.50, 0.80), MATS["BikeBody"], 0.03)
+    shield.rotation_euler = (-0.32, 0, 0); body.append(shield)
+    body.append(box("tmpBikeBar", (0.48, 0.05, 0.05), (0, -0.56, 1.08), dark, 0.01))
+    body.append(box("tmpBikeStem", (0.07, 0.09, 0.34), (0, -0.53, 0.94), dark, 0.01))
+    body.append(box("tmpBikeSeat", (0.36, 0.64, 0.13), (0, 0.30, 0.80), dark, 0.03))
+    body.append(box("tmpBikeRear", (0.38, 0.56, 0.44), (0, 0.44, 0.56), MATS["BikeBody"], 0.03))
+    fender = box("tmpBikeFender", (0.30, 0.44, 0.06), (0, -0.78, 0.60), MATS["BikeBody"], 0.01)
+    fender.rotation_euler = (0.5, 0, 0); body.append(fender)
+    body.append(box("tmpBikeTail", (0.30, 0.10, 0.16), (0, 0.76, 0.72), MATS["BikeBody"], 0.02))
+    bike = join_into(body, "BikeBody")
+    lamp_m = sphere("HeadLamp", 0.075, (0, -0.585, 0.97), MATS["HeadLamp"])
+    # người lái chibi ngồi (pose tĩnh): hông + thân nghiêng + tay tới tay lái + chân gập
+    rider = []
+    rider.append(box("tmpRiderHip", (0.40, 0.30, 0.26), (0, 0.30, 0.95), MATS["Pants"], 0.05))
+    torso = box("tmpRiderTorso", (0.47, 0.27, 0.64), (0, 0.14, 1.30), MATS["RiderShirt"], 0.07)
+    torso.rotation_euler = (0.16, 0, 0); rider.append(torso)
+    rider.append(sphere("tmpRiderHead", 0.205, (0, 0.03, 1.74), MATS["Skin"]))
+    for sx in (-0.29, 0.29):
+        arm = box("tmpRiderArm", (0.11, 0.64, 0.11), (sx, -0.22, 1.27), MATS["RiderShirt"], 0.04)
+        arm.rotation_euler = (-2.50, 0, 0); rider.append(arm)
+        thigh = box("tmpRiderThigh", (0.13, 0.52, 0.13), (sx * 0.62, -0.05, 0.80), MATS["Pants"], 0.04)
+        thigh.rotation_euler = (-1.15, 0, 0); rider.append(thigh)
+        shin = box("tmpRiderShin", (0.12, 0.13, 0.46), (sx * 0.62, 0.10, 0.52), MATS["Pants"], 0.04)
+        shin.rotation_euler = (0.25, 0, 0); rider.append(shin)
+        rider.append(box("tmpRiderShoe", (0.13, 0.30, 0.09), (sx * 0.62, -0.02, 0.33), MATS["Shoe"], 0.02))
+    rider_o = join_into(rider, "Rider")
+    helmet = sphere("Helmet", 0.235, (0, 0.03, 1.76), MATS["Helmet"], scale=(1, 1, 0.85))
+    moto = bpy.data.objects.new("Moto", None)
+    bpy.context.collection.objects.link(moto)
+    for o in (wf, wr, bike, lamp_m, rider_o, helmet):
+        o.parent = moto
+    # ---------- CAR (bán tải) ----------
+    cbody = []
+    cbody.append(box("tmpCarBase", (1.78, 4.30, 0.55), (0, 0, 0.62), MATS["CarBody"], 0.04))
+    cbody.append(box("tmpCarCab", (1.68, 1.70, 0.62), (0, -0.55, 1.18), MATS["CarBody"], 0.04))
+    shield = box("tmpCarShield", (1.58, 0.07, 0.55), (0, -1.33, 1.24), MATS["GlassDark"], 0.01)
+    shield.rotation_euler = (0.35, 0, 0); cbody.append(shield)
+    for sx in (-0.86, 0.86):
+        cbody.append(box("tmpCarSideWin", (0.06, 1.35, 0.40), (sx, -0.55, 1.30), MATS["GlassDark"], 0.01))
+        cbody.append(box("tmpCarBedSide", (0.08, 1.55, 0.52), (sx, 1.55, 0.98), MATS["CarBody"], 0.02))
+    cbody.append(box("tmpCarBedTail", (1.78, 0.08, 0.52), (0, 2.30, 0.98), MATS["CarBody"], 0.02))
+    cbody.append(box("tmpCarBumpF", (1.86, 0.25, 0.26), (0, -2.22, 0.45), dark, 0.02))
+    cbody.append(box("tmpCarBumpR", (1.86, 0.25, 0.26), (0, 2.22, 0.45), dark, 0.02))
+    car = join_into(cbody, "CarBody")
+    cwheels = [wheel("WheelFL", 0.37, 0.24, (-0.82, -1.45, 0.37), tire, pot),
+               wheel("WheelFR", 0.37, 0.24, (0.82, -1.45, 0.37), tire, pot),
+               wheel("WheelRL", 0.37, 0.24, (-0.82, 1.45, 0.37), tire, pot),
+               wheel("WheelRR", 0.37, 0.24, (0.82, 1.45, 0.37), tire, pot)]
+    hl1 = sphere("tmpHL", 0.09, (-0.60, -2.16, 0.80), MATS["HeadLamp"])
+    hl2 = sphere("tmpHL", 0.09, (0.60, -2.16, 0.80), MATS["HeadLamp"])
+    carlamp = join_into([hl1, hl2], "HeadLamp")
+    car_g = bpy.data.objects.new("Car", None)
+    bpy.context.collection.objects.link(car_g)
+    for o in [car, carlamp] + cwheels:
+        o.parent = car_g
+    export("vehicle")
+
+# ============================================================
+#  KHÁCH SẠN QUANH KHU (V4 bổ sung 09:57) — hotels.glb gồm 4 group gốc
+#  HotelA/B/C/D. Phông nền: khối 4–6 tầng, cửa sổ đều nhịp có lớp (khung nổi
+#  + kính lõm), ban công vài tầng, gờ chỉ từng tầng, biển chữ nổi nóc phát
+#  sáng đêm (material HS*), cửa sổ 3 loại HotelWinA/B/C để web cho sáng rải
+#  rác ban đêm. Mặt tiền -Y blender (= +Z three) như rạp/café.
+# ============================================================
+def _group_new(name, before):
+    g = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(g)
+    for o in list(bpy.data.objects):
+        if o not in before and o is not g and o.parent is None:
+            o.parent = g
+    return g
+
+def _hotel_variant(sign, sign_mat, sign_size, W, D, floors, wall_mat, frame_mat,
+                   band_style=False, tank=False):
+    H = 1.2 + floors * 3.05
+    box("HotelBody", (W, D, H), (0, 0, H / 2), wall_mat, 0.05)
+    box("HotelBase", (W + 0.2, D + 0.2, 1.05), (0, 0, 0.52), MATS["TrimBrown"], 0.03)
+    box("HotelDoor", (2.7, 0.22, 2.3), (0, -D / 2 - 0.02, 1.15), MATS["GlassDark"], 0.01)
+    awn = box("HotelAwn", (3.6, 1.3, 0.09), (0, -D / 2 - 0.65, 2.55), MATS["CanvasOld"], 0.01)
+    awn.rotation_euler = (0.42, 0, 0)
+    win_mats = [MATS["HotelWinA"], MATS["HotelWinB"], MATS["HotelWinC"]]
+    cols = max(3, int((W - 2.4) / 2.6))
+    xs = [-(cols - 1) * 1.3 + i * 2.6 for i in range(cols)]
+    for f in range(floors):
+        zc = 2.0 + f * 3.05
+        box("HotelCornice", (W + 0.4, D + 0.4, 0.18), (0, 0, 0.55 + (f + 1) * 3.05), frame_mat, 0.01)
+        if band_style:
+            box("HotelGlassBand", (W - 2.0, 0.14, 1.5), (0, -D / 2 - 0.05, zc), MATS["VIBGlass"], 0.0)
+            for x in xs:
+                box("HotelMullion", (0.12, 0.18, 1.5), (x, -D / 2 - 0.05, zc), MATS["MetalDark"], 0.0)
+            continue
+        for ci, x in enumerate(xs):
+            wm = win_mats[(f * 7 + ci * 3) % 5 if (f * 7 + ci * 3) % 5 < 3 else 2]
+            if (f * 7 + ci * 3) % 5 == 0: wm = win_mats[0]
+            elif (f * 7 + ci * 3) % 5 == 2: wm = win_mats[1]
+            else: wm = win_mats[2]
+            box("HotelWinFrame", (1.25, 0.16, 1.55), (x, -D / 2 - 0.05, zc), frame_mat, 0.01)
+            box("HotelWinGlass", (1.05, 0.08, 1.35), (x, -D / 2 - 0.10, zc), wm, 0.0)
+            if f % 2 == 1 and ci in (1, cols - 2):
+                box("HotelBalcony", (1.9, 0.85, 0.12), (x, -D / 2 - 0.45, zc - 0.85), frame_mat, 0.01)
+                box("HotelBalcRail", (1.9, 0.06, 0.06), (x, -D / 2 - 0.85, zc - 0.30), MATS["MetalDark"], 0.0)
+                for px in (-0.85, 0.0, 0.85):
+                    box("HotelBalcPost", (0.05, 0.05, 0.55), (x + px, -D / 2 - 0.85, zc - 0.58), MATS["MetalDark"], 0.0)
+    box("HotelRoofSlab", (W + 0.6, D + 0.6, 0.3), (0, 0, H + 0.12), frame_mat, 0.02)
+    box("HotelParapet", (W + 0.2, 0.3, 0.65), (0, -D / 2 - 0.05, H + 0.55), wall_mat, 0.01)
+    if tank:
+        cyl("HotelTank", 0.95, 1.05, 1.7, (W / 2 - 1.8, D / 2 - 1.6, H + 1.1), MATS["ConcreteDk"], verts=12)
+        cone("HotelTankCap", 1.15, 0.6, (W / 2 - 1.8, D / 2 - 1.6, H + 2.2), MATS["TrimBrown"], verts=12)
+    box("HotelSignPost", (0.14, 0.14, 1.0), (-W / 4, -D / 2 - 0.1, H + 0.7), MATS["MetalDark"], 0.0)
+    box("HotelSignPost", (0.14, 0.14, 1.0), (W / 4, -D / 2 - 0.1, H + 0.7), MATS["MetalDark"], 0.0)
+    text_obj(sign, sign_size, (0, -D / 2 - 0.18, H + 1.55), (math.pi / 2, 0, 0), sign_mat, extrude=0.10, name="HotelSign")
+
+def build_hotels():
+    clear_scene()
+    before = set(bpy.data.objects)
+    _hotel_variant("DALAT CENTER", MATS["HSYellow"], 1.5, 16, 10, 6, MATS["HotelWhite"], MATS["WhiteConc"])
+    _group_new("HotelA", before)
+    before = set(bpy.data.objects)
+    _hotel_variant("HOTEL COLLINE", MATS["HSWhite"], 1.3, 13, 9, 5, MATS["WallCream"], MATS["TrimBrown"], tank=True)
+    _group_new("HotelB", before)
+    before = set(bpy.data.objects)
+    _hotel_variant("VIB", MATS["HSWhite"], 2.8, 14, 9, 6, MATS["VIBWall"], MATS["MetalDark"], band_style=True)
+    _group_new("HotelC", before)
+    before = set(bpy.data.objects)
+    _hotel_variant("THANH BÌNH", MATS["HSBlue"], 1.4, 11, 8, 4, MATS["HotelWhite"], MATS["StripeA"], tank=True)
+    _group_new("HotelD", before)
+    export("hotels")
+
+# ============================================================
+#  QUÁN NƯỚC / CÀ PHÊ VỈA HÈ (V4 bổ sung 09:57) — shop.glb: nhà 2 tầng,
+#  tiền -Y blender. Tầng trệt lõm tối + quầy, hiên bạt, biển (web áp canvas),
+#  tầng 2 ban công nhỏ + 2 cửa sổ.
+# ============================================================
+def build_shop():
+    clear_scene()
+    glow = M("ShopGlow", (0.85, 0.62, 0.30), 0.5, 0.0, emit=(0.80, 0.45, 0.12), ei=0.5)
+    box("Body", (5.4, 4.6, 6.8), (0, 0, 3.4), MATS["ShopWall"], 0.05)
+    box("Base", (5.6, 4.8, 0.9), (0, 0, 0.45), MATS["TrimBrown"], 0.03)
+    # tầng trệt: hốc quán tối + quầy + vách trong ấm sáng
+    box("Recess", (4.6, 0.22, 2.9), (0, -2.32, 1.5), MATS["GlassDark"], 0.01)
+    box("GlowBack", (4.4, 0.14, 2.5), (0, -1.15, 1.55), glow, 0.0)
+    box("Counter", (4.2, 0.6, 0.95), (0, -1.80, 0.48), MATS["WoodDark"], 0.02)
+    box("CounterTop", (4.4, 0.75, 0.08), (0, -1.80, 0.99), MATS["WoodLight"], 0.01)
+    for i in range(3):
+        cyl("StoolIn", 0.16, 0.13, 0.45, (-1.2 + i * 1.2, -1.55, 0.23), MATS["StripeA"], verts=10)
+    # hiên bạt + biển hiệu (web áp canvas lên mặt trước bảng)
+    awn = box("ShopAwn", (5.9, 2.3, 0.10), (0, -3.15, 3.15), MATS["ShopAwn"], 0.01)
+    awn.rotation_euler = (0.42, 0, 0)
+    box("SignBoard", (5.2, 0.16, 1.05), (0, -2.44, 4.55), MATS["SignBoard"], 0.02)
+    # tầng 2: cửa ra ban công + 2 cửa sổ khung trắng + ban công
+    box("BalconySlab", (4.8, 0.85, 0.12), (0, -2.68, 4.28), MATS["WhiteConc"], 0.01)
+    box("DoorUp", (1.0, 0.14, 2.0), (0, -2.33, 5.15), MATS["GlassDark"], 0.01)
+    for sx in (-1.55, 1.55):
+        box("WinFrame", (1.1, 0.15, 1.4), (sx, -2.34, 5.2), MATS["WhiteConc"], 0.01)
+        box("WinGlass", (0.92, 0.08, 1.22), (sx, -2.38, 5.2), MATS["HotelWinC"], 0.0)
+    box("BalcRail", (4.8, 0.06, 0.06), (0, -3.08, 4.95), MATS["WoodDark"], 0.0)
+    for px in (-2.3, -1.15, 0.0, 1.15, 2.3):
+        box("BalcPost", (0.055, 0.055, 0.62), (px, -3.08, 4.65), MATS["WoodDark"], 0.0)
+    # mái đua + khối nóc
+    box("RoofSlab", (5.9, 5.1, 0.25), (0, 0, 6.95), MATS["TrimBrown"], 0.02)
+    box("RoofBox", (2.2, 2.0, 0.9), (1.2, 0.2, 7.5), MATS["Concrete"], 0.03)
+    export("shop")
 
 build_character()
 build_stall()
@@ -608,6 +1059,9 @@ build_cafe()
 build_pine()
 build_lamp()
 build_roundabout()
+build_vehicle()
+build_hotels()
+build_shop()
 build_bridge()
 build_stairs()
 print("ALL DONE")
