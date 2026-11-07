@@ -331,3 +331,40 @@ Phạm vi khóa: KHÔNG thêm hệ thống game, KHÔNG đụng logic v4.3, KHÔ
 - [x] Save `chohb3d-v1` không đổi schema — không migration.
 - [ ] CHƯA kiểm chứng trong trình duyệt thật (giới hạn môi trường đã biết): nhân vật mới đi/ngồi thật trong game, Mặc/Gỡ tủ đồ tại runtime, đi thang trong nhà xuyên giếng mới — đã thay bằng dump GLB + harness render Blender soi từng món/cutaway như trên; chờ Chung Hy chơi thử bản standalone mới.
 - [x] Không đẩy GitHub, không upload (điều phối làm).
+
+## V4.7 (07/11) — CHƠI ĐƯỢC + ĐÔNG + RỘNG (theo phản hồi chơi thử 22:50: "không biết chơi như nào", "ít người quá", "đường vào nhỏ xíu", "có sương mù nhẹ")
+### A. Dẫn chơi "một việc một lúc" (mục quan trọng nhất)
+- [x] Chuỗi hướng dẫn lần đầu "Lần đầu đi chợ" 6 bước, mỗi lúc CHỈ 1 thẻ lớn #tutCard (chữ 21px) ghi đúng 1 câu việc: (1) tới vòng sáng sạp sữa đậu nành (2) mua 1 ly Sữa đậu nành nóng (3) uống ly sữa hồi ấm (4) leo thang lên quảng trường (5) nói chuyện với 1 người đi chợ (6) mở Hộ chiếu. Xong bước thẻ tự chuyển; thưởng 15 Xu + 10 XP/bước, bước cuối 50 Xu + 20 XP (tổng 125 Xu / 70 XP).
+- [x] Móc sự kiện thật: buyItem (đúng sạp 'sua' + đúng tên món) -> tutFlags.sua; eatItem -> drank; G.chats++ -> chatted; openPassport -> pass. Bước 1 check khoảng cách tới front sạp <3m; bước 4 check playerState.y > 15,5.
+- [x] Tại đích luôn có cột sáng/vòng sáng (dùng chung beacon của hành trình; tickGuide nhường điều khiển beacon cho tickTutorial khi hướng dẫn đang chạy) + mũi tên 8 hướng theo camera + khoảng cách (m) trên thẻ. Bước tại chỗ (3, 6) thì cột sáng tắt.
+- [x] TỰ ĐI (auto-walk): đồ thị waypoint AW_NODES 36 nút (trục chính khớp tuyến LOOP/hành trình + 5 nhánh: dãy sạp đông/sạp sữa, trong nhà lồng, cầu->sân thượng->thang trong, sạp trên thang, Chú Ba, đồi tây) + BFS findAwPath. Bấm thẻ hướng dẫn hoặc panel 🧭 = nhân vật tự đi; WASD/joystick/E/xe/ngồi đều hủy ngay. Có dòng "🚶 Đang tự đi…" trên thẻ (polish).
+- [x] Sau hướng dẫn: dòng đầu panel mục tiêu = "➡️ VIỆC TIẾP THEO" duy nhất (ưu tiên: bước hướng dẫn -> chặng hành trình -> nhiệm vụ chính -> quest ngày -> tự do), luôn kèm mũi tên + khoảng cách, cập nhật mỗi frame (refreshNextTaskLine). Trong lúc hướng dẫn panel 🧭 ẩn để đúng "một việc một lúc".
+- [x] Prompt tương tác #ctxPrompt: chữ 15 -> 17,5px, viền vàng 2px + nhấp nháy sáng (ctxPulse), thêm cursor pointer + BẤM VÀO PROMPT = tương tác (trước đây chỉ phím E/nút mobile). Nút Bỏ qua hướng dẫn có; lưu state.tutorialDone + state.tutStep.
+- [x] Migration save chohb3d-v1 KHÔNG phá: save cũ có tiến độ (guide.stage>0 / guide.done / questDone / xp>0) tự coi như đã qua hướng dẫn; save đang học dở (tutorialDone=false đã lưu) được tôn trọng. Harness kiểm 5 trường hợp migration đạt.
+- [x] HARNESS /tmp/harness47.js (trích nguyên văn code thật + DOM stub): **48/48 đạt** — mô phỏng đủ 6 bước (kèm thưởng đúng số), auto-walk spawn -> sạp sữa tới nơi cách front 1,30m (~14,1s ở tốc độ đi bộ, qua đúng nút nhánh 22,7.2), auto-walk sạp sữa -> đỉnh thang đạt y=17 (qua check bước 4), groundH/baseY, đếm người.
+### B. Tăng người 185 -> ~300 (đếm bằng code, runtime có window.NPC_STATS in console)
+- [x] Hàng chờ 34 -> 49 (+15): thêm banhcan 3, supcua 3, yaourt 2, hoa 2; tăng sua 3->4, caphe 3->4, banhtrang 3->4, dau 4->5, xien 4->5.
+- [x] Khán đài thang 28 -> 40 người ngồi (+12 cụm mới cả 3 chuyến + 2 chiếu nghỉ).
+- [x] Cụm đứng chuyện 28 -> 51 (+23): quảng trường đồi +10, dọc phố chợ đêm +8, hai vệ đường vào +5.
+- [x] Nhà lồng: +28 người mua đứng trước 34 quầy trang trí (chạy lại đúng logic bỏ quầy của code dựng quầy; ~80% quầy có khách) + 4 wanderer đi lối giữa trong nhà (sàn 0,5).
+- [x] Wanderer +16 tổng cộng: tuyến LOOP 6 -> 10 (+4), trong nhà lồng +4 (ở mục trên), đường vào +4, quảng trường trước chợ/bùng binh +4.
+- [x] Tĩnh mới: vòng bùng binh + thềm thang 8, ngắm hàng trước dãy sạp mặt tiền 8 (z 6,4 bám đất), ngồi trước dãy nhà bắc 3, hàng rong thêm 2 đầu đường vào 2. TỔNG CỘNG THÊM +115 -> **~300 người**.
+- [x] Bộ đếm theo khu npcZoneOf gắn vào addStatic/addWanderer/người bán: window.NPC_STATS {duong-vao, bung-binh, pho-cho-dem, nha-long, thang, doi, ven-cho, tong} + console.log khi nạp game (số runtime CHƯA quan sát được trong trình duyệt thật — xem mục Chưa kiểm chứng).
+- [x] Xe đậu: hàng trước mặt tiền lùi z 11,25 -> 11,75 (~56 xe) + 2 hàng dọc đường vào bám dốc (parkedRowY dùng entryRampY, ~31 xe) + phía đông trước chợ 8,9 (~8 xe) -> tổng xe đậu ~100+.
+### C. Đường vào rộng + tỉ lệ chợ lớn (đo trước/sau)
+- [x] Mặt đường chính 170x11 @z2 -> **170x18 @z1,5** (z -7,5..10,5); đoạn dốc vào 31x11 -> 31x18; vỉa hè nam 2,4 -> 3,0 @z12,4, vỉa hè bắc 1,8 -> 2,6 @z-9,2; vạch qua đường sâu 8,8 -> 15. Sân lát đá trước mặt tiền 7,6 -> 9,5 @z10,4.
+- [x] Dãy nhà lùi: nam z 12,2 -> 16,5 (mặt tiền 9,4 -> 13,7), bắc -13,5/-14,5 -> -18/-19, khách sạn HotelD 15,5 -> 20,5; khói bếp theo nhà. Đèn thuộc địa ra mép mới (-8,6 / 11,9), cẩm tú cầu 13,6 / -10,4, dây đèn 12,2 / -8,4, biển tên đường -8,0.
+- [x] Dãy 10 sạp mặt tiền/đường vào z 8,4 -> 10,15 (front 6,3 -> 8,05); vùng groundH dốc vào z -5,5..10,5 -> -9..13,5 khớp đường mới; AREA_ZONES đường vào nới -12..16; guide chặng 3 tz -> 10,15; làn xe chạy -1,5 / 4,5; minimap vẽ lại đường + thang rộng 22.
+- [x] SỬA LỖI TIỀM ẨN phát hiện khi rà soát (có từ V4.5, V4.7 dời sạp mới lộ hẳn): groundH ở dải x 21..33, z 7..12,2 trả 12,6 (mặt hành lang sân thượng cho tuyến LOOP) khiến 3 sạp sữa/cà phê/yaourt bám baseY=12,6 và hàng chờ (front mới 8,05, pz>=7) bị kéo lên cao. Đã sửa gốc: baseY ngoại lệ = 0 cho dải đó; hàng chờ bám s.baseY thay vì tự hỏi groundH; onElevated của người chơi + thêm rect hành lang đông (đi bộ dưới hành lang không bị nhấc lên); cột sáng hướng dẫn đặt ở cao độ người chơi khi đích nằm dưới hành lang; người ngắm sạp đặt z 6,4. Harness có test riêng cho cả cụm này.
+- [x] Sửa luôn 2 điểm chìm/lệch: người ngồi trước nhà phố nam z 9,9 (TRONG thân nhà cũ) -> 13,0 trước mặt tiền mới; hàng rong (-58,-9,9) và (-70,-9,9) nằm ngoài rect dốc vào -> kéo về z -8,6 trên vỉa hè bắc.
+- [x] Render đối chiếu cùng góc (scripts/render_v47.py = gương v45 + hình học/crowd mới): v47-a-duong-vao (mật độ trung cảnh tăng rõ, dải đất thoáng rộng hơn), v47-b-vong-xoay (cụm người trước mặt tiền đông hơn), v47-f-trong-cho (lối đi trong nhà CÓ người mua đứng trước quầy — bản v45 trống trơn); ảnh ghép trước/sau: renders/v47-a-duong-vao-truoc-sau.png + v47-b-vong-xoay-truoc-sau.png. Đối chiếu ảnh thật 05/06: hướng đi đúng (mặt phố rộng + người tràn + xe đậu kín vệ) dù tỉ lệ game vẫn nén hơn ảnh thật.
+### D. Sương Đà Lạt rõ hơn
+- [x] Thêm 3 dải sương trôi: ngang đường vào (-56, y2,0, rộng 44, trôi 0,30), chân thang (0, y1,5, rộng 34, trôi 0,12), là là quanh bùng binh (-24, y1,1, rộng 34, trôi 0,10); dải trước dãy sạp chỉnh z 9 -> 7 (trước front mới).
+- [x] Thêm 2 đĩa sương mặt đất: chân thang r12 (0, 0,3, 2) + đoạn bằng đường vào r12 (-52, 0,32, 2). Độ mờ đêm: sương trôi 0,17 -> 0,24, đĩa mặt đất 0,22 -> 0,32; GIỮ nguyên fogBase 0,0066 để không nuốt mặt tiền/sạp.
+### E. ĐỢT CẢI THIỆN (polish — đúng 1 đợt sau QA)
+- [x] Thẻ hướng dẫn top 122 -> 138px (tránh đè panel mục tiêu khi chữ xuống dòng ở màn hẹp) + thẻ hiện "🚶 Đang tự đi…" khi auto-walk đang chạy. Sau polish: node --check đạt + harness chạy lại 48/48.
+### F. Dung lượng + đóng gói
+- [x] index.html 261.344 -> ~282KB. Đóng gói lại: **index-standalone.html = 10.344.519 byte**, DƯ 141.241 byte dưới trần 10MiB (10.485.760). Không GLB mới (chỉ code + dữ liệu mảng) nên không cần nén.
+- [x] node --check đạt cho cả index.html và index-standalone.html sau mọi patch (A, B, C, C-fix, D, polish).
+- [ ] CHƯA kiểm chứng trong trình duyệt thật (giới hạn môi trường đã biết — trình duyệt được quản lý chặn loopback/domain): luồng bấm thật (bấm thẻ -> tự đi có va chạm trượt dọc sạp trong collide() thật, mở/đóng modal giữa chừng), FPS với ~300 NPC, số NPC_STATS in ra ở runtime, sương billboard trong web (harness Blender chỉ là xấp xỉ), thẻ hướng dẫn trên màn hình mobile thật. Đã thay bằng: harness Node trích nguyên văn 48/48 + render Blender soi 3 góc. Chờ Chung Hy chơi thử bản standalone mới.
+- [x] Không đẩy GitHub, không upload (điều phối làm).
