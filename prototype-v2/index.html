@@ -313,6 +313,48 @@ function mat(color, rough=0.9, metal=0.0){
   return MAT[k];
 }
 const worldGroup = new THREE.Group(); scene.add(worldGroup);
+let _haloShared = null; // FIX MÀN HÌNH ĐEN (08/11): phải khai báo TRƯỚC mọi lệnh dựng gọi lamp()/addHalo() — trước đây nằm ở ~dòng 1360, sau điểm gọi lamp() đầu tiên (khối sườn tây) nên biến rơi vào TDZ → ReferenceError giết toàn bộ module ngay khi nạp.
+// FIX MÀN HÌNH ĐEN (08/11): bảng dữ liệu trang phục V5.1 dời lên đầu — crowdPerson() được gọi ở top-level (khối sườn tây) TRƯỚC vị trí cũ nên const rơi vào TDZ. Các hàm giữ nguyên tại chỗ (function declaration được hoist).
+const NPC_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26, 0x2e4a6b, 0x6b5a44, 0xd8d2c2, 0x24303c];
+const NPC_KNIT = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x6b8f3e, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a, 0xf0ead8, 0x2e2a26];
+const NPC_PUFFER = [0xf0ead8, 0xe8e2d4, 0xf0ead8, 0x2e2a26, 0x232120, 0x2e2a26, 0xa62b25, 0x35507a, 0xd9a62e];
+const NPC_HOODIE = [0x8668c4, 0x6b8f3e, 0xd9a62e, 0x3a6bc2, 0xc95d7e, 0x8c8c92];
+const NPC_COAT = [0x35507a, 0x5c4633, 0xe8e2d4, 0x2e2a26, 0x74566b];
+const NPC_BEANIE = [0xc8372d, 0xd9a62e, 0x2e6b46, 0xf0ead8, 0x2e2a26, 0x8668c4, 0x3a6bc2];
+const NPC_SKINS = [0xe8b98f, 0xd9a37e, 0xc68a5e, 0xa96f42];
+const FORM_DIST = { // tỉ lệ phom theo vai trò — research/18 mục 1.3
+  wanderer: [['puffer',30],['coat',15],['hoodie',15],['knit',25],['light',15]],
+  crowd:    [['puffer',32],['coat',14],['hoodie',15],['knit',24],['light',15]],
+  queue:    [['puffer',30],['coat',10],['hoodie',15],['knit',30],['light',15]],
+  sitter:   [['puffer',35],['coat',10],['hoodie',20],['knit',25],['light',10]],
+  vendor:   [['knit',50],['puffer',10],['hoodie',10],['light',30],['coat',0]],
+};
+const _npcMats = {};
+let NPC_PART_MESHES = 0;
+// FIX MÀN HÌNH ĐEN (08/11): smokeMat/smokePts dời lên đầu — addSmoke() được gọi ở top-level (khối nhà nam/bắc) trước vị trí cũ. Cùng họ TDZ.
+const smokePts = [];     // hệ khói bếp các quầy ăn
+const smokeMat = new THREE.PointsMaterial({ color:0xcccccc, size:0.55, transparent:true, opacity:0.32, depthWrite:false });
+// FIX MÀN HÌNH ĐEN (08/11): SCARF_COLS dời lên đầu — crowdPerson() đọc trực tiếp, vị trí cũ nằm ngay trên crowdPerson (~2080), sau điểm gọi sớm. Cùng họ TDZ.
+const SCARF_COLS = [0xd9a62e, 0xa62b25, 0x3a6bc2, 0x8668c4, 0xd97a30]; // lấy từ bảng 14 màu
+// FIX MÀN HÌNH ĐEN (08/11): bộ đếm của addStatic() dời lên đầu — addStatic được gọi ở top-level (khối sườn tây) trước vị trí cũ. Cùng họ TDZ.
+let _staticSeq = 0;
+// FIX MÀN HÌNH ĐEN (08/11): geometry + material dùng chung của đồ cầm tay/trang phục V5.1 dời lên đầu — cùng lý do TDZ như trên.
+const GEO_CUP = new THREE.CylinderGeometry(0.05, 0.042, 0.13, 8);
+const GEO_STRAW = new THREE.BoxGeometry(0.018, 0.11, 0.018);
+const GEO_BAG = new THREE.BoxGeometry(0.26, 0.32, 0.16);
+const GEO_BAGHANDLE = new THREE.TorusGeometry(0.07, 0.012, 5, 10, Math.PI);
+const GEO_PHONE = new THREE.BoxGeometry(0.075, 0.15, 0.016);
+const GEO_CORN = new THREE.CylinderGeometry(0.045, 0.05, 0.24, 7);
+const GEO_PACK = new THREE.BoxGeometry(0.36, 0.46, 0.17);
+const GEO_PACKFLAP = new THREE.BoxGeometry(0.30, 0.16, 0.03);
+const GEO_TOTE = new THREE.BoxGeometry(0.34, 0.36, 0.12);
+const GEO_CROSS = new THREE.BoxGeometry(0.26, 0.20, 0.09);
+const GEO_GLOVE = new THREE.BoxGeometry(0.10, 0.16, 0.06);
+const GEO_COATSKIRT = new THREE.BoxGeometry(0.69, 0.35, 0.45);
+const GEO_LAPEL = new THREE.BoxGeometry(0.13, 0.30, 0.03);
+const GEO_NECKTUBE = new THREE.TorusGeometry(0.14, 0.05, 6, 12);
+const GEO_APRON = new THREE.BoxGeometry(0.52, 0.58, 0.04);
+const _npcStripeMats = {};
 function box(w,h,d,color,x,y,z,parent=worldGroup,shadow=true){
   const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat(color));
   m.position.set(x,y,z); m.castShadow = shadow; m.receiveShadow = true;
@@ -525,7 +567,6 @@ function npcZoneOf(x, z){
   NPC_ZONE_COUNT[zn] = (NPC_ZONE_COUNT[zn] || 0) + 1;
   return zn;
 }
-const smokePts = [];     // hệ khói bếp các quầy ăn
 const wetGlows = [];     // V4.2: quầng sáng loang trên mặt đường ướt (bật về đêm)
 const haloMats = [];     // V4.3: quầng sáng LỚN quanh đèn đường/đèn thuộc địa (bật về đêm)
 const groundFogs = [];   // V4.2: đĩa sương sát mặt đất (xoay chậm)
@@ -1090,7 +1131,6 @@ const starMat = new THREE.PointsMaterial({ color:0xdfe9ff, size:1.6, sizeAttenua
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   const stars = new THREE.Points(g, starMat); worldGroup.add(stars);
 }
-const smokeMat = new THREE.PointsMaterial({ color:0xcccccc, size:0.55, transparent:true, opacity:0.32, depthWrite:false });
 function addSmoke(x, y, z, h=2.7){
   const n = 14, pos = new Float32Array(n*3), seed = [];
   for(let i=0;i<n;i++){ pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z; seed.push(Math.random()); }
@@ -1128,32 +1168,16 @@ function swingLimbs(g, phase, amp=0.5){
 // Đám đông thật đọc bằng PHOM trước màu sau: PHAO phình / DẠ DÀI / HOODIE / LEN ÔM.
 // Màu áp đảo ngoài thật là TRẮNG KEM + ĐEN (bảng 14 màu cũ không có) — chỉ thêm cho
 // crowd, KHÔNG sửa bảng gốc của người chơi. Part dùng geometry/material DÙNG CHUNG.
-const NPC_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26, 0x2e4a6b, 0x6b5a44, 0xd8d2c2, 0x24303c];
-const NPC_KNIT = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x6b8f3e, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a, 0xf0ead8, 0x2e2a26];
-const NPC_PUFFER = [0xf0ead8, 0xe8e2d4, 0xf0ead8, 0x2e2a26, 0x232120, 0x2e2a26, 0xa62b25, 0x35507a, 0xd9a62e];
-const NPC_HOODIE = [0x8668c4, 0x6b8f3e, 0xd9a62e, 0x3a6bc2, 0xc95d7e, 0x8c8c92];
-const NPC_COAT = [0x35507a, 0x5c4633, 0xe8e2d4, 0x2e2a26, 0x74566b];
-const NPC_BEANIE = [0xc8372d, 0xd9a62e, 0x2e6b46, 0xf0ead8, 0x2e2a26, 0x8668c4, 0x3a6bc2];
-const NPC_SKINS = [0xe8b98f, 0xd9a37e, 0xc68a5e, 0xa96f42];
-const FORM_DIST = { // tỉ lệ phom theo vai trò — research/18 mục 1.3
-  wanderer: [['puffer',30],['coat',15],['hoodie',15],['knit',25],['light',15]],
-  crowd:    [['puffer',32],['coat',14],['hoodie',15],['knit',24],['light',15]],
-  queue:    [['puffer',30],['coat',10],['hoodie',15],['knit',30],['light',15]],
-  sitter:   [['puffer',35],['coat',10],['hoodie',20],['knit',25],['light',10]],
-  vendor:   [['knit',50],['puffer',10],['hoodie',10],['light',30],['coat',0]],
-};
 function pickForm(role){
   const d = FORM_DIST[role] || FORM_DIST.crowd; let tot = 0; for(const e of d) tot += e[1];
   let r = Math.random() * tot;
   for(const e of d){ r -= e[1]; if(r <= 0) return e[0]; }
   return 'knit';
 }
-const _npcMats = {};
 function npcMat(color){
   if(!_npcMats[color]) _npcMats[color] = new THREE.MeshStandardMaterial({ color, roughness:0.92 });
   return _npcMats[color];
 }
-let NPC_PART_MESHES = 0;
 function npcPart(g, anchor, geo, color, x, y, z, rx, ry, rz){
   const m = new THREE.Mesh(geo, npcMat(color));
   m.position.set(x, y, z);
@@ -1163,21 +1187,6 @@ function npcPart(g, anchor, geo, color, x, y, z, rx, ry, rz){
   host.add(m); NPC_PART_MESHES++; window.__NPC_PARTS = NPC_PART_MESHES;
   return m;
 }
-const GEO_CUP = new THREE.CylinderGeometry(0.05, 0.042, 0.13, 8);
-const GEO_STRAW = new THREE.BoxGeometry(0.018, 0.11, 0.018);
-const GEO_BAG = new THREE.BoxGeometry(0.26, 0.32, 0.16);
-const GEO_BAGHANDLE = new THREE.TorusGeometry(0.07, 0.012, 5, 10, Math.PI);
-const GEO_PHONE = new THREE.BoxGeometry(0.075, 0.15, 0.016);
-const GEO_CORN = new THREE.CylinderGeometry(0.045, 0.05, 0.24, 7);
-const GEO_PACK = new THREE.BoxGeometry(0.36, 0.46, 0.17);
-const GEO_PACKFLAP = new THREE.BoxGeometry(0.30, 0.16, 0.03);
-const GEO_TOTE = new THREE.BoxGeometry(0.34, 0.36, 0.12);
-const GEO_CROSS = new THREE.BoxGeometry(0.26, 0.20, 0.09);
-const GEO_GLOVE = new THREE.BoxGeometry(0.10, 0.16, 0.06);
-const GEO_COATSKIRT = new THREE.BoxGeometry(0.69, 0.35, 0.45);
-const GEO_LAPEL = new THREE.BoxGeometry(0.13, 0.30, 0.03);
-const GEO_NECKTUBE = new THREE.TorusGeometry(0.14, 0.05, 6, 12);
-const GEO_APRON = new THREE.BoxGeometry(0.52, 0.58, 0.04);
 function npcHoldCup(g){ // ly giấy + ống hút đỏ tay phải (vật nhận diện số 1 của khách chợ đêm)
   if(g.userData.heldR) return; g.userData.heldR = 1;
   npcPart(g, 'AR', GEO_CUP, 0xf3ead6, 0.03, -0.52, 0.06);
@@ -1200,7 +1209,6 @@ function npcGloves(g, color){
   npcPart(g, 'AR', GEO_GLOVE, color, 0, -0.46, 0.01);
   npcPart(g, 'AL', GEO_GLOVE, color, 0, -0.46, 0.01);
 }
-const _npcStripeMats = {};
 function npcStripeShirt(g, baseHex){ // len SỌC ngang cho tiểu thương (ảnh 31)
   if(!_npcStripeMats[baseHex]){
     const c = document.createElement('canvas'); c.width = 64; c.height = 64;
@@ -1357,7 +1365,7 @@ for(const [cx, cy, cz, cw] of [[120, 108, 150, 150], [185, 128, 120, 190], [95, 
   sp.position.set(cx, cy, cz); sp.scale.set(cw, 17, 1);
   scene.add(sp); clouds.push(sp);
 }
-let _haloShared = null;
+// _haloShared đã khai báo ở đầu file (cạnh worldGroup) — khai báo tại đây gây TDZ, xem ghi chú FIX MÀN HÌNH ĐEN.
 function addHalo(parent, x, y, z, s){
   if(!_haloShared) _haloShared = makeHaloTex(); // tạo lười: đèn đường/đèn thuộc địa dựng TRƯỚC dòng haloTex
   const m = new THREE.SpriteMaterial({ map:_haloShared, color:0xffd9a0, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending });
@@ -2072,7 +2080,6 @@ addWanderer([[12,-3.5],[-4,-4.8],[-18,-2.2]], 0xe8862e, { speed:1.0, hat:'nonla'
 const CROWD_SHIRTS = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x6b8f3e, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a]; // BẢNG 14 MÀU ÁO CỐ ĐỊNH (research/13): đỏ đô, cam đất, vàng mù tạt, kem bơ, xanh rêu, xanh thông, teal, dương, oải hương, hồng đào, hồng sen, nâu cà phê, nâu đất, navy ấm
 const CROWD_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26];
 const CROWD_HATS = ['beanie','beanie','cap','none','beanie','cap','nonla'];
-const SCARF_COLS = [0xd9a62e, 0xa62b25, 0x3a6bc2, 0x8668c4, 0xd97a30]; // lấy từ bảng 14 màu
 function pickA(a){ return a[Math.floor(Math.random() * a.length)]; }
 function crowdPerson(scarfChance, role, forceChild){ // V5.1: dress theo vai trò (research/18) — phom/mũ/khăn/tông da/scale/vật cầm
   role = role || 'crowd';
@@ -2086,7 +2093,6 @@ function crowdPerson(scarfChance, role, forceChild){ // V5.1: dress theo vai tr�
   applyLook(g, look, role);
   return g;
 }
-let _staticSeq = 0;
 function addStatic(g, sched, kind){
   g.traverse(o => { if(o.isMesh) o.castShadow = true; });
   worldGroup.add(g);
@@ -3097,8 +3103,8 @@ box(0.12, 6.4, 0.12, 0x555049, -8.6, 3.2, 5.2); box(0.12, 6.4, 0.12, 0x555049, 8
     const m = new THREE.Mesh(new THREE.PlaneGeometry(9.5, 5.9), new THREE.MeshStandardMaterial({ map:t, roughness:0.95 }));
     m.position.set(-34.3, 9.9, 20); m.rotation.y = -Math.PI / 2; worldGroup.add(m); }
   // G9: xe máy đậu tiền cảnh nam đảo + mũ trên yên
-  const gm1 = makeMoto(0x8c2f26, false); gm1.position.set(-13.8, 0, 8.6); gm1.rotation.y = 0.7; worldGroup.add(gm1);
-  const gm2 = makeMoto(0x2e4a6e, false); gm2.position.set(-17.6, 0, 9.8); gm2.rotation.y = 0.45; worldGroup.add(gm2);
+  const gm1 = makeMoto(0x8c2f26, false).g; gm1.position.set(-13.8, 0, 8.6); gm1.rotation.y = 0.7; // FIX MÀN HÌNH ĐEN (08/11): makeMoto trả {g, wheels, coneMat} — phải lấy .g; dùng thẳng wrapper thì .position undefined → TypeError giết init
+  const gm2 = makeMoto(0x2e4a6e, false).g; gm2.position.set(-17.6, 0, 9.8); gm2.rotation.y = 0.45;
   ball(0.11, 0xd8402e, -13.55, 0.78, 8.35, worldGroup, 0.8);
 }
 { // V5.3 QUÉT CHI TIẾT TOÀN MAP (lệnh Chung Hy 15:22): nhóm 3 bộ phận nhỏ + nhóm 1
@@ -4286,7 +4292,7 @@ function tickSing(dt, t){
 }
 const RENT_PT = { x:35.5, z:8.5 }; // R-01 (19b): điểm cũ (31.5,13.8) nằm TRÊN thang trong nhà (groundH 11.39) — dời ra bãi đông trước chợ, groundH = 0
 let riding = 0, rideMesh = null;
-const rentBike = makeMoto(0xd83a2e, false);
+const rentBike = makeMoto(0xd83a2e, false).g; // FIX MÀN HÌNH ĐEN (08/11): lấy .g như gm1/gm2 — mọi dùng phía dưới (position/rotation/visible) đều viết cho Group
 {
   rentBike.position.set(RENT_PT.x, groundH(RENT_PT.x, RENT_PT.z), RENT_PT.z);
   rentBike.rotation.y = -0.5;
@@ -4305,7 +4311,7 @@ const rentBike = makeMoto(0xd83a2e, false);
 let rentParked = 0, rentReturn = 0;
 function mountBike(){
   rentBike.visible = false;
-  rideMesh = makeMoto(0xd83a2e, false);
+  rideMesh = makeMoto(0xd83a2e, false).g; // FIX MÀN HÌNH ĐEN (08/11): lấy .g — player.add/position phía dưới viết cho Group
   player.add(rideMesh);
   rideMesh.position.set(0, 0.02, 0.15); rideMesh.rotation.y = 0;
   const L = player.userData.limbs;
