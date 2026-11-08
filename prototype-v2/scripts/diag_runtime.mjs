@@ -173,7 +173,7 @@ class FakeWebGLRenderer {
     this.info = { render: { calls: 0, triangles: 0 }, memory: { geometries: 0, textures: 0 } };
     this.capabilities = { isWebGL2: true };
   }
-  setPixelRatio() {} setSize() {} setViewport() {} setScissor() {}
+  setPixelRatio(v) { this._pr = v; } setSize() {} setViewport() {} setScissor() {}
   render() { this.info.render.calls++; }
   dispose() {} setAnimationLoop() {}
   getContext() { return null; }
@@ -181,6 +181,56 @@ class FakeWebGLRenderer {
 }
 const THREE = { ..._THREE, WebGLRenderer: FakeWebGLRenderer };
 `;
+// ---------- PERF=1: epilogue đo hiệu năng (cùng module scope với game) ----------
+if (process.env.PERF === '1') {
+  code += `
+;globalThis.__perfDump = (label) => {
+  scene.updateMatrixWorld(true);
+  let meshes=0, sprites=0, points=0, lines=0, tris=0, casters=0, receivers=0, objs=0;
+  const L = { point:0, pointOn:0, spot:0, spotOn:0, dir:0, dirOn:0, hemi:0, amb:0 };
+  const crowdSet = new Set();
+  for (const p of wanderers) if (p.g) crowdSet.add(p.g);
+  for (const p of statics) if (p.g) crowdSet.add(p.g);
+  let castCrowd = 0; const buckets = { tiny:0, mid:0, big:0 }; const topTri = [];
+  const _v = new THREE.Vector3();
+  scene.traverse(o => {
+    objs++;
+    if (o.isMesh) { meshes++; if (o.receiveShadow) receivers++;
+      const g = o.geometry; let mt = 0;
+      if (g && g.attributes && g.attributes.position) { const n = g.index ? g.index.count : g.attributes.position.count; mt = n / 3; tris += mt; }
+      if (mt > 3000) topTri.push([Math.round(mt), o.name || o.geometry.type || '?']);
+      if (o.castShadow) { casters++;
+        let inCrowd = false; let a = o; while (a) { if (crowdSet.has(a)) { inCrowd = true; break; } a = a.parent; }
+        if (inCrowd) castCrowd++;
+        else if (g) { if (!g.boundingSphere) g.computeBoundingSphere(); o.getWorldScale(_v); const r = (g.boundingSphere ? g.boundingSphere.radius : 0) * Math.max(_v.x, _v.y, _v.z); if (r < 0.45) buckets.tiny++; else if (r < 1.2) buckets.mid++; else buckets.big++; }
+      } }
+    else if (o.isSprite) sprites++;
+    else if (o.isPoints) points++;
+    else if (o.isLine) lines++;
+    if (o.isPointLight) { L.point++; if (o.intensity > 0) L.pointOn++; if (!o.visible) L.pointHidden = (L.pointHidden || 0) + 1; }
+    if (o.isSpotLight) { L.spot++; if (o.intensity > 0) L.spotOn++; if (!o.visible) L.spotHidden = (L.spotHidden || 0) + 1; }
+    if (o.isDirectionalLight) { L.dir++; if (o.intensity > 0) L.dirOn++; if (!o.visible) L.dirHidden = (L.dirHidden || 0) + 1; }
+    if (o.isHemisphereLight) L.hemi++;
+    if (o.isAmbientLight) L.amb++;
+  });
+  topTri.sort((a, b) => b[0] - a[0]);
+  const cm = (arr) => { let n = 0; for (const p of arr) { if (p && p.g) p.g.traverse(o => { if (o.isMesh) n++; }); } return n; };
+  let frozenN = 0; scene.traverse(o => { if (o.matrixAutoUpdate === false) frozenN++; });
+  const out = { label, objs, meshes, sprites, points, lines, tris: Math.round(tris), casters, castCrowd, castWorldBuckets: buckets, receivers,
+    lights: L, lampLights: lampLights.length,
+    wanderers: wanderers.length, statics: statics.length, stalls: stalls.length,
+    crowdMeshW: cm(wanderers), crowdMeshS: cm(statics),
+    pixelRatio: renderer._pr, shadowEnabled: renderer.shadowMap.enabled,
+    sunMap: sun.shadow ? sun.shadow.mapSize.x : 0, sunCast: sun.castShadow,
+    topTri: topTri.slice(0, 10), frozenN,
+    estCalls: meshes + sprites + points + lines + ((renderer.shadowMap.enabled && sun.castShadow && sun.intensity > 0) ? casters : 0) };
+  console.log('[perf] ' + JSON.stringify(out));
+  return out;
+};
+globalThis.__perfNight = (on) => { isNight = on; applyDayNight(); };
+`;
+}
+
 const patchedPath = path.join(WORK, 'game_patched.mjs');
 fs.writeFileSync(patchedPath, header + code);
 console.log('[diag] game_patched.mjs bytes =', (header + code).length, '| frames =', FRAMES);
@@ -194,6 +244,21 @@ try {
   console.error('[diag] *** NGOẠI LỆ TRONG INIT ***');
   console.error(e && e.stack || e);
   process.exit(2);
+}
+if (process.env.PERF === '1' && globalThis.__perfDump) {
+  // chờ GLB nạp xong (số hậu duệ của scene ổn định 3 nhịp liên tiếp) rồi đo NGÀY + ĐÊM
+  let prev = -1, stable = 0;
+  for (let i = 0; i < 80 && stable < 3; i++) {
+    await new Promise(r => setTimeout(r, 30));
+    let c = 0; /* đếm qua __perfDump nhẹ */ 
+    c = globalThis.__perfDump('settle').objs;
+    if (c === prev) stable++; else stable = 0;
+    prev = c;
+  }
+  globalThis.__perfDump('NIGHT-init'); // game MẶC ĐỊNH mở ở chợ đêm (isNight=true)
+  globalThis.__perfNight(false);
+  globalThis.__perfDump('DAY');
+  globalThis.__perfNight(true);
 }
 let ts = 0;
 for (let f = 0; f < FRAMES; f++) {
