@@ -482,9 +482,9 @@ function vehBumpE(x){
   return s(-38, -27) * (1 - s(-21, -10));
 }
 function laneZE(x){ return -1.5 + 7.4 * vehBumpE(x); }   // làn đông: z theo x
-function laneZW(x){ // V5.2 (harness tuyến): biên độ cũ 4.5 đẩy làn tới z 8.6 = XUYÊN hàng chờ dãy sạp nam (front 7.6); nay đỉnh 6.6 và HẠ XUỐNG SỚM ở phía đông (x -16..-13) để không quét qua mặt sạp xiên (front -12,5.55)
+function laneZW(x){ // V5.2 (harness tuyến + 19b R-03): baseline 4.45 ≈ làn W cũ v4.8 đã chơi thật (bản 4.1 áp sát thân sạp chè/tron z=3); lõm -0.3 ở x 16..28 né đuôi hàng chờ sạp sữa (22,5.31); đỉnh lượn đảo 6.65 (cách front dãy nam ≥0.95, cách mép đảo ≥2.6); lên dốc muộn x -41 (né front đậu hũ), hạ sớm x -16..-13 (né front xiên)
   const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return 4.1 + 2.5 * s(-41, -30) * (1 - s(-16, -13)); // lên dốc muộn từ x -41 (bản -46 quét qua mặt sạp đậu hũ front (-38,5.55) — harness tuyến)
+  return 4.45 - 0.3 * s(16, 20) * (1 - s(24, 28)) + 2.2 * s(-39, -29) * (1 - s(-16, -13)); // lên dốc từ x -39 (bản -41 cọ front đậu hũ (-38,5.55) còn 0.66 — harness tuyến)
 }
 function roadY(x, z){ // V5.2: cao độ mặt ĐƯỜNG cho xe — khác groundH ở 2 chỗ xe đi NGANG công trình (harness tuyến bắt: dùng groundH xe sẽ "nhảy" lên mặt cầu/tháp)
   if(x >= 14.5 && x <= 20.5 && z >= -30 && z <= 9) return 0; // xe chạy DƯỚI cầu nổi (groundH trả cao độ mặt cầu 13.9–17.1)
@@ -2522,7 +2522,7 @@ const ROUTE_RING_OUT = buildRoute(ringPts(14.2, 12.9, 16.2), false); // V5.2: cu
 const ROUTE_RING_IN = buildRoute(ringPts(12.7, 11.9, 0), false);
 const ROUTE_ROAD_E = buildRoute((() => { const p = []; for(let x = -86; x <= 86; x += 4) p.push([x, laneZE(x)]); return p; })(), false);
 const ROUTE_ROAD_W = buildRoute((() => { const p = []; for(let x = 86; x >= -86; x -= 4) p.push([x, laneZW(x)]); return p; })(), false);
-const ROUTE_HILL = buildRoute([[54,12.3],[20,12.3],[-16,12.3],[-48.5,12.3],[-48.5,-1.2],[-38,-0.6],[-31,5.6],[-24,6.1],[-17,3.4],[-13.5,2.6],[-8,-1.1],[8,-1.4],[30,-1.3],[54,-1.2]], true); // điểm (-13.5,2.6) vòng né node giao lộ (-11.5,0.2) — harness tuyến
+const ROUTE_HILL = buildRoute([[54,12.9],[20,12.9],[-16,12.9],[-48.5,12.9],[-48.5,0.9],[-40,1.1],[-34,3.6],[-31,5.6],[-24,6.1],[-17,3.4],[-13.5,2.6],[-9,-0.6],[2,0.35],[16,1.5],[30,1.55],[54,1.2]], true); // R-10: chân bắc 12.9 = hành lang trong nhà lồng (giữa hàng cột 12.2 và sạp trong 13.7+), kèm bỏ hàng xe đậu 11.75. R-11/sim: chân về phía đông vào DẢI GIỮA đường (z 0.35..1.55, giữa làn E -1.5 và làn W 4.45) — bản cũ z -1.3 ĐÈ lên làn E (xe spawn đè nhau, sim bắt ở t=0); chân tây đi hành lang giữa rồi mới vòng lên hành lang nam đảo
 const TRAFFIC = [];
 function spinWheels(v, dt, spd){ for(const w of v.wheels) if(w) w.rotation.x += spd * dt / v.wr; }
 function steerTo(v, tx, tz, speed, dt){
@@ -2573,6 +2573,18 @@ addRouteVehicle(ROUTE_HILL, { speed:6.2, u: ROUTE_HILL.L * 0.75 });
 // 2 xe TẤP LỀ MUA HÀNG (chu trình khép kín, research/19 mục 2.4) — tổng 14 xe
 addRouteVehicle(ROUTE_ROAD_E, { speed:7.2, u:55, pull:{ stallId:'sua', trigX:12, park:[19.6,4.4], path:[[16,2.2],[19.6,4.4]] } });
 addRouteVehicle(ROUTE_ROAD_E, { speed:7.4, u:150, pull:{ stallId:'banhtrang', trigX:-44, park:[-33.2,4.5], path:[[-40,0.2],[-36.5,2.6],[-33.2,4.5]] } });
+function slowCapFor(v, pos){ // SLOW_ZONES của harness tuyến B (19b mục 5) + nút nhường giao tuyến nam đảo (R-11)
+  let cap = Infinity;
+  if(v.rt === ROUTE_ROAD_E || v.rt === ROUTE_ROAD_W){
+    const x = pos.x;
+    if(x >= -44 && x <= -6) cap = Math.min(cap, 3.0);       // cung nam đảo, cả 2 làn
+    if(x >= -5 && x <= 5) cap = Math.min(cap, 3.5);         // mặt tiền chợ
+    if(x >= -58 && x <= -46) cap = Math.min(cap, 3.5);      // đầu đường vào phía tây
+    if(v.rt === ROUTE_ROAD_W && x >= -46 && x <= 26) cap = Math.min(cap, 3.5); // dọc hàng sạp đêm + trục đi bộ song song
+  }
+  if(Math.hypot(pos.x + 24, pos.z - 6) < 5.5) cap = Math.min(cap, 3.2); // mọi xe qua điểm giao HILL×RING đều chậm lại
+  return cap;
+}
 function ringSwitch(v){
   const other = v.rt === ROUTE_RING_OUT ? ROUTE_RING_IN : ROUTE_RING_OUT;
   const atEnd = v.u >= v.rt.L - 0.05;
@@ -2639,18 +2651,35 @@ function updateTraffic(dt){
     let target = v.base;
     const pos = routeSample(v.rt, v.u);
     const hx = pos.dx * v.dirS, hz = pos.dz * v.dirS;
-    for(const o of TRAFFIC){ // giãn cách xe trước cùng làn/cùng chiều (KHÔNG sàn tốc — sim v5.2 bắt: sàn 0.8 khiến xe sau chui dần vào xe trước)
-      if(o === v || o.rt !== v.rt || o.dirS !== v.dirS || o.mode !== 'route') continue;
-      let gap = (o.u - v.u) * v.dirS;
-      if(v.rt.loop) gap = ((gap % v.rt.L) + v.rt.L) % v.rt.L;
-      if(gap > 0 && gap < 7) target = Math.min(target, Math.max(0, o.cur * (gap - 2.4) / 3));
-      // xe khác đang tấp lề/dừng cũng là vật cản tĩnh phía trước
-      if(o.mode !== 'route'){
+    for(const o of TRAFFIC){
+      if(o === v) continue;
+      if(o.mode === 'route' && o.rt === v.rt && o.dirS === v.dirS){
+        // followSpeed() của harness tuyến B (19b mục 7, chép công thức): minGap 2.2 · comfortGap 4.5
+        let gap = (o.u - v.u) * v.dirS;
+        if(v.rt.loop) gap = ((gap % v.rt.L) + v.rt.L) % v.rt.L;
+        if(gap > 0){
+          if(gap < 2.2) target = 0;
+          else if(gap < 4.5) target = Math.min(target, o.cur * (gap - 2.2) / 2.3 + 0.001);
+        }
+      } else if(o.mode !== 'route'){ // xe đang quay đầu/tấp lề = vật cản tĩnh phía trước (mọi tuyến)
         const ox = o.g.position.x - pos.x, oz = o.g.position.z - pos.z;
         const oa = ox * hx + oz * hz, ol = Math.abs(-ox * hz + oz * hx);
         if(oa > 0 && oa < 5 && ol < 1.7) target = Math.min(target, v.base * Math.max(0, (oa - 1.6) / 3.4));
       }
     }
+    if(v.rt === ROUTE_HILL){ // R-11 (19b): xe CHÂN ĐỒI nhường mọi xe tuyến khác đang chạy — vòng đảo/trục giữ ưu tiên nên không kẹt đối đầu ở giao tuyến nam đảo
+      for(const o of TRAFFIC){
+        if(o === v || o.rt === ROUTE_HILL || o.mode !== 'route') continue;
+        const ox = o.g.position.x - pos.x, oz = o.g.position.z - pos.z;
+        if(Math.abs(ox) > 7 || Math.abs(oz) > 7) continue;
+        const oa = ox * hx + oz * hz, ol = Math.abs(-ox * hz + oz * hx);
+        if(oa > 0 && oa < 5.5 && ol < 1.7){
+          target = Math.min(target, v.base * Math.max(0, (oa - 1.6) / 3.8));
+          if(oa < 1.3) target = 0;
+        }
+      }
+    }
+    target = Math.min(target, slowCapFor(v, pos)); // vùng chậm SLOW_ZONES (19b mục 5) + nút nhường nam đảo
     // chậm lại khi người chơi/NPC cắt ngang phía trước (không xuyên người)
     let nearest = 99;
     const px = playerState.x - pos.x, pz = playerState.z - pos.z;
@@ -2663,7 +2692,7 @@ function updateTraffic(dt){
       const wa = wx * hx + wz * hz, wl = Math.abs(-wx * hz + wz * hx);
       if(wa > 0 && wa < nearest && wl < 1.7) nearest = wa;
     }
-    if(nearest < 6.5) target = Math.min(target, v.base * Math.max(0, (nearest - 1.6) / 3.8));
+    if(nearest < 7) target = Math.min(target, v.base * Math.max(0, (nearest - 1.3) / 7)); // yieldSpeed() harness tuyến B: lookAhead 7 · stopGap 1.3
     if(nearest < 1.3){ target = 0; v.cur = 0; } // phanh cứng bảo vệ người — sim v5.2: TUYỆT ĐỐI không xuyên người
     v.cur += (target - v.cur) * Math.min(1, dt * (target < v.cur ? 3.5 : 1.6)); // giảm tốc nhanh hơn tăng tốc
     if(target === 0 && v.cur < 0.05) v.cur = 0;
@@ -2694,7 +2723,7 @@ function parkedRow(z, x0, x1, rotY, gaps){
     v.g.traverse(o => { o.castShadow = false; });
   }
 }
-parkedRow(11.75, -46, 46, 0, [[-5.5, 5.5], [-48, -40], [41, 49]]); // V4.7: sau lưng người bán, sát tường chợ
+// R-10 (19b): BỎ hàng xe đậu z=11.75 sau sạp — dải 11.45 (lưng sạp)..12.2 (hàng cột) không đủ cho cả xe đậu lẫn làn chân đồi; xe đậu đã có ở vành đảo + bãi đông + 2 vệ đường vào.
 parkedRow(-11.6, -14, -5, 0.6, []);
 // V4.7: bãi xe máy DỌC ĐƯỜNG VÀO như ảnh thật 05/06 (xe đậu kín hai vệ đường vào) — bám cao độ dốc
 function parkedRowY(z, x0, x1, rotY){
@@ -2708,20 +2737,20 @@ function parkedRowY(z, x0, x1, rotY){
 }
 parkedRowY(-7.2, -78, -53, 0);
 parkedRowY(9.9, -78, -53, 0);
-parkedRow(8.9, 40, 52, 0, []); // thêm xe đậu phía đông trước chợ
+parkedRow(8.9, 38.5, 52, 0, []); // bãi xe đông trước chợ (nới tới 38.5, chừa điểm thuê xe mới 35.5,8.5 — R-01/R-02)
 // V4.8: VÀNH XE ĐẬU quanh đảo bùng binh R10.5 (research/17 điểm 2) — xe máy
 // đậu dọc lề đảo ở các cung nam/tây/bắc (cung đông-bắc đảo tựa thềm thang)
 // + 3 ô tô đậu dọc phía tây đảo.
-for(const deg of [20, 45, 70, 95, 120, 150, 180, 200, 238]){
+// R-02 + R-09 (19b): RÚT toàn bộ xe đậu R12.6 khỏi cung nam/tây đảo (deg 20..180) —
+// vành R12.6 nằm ĐÚNG giữa 2 làn vòng đảo mới (R11.9/R12.9) nên xe chạy xuyên xe đậu
+// (đo: deg45 d=0.10, deg120/150/180 d≈0.10). Chỉ giữ 2 xe cung tây-bắc NGOÀI làn:
+// 196° R15.6 (cụm xe đậu phía tây) + 225° R13.8 (thềm phẳng, bản cũ 238° lọt sườn dốc
+// groundH 2.09 nên chìm xe). Màu cố định đỏ/xanh + xoay 3/4 như bản v5.0.
+for(const [deg, rr, col] of [[196, 15.6, 0xb03a30], [225, 13.8, 0x2e6da4]]){
   const a = deg * Math.PI / 180;
-  // V5.0: 2 xe ở cung 200/238 gần góc máy bùng binh nhất — bản cũ (205/225, R12.6, màu ngẫu
-  // nhiên có thể gần-đen, quay lưng thẳng vào máy) đọc thành "khối đen hình chữ nhật" ở tiền
-  // cảnh góc A. Đẩy ra R13.8, xoay 3/4 và cố định màu đỏ/xanh cho đọc rõ là xe máy.
-  const nearCam = (deg === 200 || deg === 238);
-  const v = makeMoto(nearCam ? (deg === 200 ? 0xb03a30 : 0x2e6da4) : pickA(BIKE_COLS), false);
-  const rr = nearCam ? 13.8 : 12.6;
+  const v = makeMoto(col, false);
   v.g.position.set(-24 + Math.cos(a) * rr, 0.02, -6 + Math.sin(a) * rr);
-  v.g.rotation.set(0, Math.atan2(-Math.sin(a), Math.cos(a)) + (nearCam ? 0.55 : (Math.random() - 0.5) * 0.15), 0.10);
+  v.g.rotation.set(0, Math.atan2(-Math.sin(a), Math.cos(a)) + 0.55, 0.10);
   v.g.traverse(o => { o.castShadow = false; });
 }
 for(const [px, pz] of [[-40.2, -8], [-40.8, -3], [-40.2, 2.5]]){
@@ -3072,6 +3101,69 @@ box(0.12, 6.4, 0.12, 0x555049, -8.6, 3.2, 5.2); box(0.12, 6.4, 0.12, 0x555049, 8
   const gm2 = makeMoto(0x2e4a6e, false); gm2.position.set(-17.6, 0, 9.8); gm2.rotation.y = 0.45; worldGroup.add(gm2);
   ball(0.11, 0xd8402e, -13.55, 0.78, 8.35, worldGroup, 0.8);
 }
+{ // V5.3 QUÉT CHI TIẾT TOÀN MAP (lệnh Chung Hy 15:22): nhóm 3 bộ phận nhỏ + nhóm 1
+  // chân/nóc sạp theo research/12 mục 4+5 còn mở. Chỉ mesh cơ bản dùng chung, không GLB mới.
+  // --- Thùng rác (trước đây toàn map KHÔNG có): thân xanh đậm + vành xám ---
+  function trashBin(x, z){
+    const y = groundH(x, z);
+    cyl(0.30, 0.26, 0.72, 0x2e4a34, x, y + 0.36, z, worldGroup, 12);
+    cyl(0.315, 0.315, 0.07, 0x8c8c92, x, y + 0.73, z, worldGroup, 12);
+  }
+  trashBin(-13.5, 6.8); trashBin(9, 9.8); trashBin(-52, 6.4); trashBin(-13.2, -0.5);
+  trashBin(2, 14.8); trashBin(25.5, -43); trashBin(-36.5, -3.5);
+  // --- Cột điện + dây võng mép bắc đường vào (ảnh thật research/11: dây chằng chịt
+  // trước mặt tiền chợ — chi tiết "đường phố thật" còn thiếu hẳn) ---
+  function powerPole(x){
+    const y = entryRampY(x);
+    cyl(0.09, 0.12, 7.6, 0x4a4640, x, y + 3.8, -8.6, worldGroup, 8);
+    box(1.7, 0.09, 0.09, 0x4a4640, x, y + 7.05, -8.6, worldGroup, false);
+    return y + 7.05;
+  }
+  const poleTops = [-72, -58, -44].map(powerPole); // cot -30 bo: nam trong de dao (cach tam 6,5 < R 10,5)
+  function wireSpan(x0, x1, y0, y1){
+    for(let s = 0; s < 4; s++){
+      const t0 = s / 4, t1 = (s + 1) / 4;
+      const ax = x0 + (x1 - x0) * t0, bx2 = x0 + (x1 - x0) * t1;
+      const ay = y0 + (y1 - y0) * t0 - Math.sin(t0 * Math.PI) * 0.55;
+      const by = y0 + (y1 - y0) * t1 - Math.sin(t1 * Math.PI) * 0.55;
+      const len = Math.hypot(bx2 - ax, by - ay);
+      const w = box(len, 0.035, 0.035, 0x1c1a18, (ax + bx2) / 2, (ay + by) / 2, -8.6, worldGroup, false);
+      w.rotation.z = Math.atan2(by - ay, bx2 - ax);
+    }
+  }
+  const poleXs = [-72, -58, -44];
+  for(let i = 0; i < 2; i++) wireSpan(poleXs[i], poleXs[i + 1], poleTops[i], poleTops[i + 1]);
+  // --- Cành thông phủ nóc sạp (research/12 mục 4: camera 45° nhìn nóc là chính) ---
+  // --- Giỏ dâu + chậu cây ở góc chân sạp (research/12 mục 5: lấp "vùng chết" chân sạp) ---
+  function stallLocalXZ(def, lx, lz){
+    const th = def.rotY || 0;
+    return [def.x + lx * Math.cos(th) + lz * Math.sin(th), def.z - lx * Math.sin(th) + lz * Math.cos(th)];
+  }
+  for(const def of STALL_DEFS){
+    const h = def.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const baseY = groundH(def.x, def.z);
+    if(h % 2 === 0){ // nóc: 2 cụm cành thông dẹt ở mép sau bạt
+      for(const [lx, sc] of [[-1.7, 1], [1.85, 0.8]]){
+        const [wx, wz] = stallLocalXZ(def, lx, -0.55);
+        ball(0.36 * sc, 0x2e4a2e, wx, baseY + 3.08, wz, worldGroup, 0.5);
+        ball(0.24 * sc, 0x3a5c33, wx + 0.25, baseY + 3.16, wz - 0.1, worldGroup, 0.5);
+      }
+    }
+    if(h % 3 !== 0){ // chân: xen kẽ giỏ dâu / chậu cây ở góc trước trái sạp
+      const [wx, wz] = stallLocalXZ(def, -2.15, 1.62);
+      if(h % 2 === 0){
+        cyl(0.30, 0.22, 0.34, 0x9a7448, wx, baseY + 0.17, wz, worldGroup, 10);
+        for(let j = 0; j < 5; j++){
+          const a = j * 1.26 + h;
+          ball(0.058, 0xd8342a, wx + Math.cos(a) * 0.17, baseY + 0.37, wz + Math.sin(a) * 0.17, worldGroup, 0.9);
+        }
+      } else {
+        cyl(0.17, 0.12, 0.27, 0xa6562e, wx, baseY + 0.135, wz, worldGroup, 10);
+        ball(0.21, 0x3f6b2f, wx, baseY + 0.42, wz, worldGroup, 0.85);
+      }
+    }
+  }
+}
 { // V5.0 ĐIỂM 2: TIỀN CẢNH GÓC BÙNG BINH — nửa dưới khung A trước đây là mặt sân tối trống.
   // Thêm cụm ăn uống trên thảm đảo (tây-bắc) + vành tây đảo + sạp hoa xô tiền cảnh, toàn bộ
   // ở phía z<0: tránh hành lang auto-walk (nút AW chạy z 0.5..8 phía nam đảo) và làn xe chạy.
@@ -3149,16 +3241,20 @@ box(0.12, 6.4, 0.12, 0x555049, -8.6, 3.2, 5.2); box(0.12, 6.4, 0.12, 0x555049, 8
     addStatic(p, 'night', 'sit');
   }
   // hàng xe máy đậu DÀI lề tây đảo (ảnh 28: hàng xe kín lề) + lấp vành cung tây-bắc
-  for(let i = 0; i < 10; i++){
+  // (8 xe, z -13.5..-3.35: 2 xe cuối bản 10 xe ở z -1.9/-0.45 lấn hành lang làn E + chân tây HILL, đo còn 0.24–0.41 — rút)
+  for(let i = 0; i < 8; i++){
     const v = makeMoto(pickA(BIKE_COLS), false);
     v.g.position.set(-39.6 + (Math.random() - 0.5) * 0.2, 0, -13.5 + i * 1.45);
     v.g.rotation.set(0, Math.PI / 2 + (Math.random() - 0.5) * 0.15, 0.10);
     v.g.traverse(o => { o.castShadow = false; });
   }
-  for(const deg of [160, 170, 190, 215, 227, 250, 262]){
+  // R-09: bản v5.1 lấp vành R12.9 ở deg 160/170/190/215 nằm ĐÈ lên làn trong vòng đảo
+  // (d≈0.2) — rút hết; deg 250/262 chìm trong sườn dốc (groundH 2.6–3.4, xe đặt y 0.1
+  // nên vô hình) — bỏ. Giữ deg 227 (thềm phẳng) + thêm 205/218 ở R15.6 ngoài làn.
+  for(const [deg, rr] of [[227, 12.9], [205, 15.6], [218, 15.6]]){
     const a = deg * Math.PI / 180;
     const v = makeMoto(pickA(BIKE_COLS), false);
-    v.g.position.set(-24 + Math.cos(a) * 12.9, 0.1, -6 + Math.sin(a) * 12.9);
+    v.g.position.set(-24 + Math.cos(a) * rr, 0.1, -6 + Math.sin(a) * rr);
     v.g.rotation.set(0, -a + Math.PI / 2 + (Math.random() - 0.5) * 0.2, 0.10);
     v.g.traverse(o => { o.castShadow = false; });
   }
@@ -4188,7 +4284,7 @@ function tickSing(dt, t){
     sfxPop(); updateHUD();
   }
 }
-const RENT_PT = { x:31.5, z:13.8 };
+const RENT_PT = { x:35.5, z:8.5 }; // R-01 (19b): điểm cũ (31.5,13.8) nằm TRÊN thang trong nhà (groundH 11.39) — dời ra bãi đông trước chợ, groundH = 0
 let riding = 0, rideMesh = null;
 const rentBike = makeMoto(0xd83a2e, false);
 {
