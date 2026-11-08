@@ -368,3 +368,103 @@ Phạm vi khóa: KHÔNG thêm hệ thống game, KHÔNG đụng logic v4.3, KHÔ
 - [x] node --check đạt cho cả index.html và index-standalone.html sau mọi patch (A, B, C, C-fix, D, polish).
 - [ ] CHƯA kiểm chứng trong trình duyệt thật (giới hạn môi trường đã biết — trình duyệt được quản lý chặn loopback/domain): luồng bấm thật (bấm thẻ -> tự đi có va chạm trượt dọc sạp trong collide() thật, mở/đóng modal giữa chừng), FPS với ~300 NPC, số NPC_STATS in ra ở runtime, sương billboard trong web (harness Blender chỉ là xấp xỉ), thẻ hướng dẫn trên màn hình mobile thật. Đã thay bằng: harness Node trích nguyên văn 48/48 + render Blender soi 3 góc. Chờ Chung Hy chơi thử bản standalone mới.
 - [x] Không đẩy GitHub, không upload (điều phối làm).
+
+## V4.8 (07–08/11) — SỬA THEO KHUNG HÌNH (đặc tả research/17, nghiệm thu bằng mắt 2 góc chuẩn)
+### A. Mặt tiền (GLB market qua build_models.py)
+- [x] Xóa toàn bộ cửa cuốn xám đóng (Shutter/ShutterLine/ShopDark) — thay 7 ô CỬA HIỆU MỞ: tường hậu phát sáng (MarketWin/AdLED), kệ + quầy + hàng + đèn hộp bên trong, đọc được từ góc bùng binh.
+- [x] Thân mặt tiền có nhịp: AdBand 1,20 + AdInset hai tông + AdFrame; lam thêm Mullion3/Rail3; mái hiên sọc gộp 1 mesh; hàng thông trụ mái mảnh lại (đỉnh 23,95).
+- [x] market.glb 1.632.756 -> 1.634.008 byte.
+### B. Đảo bùng binh (GLB roundabout)
+- [x] Đảo R 6,6 -> 10,5; thảm hoa quạt + hoa cầu 4 vành; vành ghế đá R 11,9; đĩa vành đường r16 quanh đảo; vành xe đậu 9 moto + 3 ô tô.
+- [x] Tượng đài: bệ hộp trơn -> 6 tảng đá xẻ jitter + 3 người robe cao 2,30 + thông đá (đỉnh 9,56); tượng LỆCH tây-nam khỏi trục chữ — từ góc A đọc TRỌN "CHỢ ĐÀ LẠT" (v4.7 bị che còn "Ợ ĐÀ LẠT").
+- [x] roundabout.glb 1.500.476 -> 1.313.708 byte.
+### C. Cái bát đô thị + đường vào (web)
+- [x] Nhà hai bên đường vào nâng 4–5 tầng, dãy bắc SÁT vỉa hè (bỏ lùi 6–8u); tường khách sạn cao khép khung phía đông.
+- [x] Sườn đồi tây: groundH tách nhánh thềm phẳng + sườn gần đảo chỉ còn đoạn z −30..−16 — mảng tường xanh chắn khung A giảm mạnh; đợt polish thêm 4 thông + 2 đèn phá mảng phẳng sườn.
+- [x] Cầu nổi: trụ scale 0,78, lan can/kính/mái hạ thấp + mảnh (GLB bridge +2.624 byte); điểm đáp tầng 2 GIỮ NGUYÊN; 2 góc chuẩn cầu không còn chiếm khung.
+### D. Mật độ trong khung (web)
+- [x] +8 người trước mặt tiền, +2 trước đảo, +7 ở 3 cụm đầu đường vào, +2 wanderer tuyến mới; người quanh đảo 8 vị trí bám vành r 11,3–12,8; xe đường vào 6 moto chạy lượn tránh đảo (islandBump), xóa xe chạy vòng 'ring' cũ.
+- [x] AW_NODES sửa 3 nút theo đảo mới (4/5/6); test logic Node trích code thật 82/83 (1 "fail" do kỳ vọng test sai — groundH thềm phẳng = 0 là đúng thiết kế).
+### E. MỤC 6 — Bầu trời
+- [x] Web vốn đã có dome gradient + 420 sao + trăng + mây trôi (chỉ render harness thiếu): trăng dời về trời nam-đông (150,120,160) lọt khung anh hùng + góc A; mây đêm opacity 0,05 -> 0,16.
+- [x] Harness gương trời đầy đủ: dome r330 gradient + quầng ấm phía chợ + 380 sao + trăng + quầng + 9 cụm mây cầu dẹt; cả 2 góc chuẩn phần trời có nội dung, hết mảng phẳng chết.
+### F. Kiểm chứng bằng mắt (render Blender, harness gương cảnh web)
+- [x] Đối chiếu r18 (THẬT | TRƯỚC v4.7 | SAU v4.8): renders/r18-doi-chieu-bung-binh-mat-tien.png + r18-doi-chieu-dem-dinh-thang.png — chữ đọc trọn, tầng trệt mở sáng, đảo lớn có thảm hoa/tượng đá, trời có trăng sao mây.
+- [x] Hồi quy 3 góc phụ (đường vào / vòng xoay / chân thang) không vỡ hình. Điểm yếu còn lại đã ghi nhận: mảng sườn tây vẫn phẳng ~30% khung trái góc A (xử tiếp ở lớp hoa giấy mục 7); đảo nằm sát mép dưới khung B do camera khóa theo research/17.
+
+## V4.9 (08/11) — MỤC 7: CHI TIẾT + BỐ CỤC + LỚP GỢI Ý ChatGPT ĐÃ LỌC
+### A. Từng sạp (web buildStall/decorateStall)
+- [x] Biển gỗ có ICON RIÊNG từng sạp (drawStallIcon: phin, bánh tròn, khuôn đất, dâu, hoa, cuộn len, hộp quà, đồng hồ, móc khóa, cà rốt, khoai, ly yaourt, ly nóng, lá, hộp trà, tô) vẽ 2 đầu biển thay glyph chung.
+- [x] Thẻ giá kem viền đỏ "…K" (makePriceCard) cắm mép quầy phải MỌI sạp ngoài trời + cọc giữ.
+- [x] 6 SẠP MẪU làm kỹ (designHeroStall): sữa đậu nành (kệ 2 tầng 6 hũ + nồi thép lớn + tháp ly — đúng ảnh chốt), bánh tráng (chồng bánh sống + khay bánh chín tràn mép + xiên que + 2 bát chấm), bánh căn (bếp đất 5 khuôn + khay 12 trứng cút + đĩa lá chuối), cà phê (khay 4 phin nhỏ giọt + bao hạt + 3 lon sữa), súp cua (nồi hé nắp + 2 chồng bát + 3 bát topping), dâu (bậc 3 tầng dâu + thùng bơ 034 + 4 ly kem bơ).
+- [x] Mọi sạp còn lại: hàng TRÀN mép quầy (5 món nhỏ dọc mép trước, màu theo họ hàng).
+- [x] Đạo cụ cầm tay tiểu thương theo hoạt cảnh (xẻng lật / muôi khuấy / muỗng múc-rót / kẹp gắp / cân tay / túi giấy gói / bó hoa / khăn len).
+- [x] Hơi nước sprite bốc lên tại điểm nấu của 8 sạp có bếp (sữa, súp cua, bánh căn, bánh tráng, sữa đậu, chè, đậu hũ, bánh ướt), đậm hơn về đêm.
+### B. Vật phẩm rời + kiến trúc (web)
+- [x] 4 dây LỒNG ĐÈN GIẤY LỚN có tua đỏ (đường vào ×2, phố trước chợ, ngang đầu thang) ở nhiều cao độ 8,6–11,6.
+- [x] Mặt tiền phụ: ĐỒNG HỒ thật tại (0, 17,7) — kim quay theo giờ game (applyDayNight); dây cờ tam giác 22 lá dọc băng tầng 2; 11 giỏ hoa treo dưới băng.
+- [x] Rạp: 2 banner dọc "RẠP HÒA" / "PHIM HAY" + cặp chậu lớn sảnh; thang: 3 cặp đèn trụ 2 bên + cặp chậu chiếu nghỉ; 2 cột biển chỉ đường (finger post) ở bùng binh + phố đông.
+- [x] Nền LÁT ĐÁ canvas (ô đá + khe + vết) phủ phố trước chợ + đường vào, polygonOffset chống z-fight.
+- [x] Trong nhà lồng: dải len gradient 3 cụm × 8 mảnh treo mặt lan can lửng; dây 21 bóng dọc lan can; SÀN KIM CƯƠNG canvas; khay hàng NGHIÊNG cho 1/3 số quầy.
+### C. Lớp gợi ý ChatGPT (đã lọc theo ảnh thật + style chibi đã chốt)
+- [x] ÁP: hoa giấy magenta phủ tràn sườn đầu thang (17 cụm bougCluster); vòng cẩm tú cầu + hoa màu quanh chân tượng + 12 đèn nấm quanh đảo; ghế nhựa ĐỎ + bàn thấp ×5 cụm (thang ×2, quanh đảo ×2, trước chợ ×1); xô hoa tươi vỉa hè ×6; bảng phấn menu ×2 (HOA ĐÀ LẠT / ĐỒ NƯỚNG); đèn lồng đỏ trong ô lam tầng 2 ×17 + 2 span dây đèn; tranh tường ATISÔ ĐÀ LẠT lên gable tây; mặt sân lát đá ẨM phản sáng (roughness 0,45); xe máy đậu góc tiền cảnh nam đảo ×2.
+- [x] BỎ (bịa lệch, không áp): trăng khổng lồ quá khổ; chữ neon "Đà Lạt Chợ Đêm" trên tường chắn (ngoài thật không có); đỉnh tượng bị sửa khác tượng 3 người đã chốt; người phong cách ảnh chụp (game chibi); cầu phụ + nhà bịa ở phông (gpt-duong-vao); texture grunge trên mặt tiền (lệch style phẳng).
+### D. Kiểm chứng bằng mắt
+- [x] Render cận v49 (7 shot): C2 nướng + C3 cà phê — biển/giá/icon đọc rõ, chữ không gương; C5 nhà lồng — biển QUẦY SỐ + tiểu thương sau quầy + sàn kim cương; C8 thang — đèn giấy + đồng hồ + trời sao.
+- [x] Đợt polish (đúng 1): sửa góc máy C1 sữa + C4 dâu quay thẳng trục sạp (C4 đạt: biển + thẻ 22K + giỏ dâu đọc rõ — v51-C4); hoa giấy tăng cỡ ×1,45–1,8 + thêm hàng mép sườn hướng quảng trường (đọc được chấm hoa dọc mép trên ở góc A — v51-A).
+- [ ] Sạp sữa CHƯA có shot cận sạch trong harness: dây đèn mặt sạp của harness là khối octahedron lớn hơn web nhiều lần, che biển ở cả 3 góc máy đã thử; trong web dây đèn là bóng tròn nhỏ. Nội dung sạp (biển/thẻ/nồi/hũ) đã kiểm chứng từng phần ở v49-C1 + các sạp mẫu cùng hệ (C2/C3); chờ Chung Hy xác nhận khi chơi thử.
+- [x] Đối chiếu r19 (4 file, đã ghép + soi): r19-doi-chieu-bung-binh-mat-tien.png + r19-doi-chieu-dem-dinh-thang.png (THẬT | TRƯỚC v4.7 | SAU v4.9) + r19-doi-chieu-gpt-bung-binh.png + r19-doi-chieu-gpt-duong-vao.png (GỢI Ý | SAU). Lớp GPT bắt được: vòng cẩm tú cầu + đèn nấm, đèn lồng đỏ ô lam, biển sạp đọc được, sân ẩm, hoa giấy mép sườn; chưa bằng gợi ý ở độ phủ hoa giấy trên mặt sườn (điểm yếu còn lại đã biết).
+### E. Dung lượng + đóng gói
+- [x] index-standalone.html = **10.140.205 byte**, DƯ 345.555 byte dưới trần 10MiB (10.485.760). node --check đạt cho cả index.html và index-standalone.html sau mọi patch (W1–W10, lớp GPT, polish). Không GLB mới trong mục 7 (chỉ code + canvas) nên không cần nén thêm.
+- [x] Save `chohb3d-v1` không đổi schema — không migration.
+- [ ] CHƯA kiểm chứng trong trình duyệt thật (giới hạn môi trường đã biết): FPS với thêm mesh/NPC của mục 7, va chạm auto-walk qua solid đảo mới, đường lượn xe islandBump nhìn thật, mây/sương web chuyển động, kim đồng hồ có gương chiều không, paving overlay có z-fight với glowDisc không, hiển thị mobile. Chờ Chung Hy chơi thử.
+- [x] Không đẩy GitHub, không upload (điều phối làm sau khi duyệt mắt).
+
+## V5.0 (08/11) — SỬA 3 ĐIỂM THỊ GIÁC CÒN LẠI Ở GÓC A (theo soi trực tiếp r19 của điều phối)
+### Điểm 1 — Bức tường xanh sườn tây
+- [x] Gờ đá ngang (2/tầng) + nắp mép đá trên mặt tây (x=-19) của cả 3 khối thềm TERR.
+- [x] Bồn dây leo mép thềm + rèm hoa giấy rủ (6 cột × 3–4 hàng, jitter phá lưới — đợt đầu ra lưới chấm đều, đã sửa sau khi soi draft) + dải hoa lưng chừng ở thềm trên/giữa.
+- [x] 5 đèn trụ + 2 thông trên mép thềm tây; 2 người đứng mép thềm trên (bóng người cắt đường đỉnh tường).
+- [x] Dãy ki-ốt mép thềm: 3 ở thềm dưới (2.8) + 2 ở thềm giữa (8.5), mỗi ki-ốt có người bán đứng sau quầy quay mặt về đảo.
+- [x] (c) Hạ cạnh sườn: KHÔNG đổi hình học (thềm là địa hình, groundH neo vào đó) — thay bằng phá đường nét đỉnh: bồn leo + rèm hoa tràn mép + đèn. Đã ghi rõ lý do.
+### Điểm 2 — Tiền cảnh trống + vật đen lạ
+- [x] VẬT ĐEN ĐÃ XÁC ĐỊNH (dump object quanh điểm three (-33,-8.5)): là XE MÁY ĐẬU vành đảo cung 205° tại (-35.4,-11.3) (+ xe cung 225° sát máy) — không phải mesh lỗi: xe đậu hợp lệ nhưng quay lưng thẳng vào góc máy A, màu sơn ngẫu nhiên gần-đen, nằm tối → đọc thành "khối đen hình chữ nhật" (+ 1 người đứng cạnh bị đọc thành "nhân vật nằm"). Sửa: cung 205/225 → 200/238, đẩy R12.6 → R13.8, xoay 3/4 (+0.55 rad), cố định màu đỏ/xanh. Ở r20 vật đen biến mất hẳn.
+- [x] Cụm ăn A trên thảm đảo tây-bắc (bàn + ghế đỏ + 2 người ngồi) tại (-30.0,-13.5); cụm B vành tây đảo (-33.8,-7.6) + 2 người; sạp hoa 3 xô tại (-30.9,-11.6) + người bán ở vành.
+- [x] Thêm người ngồi vào 2 bộ bàn G3 sẵn có ở nam đảo (trước đây bàn ghế trống).
+- [x] Vị trí đều ở z<0 phía bắc/tây đảo — kiểm AW_NODES (hành lang z 0.5..8 phía nam) và làn xe islandBump (z>=5 khi qua đảo): không chặn.
+### Điểm 3 — Đảo + bệ tượng
+- [x] PHÁT HIỆN GỐC: bụi cẩm tú cầu + đèn nấm lớp GPT đặt chân y=0.35 trong khi mặt thảm đảo (Lawn GLB) top = 0.93 (số đo dump roundabout.glb) → bụi chỉ ló ngọn hoa, chao đèn nằm dưới thảm. Nâng chân lên 0.92 (bụi ngoài đĩa r11.6 giữ 0.05).
+- [x] 14 gò cẩm tú cầu LỚN (×1.6) dọc cung nam-tây r8.8/9.5 + vành đèn nấm 2 (8 cái r9.3).
+- [x] Bậc đá 8.8×8.8 quanh chân tượng (tâm tượng lệch (-28.2,-2.8) theo dump GLB) + 4 đá góc; 3 người ngồi vành nam đảo (mép Base 0.55).
+### Sửa kèm trong harness (render_v52.py, không đổi web)
+- [x] Sửa lỗi DẤU groundH(x,-z) ở boug()/eat_set()/bucket()/chalk() của harness: hoa giấy trên sườn bị chôn (chỉ ló hàng mép z=-16.6), eat_set nổi +2.8, xô hoa nổi +6.4, bảng phấn nổi +3.28 trong các render kiểm chứng trước. Web không có lỗi này.
+### Kiểm chứng
+- [x] Render draft v52 (A + C-terr + C-dao) soi từng điểm → sửa rèm hoa 1 vòng → render full v52: góc A (v52-A-bung-binh-dem.png), cận sườn tây (v52-C-terr-dem.png), cận đảo (v52-C-dao-dem.png).
+- [x] Đối chiếu r20 (THẬT | v4.9 | v5.0): renders/r20-doi-chieu-bung-binh-mat-tien.png — tường tây hết mảng trơ (còn là vùng yếu nhất khung nhưng đã chia tầng/hoa/ki-ốt/đèn), vật đen hết, thảm hoa nổi khối, chữ CHỢ ĐÀ LẠT đọc trọn.
+- [x] node --check đạt cho index.html + index-standalone.html. Standalone = **10.149.407 byte**, dư 336.353 byte dưới trần 10MiB. Chỉ thêm code, 0 GLB mới. Save chohb3d-v1 không đổi schema.
+- [ ] CHƯA kiểm chứng runtime (giới hạn môi trường như cũ): FPS, auto-walk thực tế qua tiền cảnh mới, va chạm cụm ăn trên đảo. Chờ Chung Hy chơi thử.
+- [x] Không upload, không push GitHub (chờ duyệt mắt).
+
+## V5.1 — Trang phục đa dạng + ăn uống + bùng binh đêm (research/18) + BLENDER-FIRST (lệnh 14:15–14:16 08/11)
+Nguyên tắc mới: hình khối quan trọng dựng THẬT trong Blender (build_models.py), không chồng primitive trong code. Báo byte TRƯỚC/SAU từng GLB + tổng bundle; trần 10MiB giữ nguyên.
+### Blender-first (roundabout.glb + stall.glb dựng lại)
+- [ ] Tượng đài: bệ 3 bậc bo chamfer + gờ, 3 tượng thuôn mượt (cone 16 cạnh + vai/đầu cầu, smooth shading, tượng giữa cao hơn + giơ 2 tay), vật liệu StatueStone sáng hơn (đá xám lạnh)
+- [ ] Đảo: ghế đá BO CONG (sector theo vành) + gờ đá quanh đế; hoa thảm gộp mesh; thảm họa tiết giữ hình học sector
+- [ ] Hàng tĩnh sạp trong stall.glb (web bật theo def.id): SkewerTrays (3 khay nghiêng + ~48 xiên + vỉ than), CheCups (10 cốc 2 tầng), YaourtTower (tháp 12 hũ), BowlStack (nồi + chồng 6 chén + hũ nước đường), CornGrill (vỉ + 8 bắp + 6 khoai)
+- [ ] Mái sạp: ô dù sạp (Umbrella) + mái tôn sóng (TinRoof) trong stall.glb; web: mọi sạp có bạt sọc (stripeVar mặc định theo hash), sạp khoai/trộn dùng mái tôn
+- [ ] Byte GLB trước/sau + tổng standalone ≤ 10.485.760
+### Mục A — trang phục đám đông (code)
+- [ ] 4 phom: PHAO (scale Torso) / DẠ DÀI (part A2 rút gọn) / HOODIE (beanie trùng màu áo + khăn ống K5) / LEN ÔM (+ sọc cho tiểu thương); phân bổ theo vai trò research/18
+- [ ] Màu crowd thêm trắng kem + đen; beanie/khăn màu độc lập áo; quần nhiều màu; scale ±8% + dáng thấp + trẻ em 0,70–0,78; 4 tông da
+- [ ] Vật cầm/đeo: ly giấy ~10–12%, túi nilon ~25–30%, ba lô/túi chéo/tote ~35%, điện thoại ~15%, găng ~8%, bắp ~5% — đếm mesh tăng thêm
+### Mục B — ăn uống (code + GLB)
+- [ ] Sạp xiên khay tầng đọc "trăm xiên" (GLB) + khói/vỉ than (code giữ); bàn ăn đủ bộ: 2 ly (1 ly sữa thủy tinh) + tô/đĩa theo cụm + chén chấm + đũa; sitters có ly/túi cạnh + cầm ly
+### Mục C — bùng binh đêm (code)
+- [ ] Tượng RỌI SÁNG: vật liệu emissive đêm + 2 spotlight chân bệ + halo chân tượng; trăng thu nhỏ (hết trộm khung góc A)
+- [ ] Người tụ quanh đảo: 2 nhóm chụp ảnh trước tượng (1 người giơ điện thoại) + 4 ngồi vành + cụm gia đình có trẻ em; xe máy đậu vành tây dài; xe chạy đêm qua đảo (nightRoad)
+- [ ] Mây trời đêm: vệt mây mềm chibi (sprite quầng mềm, trôi chậm) thấy trong render góc A đêm
+- [ ] Biển neon phông: THANH BÌNH (xanh dương, khách sạn đông) + SANDALS FLORA (vàng, khách sạn đồi)
+### Nghiệm thu
+- [ ] Render v53: góc A đêm + cận đám đông + cận sạp xiên + cận bàn ăn + góc B; file đối chiếu r21 đặt cạnh tư liệu đêm 28–39
+- [ ] node --check sau mỗi patch; harness test liên quan chạy lại; save chohb3d-v1 không phá
+- [ ] Không upload, không push GitHub

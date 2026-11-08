@@ -189,6 +189,7 @@
   <button class="hbtn" id="btnBag">🧺 Giỏ (<span id="bagCount">0</span>)</button>
   <button class="hbtn" id="btnWardrobe">🧣 Tủ đồ (<span id="wdCount">1</span>)</button>
   <button class="hbtn" id="btnUpgrade">⬆️ Nâng cấp</button>
+  <button class="hbtn" id="btnReturnBike" style="display:none">🛵 Trả xe</button>
 </div>
 
 <div id="buffs"></div>
@@ -456,10 +457,40 @@ function groundH(x,z){
     if(z > -18.75) return 8.5;
     return 14.2;
   }
+  // V4.8 (research/17 điểm 3): THỀM PHẲNG quanh đảo bùng binh — sườn đồi thoái
+  // về phía bắc đoạn x -45..-19 (ngoài thật phía đó là đường mở + dốc xa, không
+  // phải vách xanh chắn khung). Đảo R10.5 (z tới -16.5) ngồi trọn trên thềm này.
+  if(x >= -45 && x < -19 && z < -2 && z > -30){
+    if(z >= -16) return 0;
+    return 17 * ((-16 - z) / 14);
+  }
   return 17 * ((-2 - z) / 28);                   // sườn đồi
 }
 
 function entryRampY(x){ return x < -52 ? Math.min(2.0, (-52 - x) * 0.07) : 0; }
+// V4.8: hệ số lượn tránh đảo cho xe đường (0 ngoài đoạn đảo, 1 khi ngang đảo)
+function islandBump(x){
+  const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  return s(-46, -30) * (1 - s(-18, -2));
+}
+// V5.2: profile làn ĐÔNG (đi +x) vòng đảo HẸP hơn islandBump — đỉnh z 5.9 tại x=-24
+// (vừa qua mép nam đảo z 5.0) nhưng hạ xuống z ~3.9 ở x=-36/-17.5 để KHÔNG quét qua
+// hàng chờ sạp mặt tiền (z >= 5.3) và cụm bàn ăn nam đảo (-17.5, 5.5). Harness tuyến
+// xe kiểm lại toàn bộ khoảng cách tới người tĩnh/AW_NODES bằng chính hàm này.
+function vehBumpE(x){
+  const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  return s(-38, -27) * (1 - s(-21, -10));
+}
+function laneZE(x){ return -1.5 + 7.4 * vehBumpE(x); }   // làn đông: z theo x
+function laneZW(x){ // V5.2 (harness tuyến): biên độ cũ 4.5 đẩy làn tới z 8.6 = XUYÊN hàng chờ dãy sạp nam (front 7.6); nay đỉnh 6.6 và HẠ XUỐNG SỚM ở phía đông (x -16..-13) để không quét qua mặt sạp xiên (front -12,5.55)
+  const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  return 4.1 + 2.5 * s(-41, -30) * (1 - s(-16, -13)); // lên dốc muộn từ x -41 (bản -46 quét qua mặt sạp đậu hũ front (-38,5.55) — harness tuyến)
+}
+function roadY(x, z){ // V5.2: cao độ mặt ĐƯỜNG cho xe — khác groundH ở 2 chỗ xe đi NGANG công trình (harness tuyến bắt: dùng groundH xe sẽ "nhảy" lên mặt cầu/tháp)
+  if(x >= 14.5 && x <= 20.5 && z >= -30 && z <= 9) return 0; // xe chạy DƯỚI cầu nổi (groundH trả cao độ mặt cầu 13.9–17.1)
+  if(x >= 29 && x <= 33 && z >= 12 && z < 13.5) return 0.5; // làn chân đồi chạy TRƯỚC tháp thang trong nhà — mặt sân trước chợ
+  return groundH(x, z);
+}
 
 const colliders = []; // {minX,maxX,minZ,maxZ, nightOnly}
 function solid(x, z, hw, hd, nightOnly=false){
@@ -475,6 +506,7 @@ const stallBulbs = [];   // bóng đèn + quầng sáng từng sạp (bật ban 
 const vehicles = [];     // xe đang chạy
 const vehHeadMats = [];  // material đèn pha xe (bật ban đêm)
 const vehTailMats = [];  // V4.4: material đèn hậu đỏ (bật ban đêm)
+const vehGlowMats = [];  // V5.2: vệt sáng đèn pha trên mặt đường (đĩa additive gắn theo xe chạy)
 const uplightMats = [];  // V4.4: đèn viền chân tượng đài (bật ban đêm)
 const stringBulbMat = new THREE.MeshBasicMaterial({ color:0xb8b0a0 }); // V4.4: dây bóng quanh mái sạp (dùng chung)
 const stringBulbGeo = new THREE.SphereGeometry(0.045, 6, 5);
@@ -524,14 +556,21 @@ const groundFogs = [];   // V4.2: đĩa sương sát mặt đất (xoay chậm)
   const ang = Math.atan2(17, 28);
   // V4.5: thang nới rộng 22 -> dải sườn trơn chỉ còn 2 đoạn ngoài; dải ôm thang
   // (x -19..-11 và 11..14.5) thay bằng THỀM BẬC THANG đặc (khớp groundH mới).
-  const segs = [[-70, -19], [20.5, 70]];
-  for(const [x0, x1] of segs){
-    const w = x1 - x0, cx = (x0 + x1) / 2;
-    const slope = new THREE.Mesh(new THREE.PlaneGeometry(w, slopeLen), mat(0x5f8547));
-    slope.rotation.x = -Math.PI/2 + ang;
-    slope.position.set(cx, 8.5, -16);
+  // V4.8: đoạn sườn TÂY gần bùng binh (x -45..-19) THOÁI về bắc — mặt dốc chỉ
+  // còn z -30..-16 (dốc hơn), phía trước là thềm phẳng quanh đảo (khớp groundH);
+  // hết cảnh "bức tường xanh" chắn nửa trái khung ở góc bùng binh.
+  const segs = [
+    { x0:-70, x1:-45, len:slopeLen, a:ang, cz:-16, strip:-1.6 },
+    { x0:-45, x1:-19, len:Math.sqrt(14*14 + 17*17), a:Math.atan2(17, 14), cz:-23, strip:-15.6 },
+    { x0:20.5, x1:70, len:slopeLen, a:ang, cz:-16, strip:-1.6 },
+  ];
+  for(const sg of segs){
+    const w = sg.x1 - sg.x0, cx = (sg.x0 + sg.x1) / 2;
+    const slope = new THREE.Mesh(new THREE.PlaneGeometry(w, sg.len), mat(0x5f8547));
+    slope.rotation.x = -Math.PI/2 + sg.a;
+    slope.position.set(cx, 8.5, sg.cz);
     slope.receiveShadow = true; worldGroup.add(slope);
-    box(w, 1.1, 0.8, 0x7c766b, cx, 0.55, -1.6);
+    box(w, 1.1, 0.8, 0x7c766b, cx, 0.55, sg.strip);
   }
   // thềm 3 vùng/bên: thân hộp tông sườn + tấm lát đá trên mặt (đặt hàng rong/ghế)
   const TERR = [ { top:14.2, zc:-24.375, d:11.25 }, { top:8.5, zc:-13.5, d:10.5 }, { top:2.8, zc:-5.125, d:6.25 } ];
@@ -550,6 +589,64 @@ const groundFogs = [];   // V4.2: đĩa sương sát mặt đất (xoay chậm)
     const zz = -5 - i * 2.9, yy = 17 * ((-2 - zz) / 28) + 0.10;
     const st = box(3.4, 0.18, 1.6, RB[i], 22.4, yy, zz);
     st.rotation.x = ang;
+  }
+}
+{ // V5.0 ĐIỂM 1: TRANG TRÍ MẶT TÂY THỀM — phá "bức tường xanh" ở góc bùng binh.
+  // Mặt tây (x=-19) của 3 khối thềm là mảng đặc phẳng lớn nhất khung A: thêm gờ đá ngang,
+  // rèm hoa giấy rủ từ mép trên, đèn + thông trên mép thềm, dãy ki-ốt ở mép thềm dưới/giữa
+  // quay mặt về đảo và người đứng trên mép thềm trên. (Hạ thấp cạnh sườn về hình học sẽ phá
+  // mô hình groundH/thềm — thay bằng phá đường nét đỉnh bằng rèm hoa + lan can sáng đèn.)
+  const TERRW = [ { top:14.2, zc:-24.375, d:11.25 }, { top:8.5, zc:-13.5, d:10.5 }, { top:2.8, zc:-5.125, d:6.25 } ];
+  const bougColsW = [0xd63384, 0xe75480, 0xc22e6e, 0xe88ac0];
+  for(const t of TERRW){
+    for(const fy of [0.42, 0.78])
+      box(0.14, 0.2, t.d - 0.5, 0x8a8074, -19.07, t.top * fy, t.zc, worldGroup, false);
+    box(0.4, 0.16, t.d - 0.2, 0x7d7468, -19.08, t.top - 0.02, t.zc, worldGroup, false);
+    box(0.26, 0.22, t.d - 0.6, 0x3d6034, -19.14, t.top - 0.16, t.zc, worldGroup, false); // bồn dây leo mép thềm — rèm hoa rủ từ đây xuống
+    for(let i = 0; i < 6; i++){
+      const cz0 = t.zc - t.d / 2 + 1.0 + i * (t.d - 2.0) / 5;
+      const rows = 3 + (i % 2);
+      for(let r2 = 0; r2 < rows; r2++){
+        const cz = cz0 + Math.sin(i * 12.9 + r2 * 7.7) * 0.3;
+        const bx = -19.24 - (r2 % 2) * 0.1, by = t.top - 0.42 - r2 * 0.66 + Math.sin(i * 5.3 + r2 * 9.1) * 0.13;
+        ball(0.34, 0x3d6034, bx, by, cz, worldGroup, 0.8);
+        ball(0.24, bougColsW[(i + r2) % 4], bx - 0.12, by + 0.1, cz + 0.2, worldGroup, 0.9);
+        ball(0.20, bougColsW[(i + r2 + 2) % 4], bx - 0.08, by - 0.06, cz - 0.22, worldGroup, 0.9);
+      }
+    }
+    if(t.top > 3){ // dải hoa lưng chừng phá mảng trơ giữa mặt thềm trên/giữa
+      for(let i = 0; i < 4; i++){
+        const cz = t.zc - t.d / 2 + 1.6 + i * (t.d - 3.2) / 3 + Math.sin(i * 8.4) * 0.3;
+        const by = t.top * 0.52 + Math.sin(i * 6.1) * 0.2;
+        ball(0.36, 0x3d6034, -19.24, by, cz, worldGroup, 0.8);
+        ball(0.25, bougColsW[i % 4], -19.36, by + 0.12, cz + 0.18, worldGroup, 0.9);
+        ball(0.21, bougColsW[(i + 1) % 4], -19.32, by - 0.08, cz - 0.2, worldGroup, 0.9);
+      }
+    }
+  }
+  lamp(-18.1, -21); lamp(-18.1, -27.5); lamp(-18.1, -11.5); lamp(-18.1, -16.8); lamp(-18.3, -4.2);
+  pine(-17.6, -23.5, 0.8); pine(-17.9, -19.6, 0.7);
+  // dãy ki-ốt mép thềm: quầy + mái nghiêng quay mặt về phía đảo (tây)
+  function rimKiosk(x, z, y, col){
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    box(0.1, 1.05, 0.1, 0x6a4a30, -0.75, 0.52, -0.55, g, false); box(0.1, 1.05, 0.1, 0x6a4a30, -0.75, 0.52, 0.55, g, false);
+    box(0.1, 1.05, 0.1, 0x6a4a30, 0.55, 0.52, -0.55, g, false); box(0.1, 1.05, 0.1, 0x6a4a30, 0.55, 0.52, 0.55, g, false);
+    const roof = box(2.0, 0.07, 1.7, col, -0.1, 1.18, 0, g, false); roof.rotation.z = 0.16;
+    box(1.15, 0.5, 1.15, 0x8a6a42, 0.05, 0.25, 0, g, false);
+    ball(0.17, 0xe07b2a, -0.15, 0.6, -0.3, g, 0.8); ball(0.15, 0xd8b13c, -0.1, 0.6, 0.15, g, 0.8); ball(0.14, 0xc23b2e, -0.2, 0.6, 0.35, g, 0.8);
+  }
+  rimKiosk(-18.1, -3.4, 2.8, 0xc23b2e); rimKiosk(-18.1, -5.6, 2.8, 0x2e7ab8); rimKiosk(-18.1, -7.6, 2.8, 0xe07b2a);
+  rimKiosk(-18.1, -10.2, 8.5, 0x4a9a4a); rimKiosk(-18.1, -17.2, 8.5, 0xc95d7e);
+  for(const [vx, vz, vy] of [[-17.3, -3.4, 2.8], [-17.3, -5.6, 2.8], [-17.3, -7.6, 2.8], [-17.3, -10.2, 8.5], [-17.3, -17.2, 8.5]]){
+    const p = crowdPerson(0.45);
+    p.position.set(vx, vy + 0.02, vz); p.rotation.y = -Math.PI / 2;
+    addStatic(p, 'night', 'vendor');
+  }
+  // 2 người đứng mép tây thềm trên — bóng người + đèn cắt đường đỉnh tường ở góc bùng binh
+  for(const vz of [-22.5, -28.3]){
+    const p = crowdPerson(0.4);
+    p.position.set(-18.2, 14.2, vz); p.rotation.y = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+    addStatic(p, 'night', 'stand');
   }
 }
 {
@@ -624,27 +721,51 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
   const rb = cloneAsset('roundabout');
   rb.position.set(-24, 0, -6);
   worldGroup.add(rb);
-  solid(-24, -6, 6.4, 6.4);
-  for(const [bx, bz] of [[-18.1,-11.9],[-29.9,-11.9],[-18.1,-0.1],[-29.9,-0.1]]) solid(bx, bz, 1.1, 1.1);
+  // V5.1 MỤC C: tượng RỌI SÁNG (research/18 điểm 3.3.1 + ảnh 32 — tượng thật TRẮNG
+  // SÁNG trên nền tối): clone vật liệu StatueStone + emissive đêm, 2 spotlight từ
+  // chân bệ hắt lên, quầng sáng ở chân tượng. applyDayNight bật/tắt qua STATUE_FX.
+  window.STATUE_FX = { mats: [], spots: [] };
+  rb.traverse(o => {
+    if(o.isMesh && o.material && o.material.name === 'StatueStone'){
+      o.material = o.material.clone();
+      o.material.emissive = new THREE.Color(0x8b939c);
+      o.material.emissiveIntensity = 0;
+      window.STATUE_FX.mats.push(o.material);
+    }
+  });
+  for(const [sx, sz] of [[-31.6, -6.4], [-24.6, 0.9]]){
+    const sp = new THREE.SpotLight(0xf2e8d8, 0, 34, 0.55, 0.9, 1.2);
+    sp.position.set(sx, 1.18, sz); sp.target.position.set(-28.2, 5.2, -2.8);
+    worldGroup.add(sp); worldGroup.add(sp.target);
+    window.STATUE_FX.spots.push(sp);
+    box(0.26, 0.2, 0.26, 0x3a3f4a, sx, 1.03, sz, worldGroup, false);
+  }
+  glowDisc(-28.2, -2.8, 3.6, 1.36);
+  solid(-24, -6, 10.4, 10.4); // V4.8: đảo R 6.6 -> 10.5 (ghế đá R11.9 nằm trong solid này)
   pine(-16.6, -13.8, 1.15); // cây thông lớn cạnh bùng binh (như ảnh thật)
   const bs = signMesh('BÙNG BINH HOA', 6.5, 1.0, '#33502e', '#eaf5d8');
-  bs.position.set(-24, 2.2, -11.6); worldGroup.add(bs);
+  bs.position.set(-24, 2.2, 5.6); worldGroup.add(bs); // V4.8: biển về mép NAM đảo (trước nằm lọt trong đảo mới)
   const upMat = new THREE.MeshStandardMaterial({ color:0x8a6a42, emissive:0xffa64d, emissiveIntensity:0, roughness:0.6 });
   uplightMats.push(upMat);
-  for(let i = 0; i < 8; i++){
-    const a = i / 8 * Math.PI * 2 + 0.39;
+  for(let i = 0; i < 10; i++){
+    const a = i / 10 * Math.PI * 2 + 0.39;
     const ub = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), upMat);
-    ub.position.set(-24 + Math.cos(a) * 7.0, 0.12, -6 + Math.sin(a) * 7.0); worldGroup.add(ub);
+    ub.position.set(-24 + Math.cos(a) * 11.6, 0.12, -6 + Math.sin(a) * 11.6); worldGroup.add(ub);
   }
-  glowDisc(-24, -6, 8.6, 0);
+  glowDisc(-24, -6, 13.8, 0);
+  // V4.8: VÀNH ĐƯỜNG quanh đảo (đĩa nhựa đường R16) — sân đảo liền với sân chợ,
+  // xe vòng chạy trên vành này thay vì cắt qua sân phẳng trống
+  const ringRoad = new THREE.Mesh(new THREE.CircleGeometry(16, 40), mat(0x4a4038));
+  ringRoad.rotation.x = -Math.PI/2; ringRoad.position.set(-24, 0.045, -6);
+  ringRoad.receiveShadow = true; worldGroup.add(ringRoad);
 }
 {
   const br = cloneAsset('bridge');
   br.position.set(17.5, 14.65, -10.5);
   br.rotation.x = Math.atan2(4.4, 39); // V4.3: sửa dấu — trước đây cầu dốc NGƯỢC gây lỗi người đi trên trời
   worldGroup.add(br);
-  const p1 = cloneAsset('pier'); p1.position.set(17.5, 0, -2); p1.scale.y = 13.4; worldGroup.add(p1);
-  const p2 = cloneAsset('pier'); p2.position.set(17.5, 0, -16); p2.scale.y = 15.0; worldGroup.add(p2);
+  const p1 = cloneAsset('pier'); p1.position.set(17.5, 0, -2); p1.scale.set(0.78, 13.4, 0.78); worldGroup.add(p1); // V4.8: trụ mảnh hơn
+  const p2 = cloneAsset('pier'); p2.position.set(17.5, 0, -16); p2.scale.set(0.78, 15.0, 0.78); worldGroup.add(p2);
   const ts = signMesh('CẦU NỔI — VÀO TẦNG 2', 8, 1.1, '#3a2e24', '#ffe9b0');
   ts.position.set(17.5, 19.6, -29.4); worldGroup.add(ts);
   box(0.16,2.6,0.16,0x555049,13.4,18.3,-29.4); box(0.16,2.6,0.16,0x555049,21.6,18.3,-29.4);
@@ -854,12 +975,14 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   const arch = signMesh('KHU HÒA BÌNH — CHỢ ĐÀ LẠT', 8.6, 1.25, '#5d2f24', '#ffd98a');
   arch.position.set(-81.35, gy + 5.5, 2); arch.rotation.y = -Math.PI / 2; worldGroup.add(arch);
   solid(-81, -2.6, 0.5, 0.5); solid(-81, 6.6, 0.5, 0.5);
-  shophouse(-60.5, 16.5, 7.5, 3, 0xe8dcc4, 'PHỞ & BÚN BÒ ĐÊM', '#7a2e22', 0x9c4034);
-  shophouse(-53, 16.5, 7, 2, 0xdcc7a8, 'TẠP HÓA CÔ TƯ', '#33502e', 0x2e6da4);
-  shophouse(-38.5, 16.5, 7, 3, 0xe4d2b0, 'NHÀ NGHỈ HOA SIM', '#4c3428', 0x74566b);
-  shophouse(-62, -18, 7, 2, 0xd8c8ae, 'CÀ PHÊ SƯỜN ĐỒI', '#3a2e24', 0x51624a, Math.PI);
-  shophouse(-52, -19, 6.5, 2, 0xe0d0b4, 'HOMESTAY THÔNG XANH', '#33502e', 0x68804f, Math.PI);
-  shophouse(-42, -18, 7, 3, 0xe8dcc4, 'BÁNH MÌ & SỮA NÓNG', '#7a2e22', 0xb03a30, Math.PI);
+  // V4.8 (research/17 điểm 8): nhà 2 bên đường 2-3 tầng -> 4-5 tầng; dãy BẮC
+  // dịch sát vỉa hè (z -18/-19 -> -15.2/-16, bỏ dải đất trống lùi 6-8u)
+  shophouse(-60.5, 16.5, 7.5, 5, 0xe8dcc4, 'PHỞ & BÚN BÒ ĐÊM', '#7a2e22', 0x9c4034);
+  shophouse(-53, 16.5, 7, 4, 0xdcc7a8, 'TẠP HÓA CÔ TƯ', '#33502e', 0x2e6da4);
+  shophouse(-38.5, 16.5, 7, 5, 0xe4d2b0, 'NHÀ NGHỈ HOA SIM', '#4c3428', 0x74566b);
+  shophouse(-62, -15.2, 7, 4, 0xd8c8ae, 'CÀ PHÊ SƯỜN ĐỒI', '#3a2e24', 0x51624a, Math.PI);
+  shophouse(-52, -16, 6.5, 5, 0xe0d0b4, 'HOMESTAY THÔNG XANH', '#33502e', 0x68804f, Math.PI);
+  shophouse(-42, -15.2, 7, 4, 0xe8dcc4, 'BÁNH MÌ & SỮA NÓNG', '#7a2e22', 0xb03a30, Math.PI);
   colonialLamp(-74, -8.6, true); colonialLamp(-66, 11.9, false); colonialLamp(-58, -8.6, true); // V4.7: mép đường mới
   colonialLamp(-50, 11.9, false); colonialLamp(-43, -8.6, true); // V4.7
   colonialLamp(-33.5, -13.5, false); colonialLamp(-14.5, -13.5, true);
@@ -867,14 +990,14 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   for(const hx of [-70, -62, -54, -46]) hydrangea(hx, 13.6, 1); // V4.7
   for(const hx of [-72, -64, -56, -48]) hydrangea(hx, -10.4, 0.9); // V4.7
   hydrangea(-13.5, -43, 1.1, 17); hydrangea(20, -43.5, 1.1, 17); hydrangea(38, -50, 1, 17); hydrangea(-30, -50, 1, 17);
-  hydrangea(-17.2, -12.3, 1.05, 0); hydrangea(-30.8, 0.3, 1.05, 0); // chậu hoa ở vòng xoay (y=0 như mô hình đảo)
+  hydrangea(-12.8, -6.2, 1.05, 0); hydrangea(-33.5, 3.4, 1.05, 0); // V4.8: chậu hoa ở vòng xoay, ngoài mép đảo R10.5
   hydrangea(16.1, -6, 0.55, groundH(17.5, -6) + 1.05); hydrangea(18.9, -14, 0.55, groundH(17.5, -14) + 1.05);
   hydrangea(16.1, -22, 0.55, groundH(17.5, -22) + 1.05);
   for(let x = -60; x <= 60; x += 20) glowDisc(x + 0.95, -3.2, 3.0, 0);
   glowDisc(-66, 2, 3.4); glowDisc(-56, 2, 3.4);
   addSmoke(-44, 2.4, 17.1, 1.4); // V4.7: theo dãy nhà nam mới
   addSmoke(-70, 12.6, 20.5, 4.5); // V4.7
-  addSmoke(-52, groundH(-52, -19) + 7.6, -19, 3.2); // V4.7
+  addSmoke(-52, groundH(-52, -16) + 16.2, -16, 3.2); // V4.8: theo nhà bắc mới (5 tầng, z=-16)
 }
 { // --- PHÔNG NỀN ĐỒI THÔNG lớp lớp + THÁP CHUÔNG nhà thờ (silhouette xa) ---
   const ridgeMat = new THREE.MeshBasicMaterial({ color:0x2f4234 });
@@ -954,6 +1077,8 @@ lamp(-34, -40); lamp(24, -40); lamp(-2, -64);
 pine(-52,-38,1.2); pine(52,-40,1.1); pine(-60,-62,1.3); pine(58,-66,1.2); pine(-44,-72,1);
 pine(46,-74,1.15); pine(-64,-14,0.9); pine(64,-12,0.95); pine(58,14,0.9); pine(-58,16,0.9);
 pine(-40,-46,1.05); pine(34,-48,1.0);
+pine(-40,-26,1.05); pine(-33,-20,0.9); pine(-27,-27,1.1); pine(-22,-21,0.85); // V4.8 POLISH: hàng thông phá mảng tường sườn tây phẳng ở góc bùng binh
+lamp(-36,-17); lamp(-24,-17); // V4.8 POLISH: đèn dọc mép thềm sườn tây (điểm sáng cắt mảng tường ở tầm thấp)
 const starMat = new THREE.PointsMaterial({ color:0xdfe9ff, size:1.6, sizeAttenuation:false, transparent:true, opacity:0 });
 {
   const pos = [];
@@ -975,11 +1100,12 @@ function addSmoke(x, y, z, h=2.7){
   smokePts.push({ pts:p, x, y, z, seed, h });
 }
 
-function makePerson(shirt=0x7a6a55, pants=0x4a4640, hat='none', skin=0xd9a37e){
+function makePerson(shirt=0x7a6a55, pants=0x4a4640, hat='none', skin=0xd9a37e, hatColor){
   const g = cloneAsset('character');
   recolor(g, 'Shirt', shirt);
   recolor(g, 'Pants', pants);
-  recolor(g, 'Beanie', shirt);   // mũ len trùng màu áo len như bảng tạo hình B1
+  recolor(g, 'Beanie', hatColor !== undefined ? hatColor : shirt);   // V5.1: màu mũ TÁCH độc lập với áo (research/18); mặc định giữ hành vi cũ
+  if(skin !== 0xd9a37e) recolor(g, 'Skin', skin);                    // V5.1: 4 tông da cho đám đông
   const hatName = { nonla:'HatNonLa', beanie:'HatBeanie', cap:'HatCap' }[hat];
   for(const hn of ['HatNonLa','HatBeanie','HatCap']){
     const h = g.getObjectByName(hn); if(h) h.visible = (hn === hatName);
@@ -997,6 +1123,142 @@ function swingLimbs(g, phase, amp=0.5){
   L.rLeg.rotation.x = -Math.sin(phase) * amp;
   L.lArm.rotation.x = -Math.sin(phase) * amp * 0.7;
   L.rArm.rotation.x = Math.sin(phase) * amp * 0.7;
+}
+// ================= V5.1 MỤC A: ĐA DẠNG TRANG PHỤC ĐÁM ĐÔNG (research/18) =================
+// Đám đông thật đọc bằng PHOM trước màu sau: PHAO phình / DẠ DÀI / HOODIE / LEN ÔM.
+// Màu áp đảo ngoài thật là TRẮNG KEM + ĐEN (bảng 14 màu cũ không có) — chỉ thêm cho
+// crowd, KHÔNG sửa bảng gốc của người chơi. Part dùng geometry/material DÙNG CHUNG.
+const NPC_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26, 0x2e4a6b, 0x6b5a44, 0xd8d2c2, 0x24303c];
+const NPC_KNIT = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x6b8f3e, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a, 0xf0ead8, 0x2e2a26];
+const NPC_PUFFER = [0xf0ead8, 0xe8e2d4, 0xf0ead8, 0x2e2a26, 0x232120, 0x2e2a26, 0xa62b25, 0x35507a, 0xd9a62e];
+const NPC_HOODIE = [0x8668c4, 0x6b8f3e, 0xd9a62e, 0x3a6bc2, 0xc95d7e, 0x8c8c92];
+const NPC_COAT = [0x35507a, 0x5c4633, 0xe8e2d4, 0x2e2a26, 0x74566b];
+const NPC_BEANIE = [0xc8372d, 0xd9a62e, 0x2e6b46, 0xf0ead8, 0x2e2a26, 0x8668c4, 0x3a6bc2];
+const NPC_SKINS = [0xe8b98f, 0xd9a37e, 0xc68a5e, 0xa96f42];
+const FORM_DIST = { // tỉ lệ phom theo vai trò — research/18 mục 1.3
+  wanderer: [['puffer',30],['coat',15],['hoodie',15],['knit',25],['light',15]],
+  crowd:    [['puffer',32],['coat',14],['hoodie',15],['knit',24],['light',15]],
+  queue:    [['puffer',30],['coat',10],['hoodie',15],['knit',30],['light',15]],
+  sitter:   [['puffer',35],['coat',10],['hoodie',20],['knit',25],['light',10]],
+  vendor:   [['knit',50],['puffer',10],['hoodie',10],['light',30],['coat',0]],
+};
+function pickForm(role){
+  const d = FORM_DIST[role] || FORM_DIST.crowd; let tot = 0; for(const e of d) tot += e[1];
+  let r = Math.random() * tot;
+  for(const e of d){ r -= e[1]; if(r <= 0) return e[0]; }
+  return 'knit';
+}
+const _npcMats = {};
+function npcMat(color){
+  if(!_npcMats[color]) _npcMats[color] = new THREE.MeshStandardMaterial({ color, roughness:0.92 });
+  return _npcMats[color];
+}
+let NPC_PART_MESHES = 0;
+function npcPart(g, anchor, geo, color, x, y, z, rx, ry, rz){
+  const m = new THREE.Mesh(geo, npcMat(color));
+  m.position.set(x, y, z);
+  if(rx) m.rotation.x = rx; if(ry) m.rotation.y = ry; if(rz) m.rotation.z = rz;
+  m.castShadow = false;
+  const host = anchor === 'R' ? g : anchor === 'AR' ? g.userData.limbs.rArm : g.userData.limbs.lArm;
+  host.add(m); NPC_PART_MESHES++; window.__NPC_PARTS = NPC_PART_MESHES;
+  return m;
+}
+const GEO_CUP = new THREE.CylinderGeometry(0.05, 0.042, 0.13, 8);
+const GEO_STRAW = new THREE.BoxGeometry(0.018, 0.11, 0.018);
+const GEO_BAG = new THREE.BoxGeometry(0.26, 0.32, 0.16);
+const GEO_BAGHANDLE = new THREE.TorusGeometry(0.07, 0.012, 5, 10, Math.PI);
+const GEO_PHONE = new THREE.BoxGeometry(0.075, 0.15, 0.016);
+const GEO_CORN = new THREE.CylinderGeometry(0.045, 0.05, 0.24, 7);
+const GEO_PACK = new THREE.BoxGeometry(0.36, 0.46, 0.17);
+const GEO_PACKFLAP = new THREE.BoxGeometry(0.30, 0.16, 0.03);
+const GEO_TOTE = new THREE.BoxGeometry(0.34, 0.36, 0.12);
+const GEO_CROSS = new THREE.BoxGeometry(0.26, 0.20, 0.09);
+const GEO_GLOVE = new THREE.BoxGeometry(0.10, 0.16, 0.06);
+const GEO_COATSKIRT = new THREE.BoxGeometry(0.69, 0.35, 0.45);
+const GEO_LAPEL = new THREE.BoxGeometry(0.13, 0.30, 0.03);
+const GEO_NECKTUBE = new THREE.TorusGeometry(0.14, 0.05, 6, 12);
+const GEO_APRON = new THREE.BoxGeometry(0.52, 0.58, 0.04);
+function npcHoldCup(g){ // ly giấy + ống hút đỏ tay phải (vật nhận diện số 1 của khách chợ đêm)
+  if(g.userData.heldR) return; g.userData.heldR = 1;
+  npcPart(g, 'AR', GEO_CUP, 0xf3ead6, 0.03, -0.52, 0.06);
+  npcPart(g, 'AR', GEO_STRAW, 0xd8342a, 0.05, -0.43, 0.06, 0.35);
+}
+function npcHoldBag(g){ // túi nilon căng đồ tay trái (vàng/trắng — ảnh 32)
+  if(g.userData.heldL) return; g.userData.heldL = 1;
+  const c = pickA([0xe8c832, 0xe8c832, 0xf0ead8, 0x7fb2dd]);
+  npcPart(g, 'AL', GEO_BAG, c, -0.03, -0.64, 0.05);
+  npcPart(g, 'AL', GEO_BAGHANDLE, c, -0.03, -0.45, 0.05);
+}
+function npcHoldPhone(g){ if(g.userData.heldR) return; g.userData.heldR = 1; npcPart(g, 'AR', GEO_PHONE, 0x23272e, 0.02, -0.52, 0.07, -0.3); }
+function npcHoldCorn(g){ if(g.userData.heldR) return; g.userData.heldR = 1; npcPart(g, 'AR', GEO_CORN, 0xe8b93c, 0.03, -0.55, 0.05, 0, 0, 0.5); }
+function npcBags(g, kind){
+  if(kind === 'pack'){ npcPart(g, 'R', GEO_PACK, pickA([0xa62b25, 0x35507a, 0x2e2a26, 0x6b8f3e]), 0, 0.88, -0.30); npcPart(g, 'R', GEO_PACKFLAP, 0x2e2a26, 0, 1.03, -0.40); }
+  else if(kind === 'cross'){ npcPart(g, 'R', GEO_CROSS, pickA([0x5c4633, 0x2e2a26, 0x74566b]), 0.22, 0.70, 0.17, 0, 0, 0.15); }
+  else { npcPart(g, 'R', GEO_TOTE, pickA([0xe8e2d4, 0xd9a62e, 0x7fb2dd]), 0.31, 0.76, 0.02); }
+}
+function npcGloves(g, color){
+  npcPart(g, 'AR', GEO_GLOVE, color, 0, -0.46, 0.01);
+  npcPart(g, 'AL', GEO_GLOVE, color, 0, -0.46, 0.01);
+}
+const _npcStripeMats = {};
+function npcStripeShirt(g, baseHex){ // len SỌC ngang cho tiểu thương (ảnh 31)
+  if(!_npcStripeMats[baseHex]){
+    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+    const x2 = c.getContext('2d');
+    x2.fillStyle = '#' + baseHex.toString(16).padStart(6, '0'); x2.fillRect(0, 0, 64, 64);
+    x2.fillStyle = 'rgba(240,234,216,0.85)'; x2.fillRect(0, 10, 64, 7); x2.fillRect(0, 36, 64, 7);
+    x2.fillStyle = 'rgba(30,26,22,0.55)'; x2.fillRect(0, 24, 64, 4); x2.fillRect(0, 50, 64, 4);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+    _npcStripeMats[baseHex] = new THREE.MeshStandardMaterial({ map:t, roughness:0.95 });
+  }
+  for(const nm of ['Torso', 'tmpCollar']){ const n = g.getObjectByName(nm); if(n) n.material = _npcStripeMats[baseHex]; }
+}
+function rollLook(role, baseShirt){
+  const form = pickForm(role);
+  let shirt = baseShirt !== undefined ? baseShirt : pickA(NPC_KNIT);
+  let hat = 'none', hatColor;
+  if(form === 'puffer') shirt = pickA(NPC_PUFFER);
+  else if(form === 'hoodie'){ if(baseShirt === undefined) shirt = pickA(NPC_HOODIE); hat = 'beanie'; hatColor = shirt; }
+  else if(form === 'coat') shirt = pickA(NPC_COAT);
+  if(hat === 'none'){
+    const hr = Math.random(), beanieP = role === 'vendor' ? 0.35 : 0.25;
+    if(hr < beanieP){ hat = 'beanie'; hatColor = pickA(NPC_BEANIE); }
+    else if(hr < beanieP + 0.15) hat = 'cap';
+    else if(role === 'vendor' && hr < beanieP + 0.35) hat = 'nonla'; // nón lá CHỈ còn ~20% tiểu thương, khách không đội
+  }
+  return { form, shirt, hat, hatColor, pants: pickA(NPC_PANTS), skin: pickA(NPC_SKINS),
+    scarf: Math.random() < (role === 'sitter' || role === 'queue' ? 0.28 : role === 'vendor' ? 0.20 : 0.25),
+    child: Math.random() < (role === 'wanderer' ? 0.04 : 0.07) };
+}
+function applyLook(g, look, role){
+  if(look.form === 'puffer'){
+    const t = g.getObjectByName('Torso'); if(t) t.scale.set(1.24, 1.03, 1.27);
+    const c = g.getObjectByName('tmpCollar'); if(c) c.scale.set(1.15, 1, 1.15);
+  } else if(look.form === 'coat'){
+    npcPart(g, 'R', GEO_COATSKIRT, look.shirt, 0, 0.36, 0);
+    npcPart(g, 'R', GEO_LAPEL, look.shirt, -0.10, 0.80, 0.235, 0, 0, 0.18);
+    npcPart(g, 'R', GEO_LAPEL, look.shirt, 0.10, 0.80, 0.235, 0, 0, -0.18);
+  } else if(look.form === 'hoodie'){
+    npcPart(g, 'R', GEO_NECKTUBE, look.shirt, 0, 0.94, 0, Math.PI / 2);
+  }
+  if(role === 'vendor'){
+    if(look.form === 'knit' && Math.random() < 0.55) npcStripeShirt(g, look.shirt);
+    if(Math.random() < 0.30) npcPart(g, 'R', GEO_APRON, pickA([0x3a3f4a, 0x5c4633, 0x2e2a26]), 0, 0.68, 0.245);
+  }
+  g.scale.setScalar(look.child ? 0.70 + Math.random() * 0.08
+    : (0.96 + Math.random() * 0.08) * (Math.random() < 0.12 ? 0.90 : 1));
+  if(role !== 'vendor' && role !== 'sitter'){
+    const br = Math.random();
+    if(br < 0.17) npcBags(g, 'pack'); else if(br < 0.26) npcBags(g, 'cross'); else if(br < 0.34) npcBags(g, 'tote');
+  }
+  // vật cầm tay — tỉ lệ research/18 (ly ~12%, túi nilon ~25-30%, điện thoại ~12%, bắp ~5%)
+  const cupP = role === 'queue' ? 0.15 : 0.12;
+  if(Math.random() < cupP) npcHoldCup(g);
+  if(Math.random() < 0.05) npcHoldCorn(g);
+  if(role !== 'sitter' && Math.random() < 0.12) npcHoldPhone(g);
+  if(role === 'wanderer' || role === 'crowd'){ if(Math.random() < 0.27) npcHoldBag(g); }
+  else if(role === 'queue'){ if(Math.random() < 0.20) npcHoldBag(g); }
+  if(Math.random() < 0.08) npcGloves(g, pickA(NPC_BEANIE));
 }
 function vendorAnim(s, t, now){
   const v = s.vendor, L = v.userData.limbs; if(!L) return;
@@ -1076,16 +1338,23 @@ const skyDome = new THREE.Mesh(new THREE.SphereGeometry(390, 24, 14), new THREE.
 skyDome.renderOrder = -10; scene.add(skyDome);
 const amb = new THREE.AmbientLight(0xffc98a, 0); scene.add(amb);
 const moonSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map:haloTex, color:0xffe9bd, transparent:true, opacity:0, depthWrite:false }));
-moonSpr.scale.set(110, 110, 1); moonSpr.position.set(215, 240, -195); scene.add(moonSpr);
-const moonBall = new THREE.Mesh(new THREE.CircleGeometry(13, 24), new THREE.MeshBasicMaterial({ color:0xfff3cf, transparent:true, opacity:0, fog:false }));
-moonBall.position.set(215, 240, -195); moonBall.lookAt(0, 25, 0); scene.add(moonBall);
+moonSpr.scale.set(64, 64, 1); moonSpr.position.set(150, 120, 160); scene.add(moonSpr); // V5.1: quầng trăng THU NHỎ (r13 cũ "trộm khung" góc A — research/18)
+const moonBall = new THREE.Mesh(new THREE.CircleGeometry(8.5, 24), new THREE.MeshBasicMaterial({ color:0xfff3cf, transparent:true, opacity:0, fog:false }));
+moonBall.position.set(150, 120, 160); moonBall.lookAt(0, 25, 0); scene.add(moonBall); // V4.8 MỤC 6: cùng vị trí trăng mới
 const clouds = [];
-for(let i = 0; i < 8; i++){
+for(let i = 0; i < 14; i++){
   const cm = new THREE.SpriteMaterial({ map:haloTex, color:0xffffff, transparent:true, opacity:0, depthWrite:false });
   const sp = new THREE.Sprite(cm);
   const aa = Math.random() * Math.PI * 2, rr = 130 + Math.random() * 130;
   sp.position.set(Math.cos(aa) * rr, 100 + Math.random() * 45, Math.sin(aa) * rr);
-  sp.scale.set(75 + Math.random() * 65, 20 + Math.random() * 12, 1);
+  sp.scale.set(115 + Math.random() * 95, 15 + Math.random() * 10, 1); // V5.1: vệt mây DÀI MỎNG kiểu chibi (chỉ thị 14:16)
+  scene.add(sp); clouds.push(sp);
+}
+// V5.1: 4 vệt mây cố định ở trời NAM-ĐÔNG (khu vực lọt khung góc A + khung đồi)
+for(const [cx, cy, cz, cw] of [[120, 108, 150, 150], [185, 128, 120, 190], [95, 92, 195, 120], [215, 100, 185, 160]]){
+  const cm = new THREE.SpriteMaterial({ map:haloTex, color:0xffffff, transparent:true, opacity:0, depthWrite:false });
+  const sp = new THREE.Sprite(cm);
+  sp.position.set(cx, cy, cz); sp.scale.set(cw, 17, 1);
   scene.add(sp); clouds.push(sp);
 }
 let _haloShared = null;
@@ -1139,8 +1408,83 @@ function decorateStall(g, def){
     const bc = [0xd8542e, 0xc22e22, 0xf0ead8];
     for(let i = 0; i < 3; i++) cyl(0.045, 0.045, 0.17, bc[i], 0.45 + i * 0.17, 1.24, 0.35, g, 8);
   }
+  // V4.9 MỤC 7: hàng TRÀN ra mép quầy cho mọi sạp — dãy món nhỏ dọc mép trước, màu theo họ sạp
+  const spillCols = { food:[0xd8542e, 0xe8c33c, 0xf0ead8], drink:[0xf0ead8, 0xd8b13c, 0xe88ac0],
+    produce:[0xd63c2a, 0x4a7a3a, 0xe07b2a], wool:[0xb03a30, 0xe8c33c, 0x2e6da4], specialty:[0xc9a227, 0xb03a30, 0xd88f2e] }[def.district] || [0xf0ead8];
+  for(let i = 0; i < 5; i++) cyl(0.055, 0.05, 0.1, spillCols[i % spillCols.length], -0.84 + i * 0.42, 1.16, 0.88, g, 8);
 }
 
+// V4.9 MỤC 7: icon món RIÊNG cho từng sạp vẽ 2 đầu biển (trước đây mọi sạp chung 1 glyph hũ+ly)
+function drawStallIcon(g2, def, cx, cy){
+  const cream = 'rgba(240,234,216,0.95)', gold = '#d8b13c', red = '#d84a35', green = '#7fae5a';
+  g2.save(); g2.translate(cx, cy); g2.lineWidth = 7; g2.strokeStyle = cream; g2.fillStyle = cream;
+  const id = def.id, dist = def.district;
+  const steam = (x, y) => { g2.strokeStyle = cream; g2.lineWidth = 5; for(const dx of [-11, 9]){ g2.beginPath(); g2.arc(x + dx, y, 7, 3.6, 5.6); g2.stroke(); } };
+  if(id === 'caphe' || id === 'tra'){ // phin + ly + giọt cà phê
+    g2.fillRect(-26, -40, 52, 10);
+    g2.beginPath(); g2.moveTo(-22, -30); g2.lineTo(22, -30); g2.lineTo(14, 0); g2.lineTo(-14, 0); g2.closePath(); g2.fill();
+    g2.fillStyle = gold; g2.beginPath(); g2.arc(0, 14, 5, 0, 6.29); g2.fill();
+    g2.strokeStyle = cream; g2.lineWidth = 6; g2.beginPath(); g2.moveTo(-19, 32); g2.lineTo(19, 32); g2.lineTo(14, 50); g2.lineTo(-14, 50); g2.closePath(); g2.stroke();
+  } else if(id === 'banhtrang' || id === 'xien' || id === 'tron'){ // bánh tròn trên vỉ
+    g2.beginPath(); g2.arc(0, 0, 33, 0, 6.29); g2.fillStyle = '#e8c88a'; g2.fill();
+    g2.fillStyle = red; for(let i = 0; i < 5; i++){ g2.beginPath(); g2.arc(-15 + (i % 3) * 15, -8 + Math.floor(i / 3) * 19, 5.5, 0, 6.29); g2.fill(); }
+    g2.strokeStyle = cream; g2.lineWidth = 6; g2.beginPath(); g2.moveTo(-40, 42); g2.lineTo(40, 42); g2.stroke();
+  } else if(id === 'banhcan'){ // hàng khuôn đất + bánh vàng
+    g2.fillStyle = '#8a5a3a'; for(let i = 0; i < 3; i++){ g2.beginPath(); g2.arc(-26 + i * 26, 12, 12.5, 0, 6.29); g2.fill(); }
+    g2.fillStyle = '#f0d090'; for(let i = 0; i < 3; i++){ g2.beginPath(); g2.arc(-26 + i * 26, 10, 7, 0, 6.29); g2.fill(); }
+    g2.fillStyle = cream; g2.fillRect(-42, 32, 84, 8); steam(0, -22);
+  } else if(id === 'dau'){ // dâu tây
+    g2.fillStyle = red; g2.beginPath(); g2.moveTo(0, 48); g2.bezierCurveTo(-34, 14, -26, -20, 0, -20); g2.bezierCurveTo(26, -20, 34, 14, 0, 48); g2.fill();
+    g2.fillStyle = green; g2.fillRect(-17, -32, 34, 10); g2.fillRect(-4, -41, 8, 12);
+    g2.fillStyle = 'rgba(255,235,200,0.9)'; for(let i = 0; i < 5; i++){ g2.beginPath(); g2.arc(-13 + (i % 3) * 13, -2 + Math.floor(i / 3) * 20, 2.6, 0, 6.29); g2.fill(); }
+  } else if(id === 'hoa'){ // bó hoa 3 bông
+    g2.strokeStyle = green; g2.lineWidth = 6; g2.beginPath(); g2.moveTo(0, 50); g2.lineTo(-14, 4); g2.moveTo(0, 50); g2.lineTo(0, 0); g2.moveTo(0, 50); g2.lineTo(14, 4); g2.stroke();
+    const fc = [red, '#e88ac0', gold];
+    [[-16, -10], [0, -20], [16, -10]].forEach((p, i) => { g2.fillStyle = fc[i]; g2.beginPath(); g2.arc(p[0], p[1], 11, 0, 6.29); g2.fill(); });
+  } else if(dist === 'wool'){ // cuộn len + kim đan
+    g2.beginPath(); g2.arc(-4, 8, 29, 0, 6.29); g2.fillStyle = '#c95d7e'; g2.fill();
+    g2.strokeStyle = 'rgba(110,35,60,0.85)'; g2.lineWidth = 4;
+    g2.beginPath(); g2.arc(-4, 8, 20, 0.4, 2.6); g2.stroke();
+    g2.beginPath(); g2.arc(-4, 8, 11, 2.8, 5.2); g2.stroke();
+    g2.strokeStyle = cream; g2.lineWidth = 5; g2.beginPath(); g2.moveTo(8, -34); g2.lineTo(30, 16); g2.moveTo(26, -30); g2.lineTo(16, 20); g2.stroke();
+  } else if(id === 'dacsan'){ // hộp quà
+    g2.fillStyle = gold; g2.fillRect(-30, -12, 60, 46);
+    g2.fillStyle = red; g2.fillRect(-34, -22, 68, 13); g2.fillRect(-5, -22, 10, 56);
+    g2.beginPath(); g2.arc(-11, -30, 8, 0, 6.29); g2.stroke(); g2.beginPath(); g2.arc(11, -30, 8, 0, 6.29); g2.stroke();
+  } else if(id === 'dongho'){ // đồng hồ
+    g2.beginPath(); g2.arc(0, 2, 32, 0, 6.29); g2.fill();
+    g2.strokeStyle = '#5a4632'; g2.lineWidth = 6; g2.beginPath(); g2.moveTo(0, 2); g2.lineTo(0, -18); g2.moveTo(0, 2); g2.lineTo(14, 8); g2.stroke();
+  } else if(id === 'luuniem'){ // móc khóa
+    g2.lineWidth = 7; g2.beginPath(); g2.arc(-8, -16, 15, 0, 6.29); g2.stroke();
+    g2.fillStyle = gold; g2.fillRect(-2, -4, 30, 40);
+    g2.fillStyle = red; g2.beginPath(); g2.arc(13, 12, 7, 0, 6.29); g2.fill();
+  } else if(id === 'rau'){ // cà rốt
+    g2.fillStyle = '#e07b2a'; g2.beginPath(); g2.moveTo(-15, -8); g2.lineTo(15, -8); g2.lineTo(0, 46); g2.closePath(); g2.fill();
+    g2.strokeStyle = green; g2.lineWidth = 6; g2.beginPath(); g2.moveTo(0, -8); g2.lineTo(-12, -30); g2.moveTo(0, -8); g2.lineTo(0, -34); g2.moveTo(0, -8); g2.lineTo(12, -30); g2.stroke();
+  } else if(id === 'khoai' || id === 'khoainuong'){ // củ khoai nướng
+    g2.fillStyle = '#a8642e'; g2.beginPath(); g2.ellipse(0, 8, 30, 19, 0.5, 0, 6.29); g2.fill();
+    g2.fillStyle = '#e8a34c'; g2.beginPath(); g2.ellipse(2, 6, 17, 9, 0.5, 0, 6.29); g2.fill(); steam(-2, -26);
+  } else if(id === 'yaourt'){ // ly yaourt + ống hút
+    g2.fillRect(-20, -16, 40, 58);
+    g2.fillStyle = '#e88ac0'; g2.fillRect(-20, -16, 40, 15);
+    g2.strokeStyle = red; g2.lineWidth = 7; g2.beginPath(); g2.moveTo(6, -2); g2.lineTo(20, -38); g2.stroke();
+  } else if(dist === 'drink'){ // ly nóng bốc hơi
+    g2.fillRect(-21, -8, 42, 52);
+    g2.fillStyle = gold; g2.fillRect(-21, -8, 42, 11); steam(0, -30);
+  } else if(dist === 'produce'){ // lá + quả
+    g2.fillStyle = green; g2.beginPath(); g2.ellipse(0, -6, 26, 15, -0.6, 0, 6.29); g2.fill();
+    g2.fillStyle = red; g2.beginPath(); g2.arc(6, 22, 15, 0, 6.29); g2.fill();
+    g2.fillStyle = gold; g2.beginPath(); g2.arc(-18, 28, 10, 0, 6.29); g2.fill();
+  } else if(dist === 'specialty'){ // hộp trà
+    g2.fillStyle = '#8c6a3a'; g2.fillRect(-26, -26, 52, 62);
+    g2.fillStyle = red; g2.fillRect(-26, -26, 52, 13);
+    g2.fillStyle = cream; g2.fillRect(-13, 2, 26, 20);
+  } else { // tô nóng (food mặc định)
+    g2.fillStyle = cream; g2.beginPath(); g2.arc(0, 2, 32, 3.35, 6.08); g2.lineTo(-32, 2); g2.closePath(); g2.fill();
+    g2.fillRect(-36, -4, 72, 7); steam(0, -32);
+  }
+  g2.restore();
+}
 function makeStallSign(def){
   const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
   const g2 = c.getContext('2d');
@@ -1157,12 +1501,7 @@ function makeStallSign(def){
   g2.fillStyle = '#ffd94d'; g2.font = 'bold 62px Arial, sans-serif';
   const price = def.menu && def.menu[0] ? def.menu[0].price : 15;
   g2.fillText('— ' + price + 'K —', 512, 190);
-  g2.fillStyle = 'rgba(240,234,216,0.92)';
-  g2.fillRect(72, 128, 54, 76); g2.fillRect(65, 116, 68, 14);
-  g2.fillStyle = '#d8b13c';
-  for(let i = 0; i < 8; i++){ g2.beginPath(); g2.arc(86 + (i % 3) * 14, 150 + Math.floor(i / 3) * 19, 6, 0, 6.29); g2.fill(); }
-  g2.fillStyle = 'rgba(240,234,216,0.92)';
-  for(let i = 0; i < 3; i++) g2.fillRect(898 - i * 3, 136 + i * 21, 52, 15);
+  drawStallIcon(g2, def, 100, 158); drawStallIcon(g2, def, 924, 158); // V4.9 MỤC 7: icon riêng từng sạp
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 0.95),
@@ -1253,6 +1592,93 @@ function enhanceStallChot(g, def){
   hydrangeaBasket(g, -1.55, 0.02, 2.5); hydrangeaBasket(g, 1.55, 0.02, 2.55);
   return { bigLanternMat, pourStream };
 }
+// V4.9 MỤC 7: thẻ giá cắm mặt quầy — đọc được ở cự ly chơi
+function makePriceCard(price){
+  const c = document.createElement('canvas'); c.width = 256; c.height = 160;
+  const g2 = c.getContext('2d');
+  g2.fillStyle = '#f3e3c2'; g2.fillRect(0, 0, 256, 160);
+  g2.strokeStyle = '#b02020'; g2.lineWidth = 10; g2.strokeRect(8, 8, 240, 144);
+  g2.fillStyle = '#b02020'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+  g2.font = 'bold 84px Arial, sans-serif';
+  g2.fillText(price + 'K', 128, 86);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.39),
+    new THREE.MeshStandardMaterial({ map:t, roughness:0.9, side:THREE.DoubleSide }));
+}
+// V4.9 MỤC 7: 6 sạp mẫu làm thật kỹ (bố cục tầng + hàng tràn + bộ đồ nghề riêng)
+const HERO_STALLS = new Set(['sua', 'banhtrang', 'banhcan', 'caphe', 'supcua', 'dau']);
+function designHeroStall(g, def){
+  const steel = new THREE.MeshStandardMaterial({ color:0xb9c0c4, roughness:0.35, metalness:0.7 });
+  const clay = 0x6a4630, wood = 0x8a6a42;
+  if(def.id === 'sua'){ // SỮA ĐẬU NÀNH — sạp của ảnh chốt: kệ 2 tầng + nồi lớn + tháp ly
+    for(const sy of [1.44, 1.74]) box(0.95, 0.05, 0.3, wood, -1.08, sy, -0.3, g, false);
+    for(const px of [-1.5, -0.66]) box(0.05, 0.62, 0.26, wood, px, 1.42, -0.3, g, false);
+    for(let i = 0; i < 3; i++){ cyl(0.07, 0.07, 0.17, 0xd8b13c, -1.32 + i * 0.26, 1.55, -0.3, g, 8); cyl(0.07, 0.07, 0.17, 0xf0ead8, -1.32 + i * 0.26, 1.85, -0.3, g, 8); }
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.32, 0.42, 14), steel);
+    pot.position.set(-0.3, 1.3, 0.02); g.add(pot);
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.07, 14), steel);
+    lid.position.set(-0.3, 1.54, 0.02); lid.rotation.z = 0.16; g.add(lid);
+    for(let i = 0; i < 4; i++) cyl(0.055, 0.042, 0.07, 0xf0ead8, 0.42, 1.20 + i * 0.055, 0.3, g, 8); // tháp ly sứ thứ hai
+  }
+  if(def.id === 'banhtrang'){ // vỉ + chồng bánh sống + khay bánh chín tràn mép + xiên que
+    for(let i = 0; i < 6; i++) cyl(0.17, 0.17, 0.02, 0xe8c88a, 1.18, 1.13 + i * 0.022, 0.32, g, 14);
+    box(0.95, 0.04, 0.52, wood, 0.05, 1.1, 0.78, g, false);
+    for(let i = 0; i < 3; i++){ cyl(0.15, 0.15, 0.025, 0xe8c88a, -0.25 + i * 0.32, 1.14, 0.78, g, 14); ball(0.045, 0xd8542e, -0.25 + i * 0.32, 1.17, 0.78, g, 0.6); }
+    cyl(0.07, 0.055, 0.16, 0xc22e22, -1.32, 1.2, 0.42, g, 8);
+    for(let i = 0; i < 6; i++){ const st = cyl(0.008, 0.008, 0.3, 0xd8b13c, -1.36 + i * 0.016, 1.38, 0.42, g, 5); st.rotation.z = (i - 2.5) * 0.09; }
+    for(let i = 0; i < 2; i++) ball(0.09, [0xd8542e, 0x7fae5a][i], 0.62 + i * 0.24, 1.14, 0.5, g, 0.45); // 2 bát nước chấm
+  }
+  if(def.id === 'banhcan'){ // bếp đất + hàng khuôn + khay trứng + đĩa lá chuối
+    box(0.98, 0.3, 0.52, clay, -0.72, 0.94, 0.12, g, false);
+    for(let i = 0; i < 5; i++){ cyl(0.095, 0.08, 0.075, clay, -1.08 + i * 0.19, 1.13, 0.12, g, 10); cyl(0.07, 0.07, 0.02, 0xf0d090, -1.08 + i * 0.19, 1.17, 0.12, g, 10); }
+    ball(0.17, 0xf0ead8, 0.28, 1.13, 0.3, g, 0.5); // tô bột
+    box(0.44, 0.05, 0.32, wood, 0.88, 1.1, 0.32, g, false);
+    for(let i = 0; i < 12; i++) ball(0.032, 0xf5f2ea, 0.74 + (i % 4) * 0.1, 1.15, 0.24 + Math.floor(i / 4) * 0.09, g, 0.9); // khay trứng cút
+    cyl(0.3, 0.3, 0.02, 0x4d7340, 0.15, 1.11, 0.8, g, 16); // đĩa lá
+    for(let i = 0; i < 4; i++) cyl(0.075, 0.075, 0.02, 0xf0d090, -0.02 + (i % 2) * 0.17, 1.14, 0.72 + Math.floor(i / 2) * 0.17, g, 10);
+  }
+  if(def.id === 'caphe'){ // khay 4 phin nhỏ giọt + bao hạt + lon sữa
+    box(0.88, 0.04, 0.42, wood, -0.52, 1.11, 0.22, g, false);
+    for(let i = 0; i < 4; i++){
+      cyl(0.048, 0.038, 0.1, 0xf5f2ea, -0.82 + i * 0.21, 1.17, 0.22, g, 8);
+      const ph = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.05, 0.085, 10), steel);
+      ph.position.set(-0.82 + i * 0.21, 1.28, 0.22); g.add(ph);
+      cyl(0.066, 0.066, 0.015, 0x8a8f94, -0.82 + i * 0.21, 1.33, 0.22, g, 10);
+    }
+    ball(0.3, 0x9a7a4e, 1.52, 0.32, 0.62, g, 0.62); // bao hạt cà phê ở chân quầy
+    for(let i = 0; i < 5; i++) ball(0.028, 0x4a3220, 1.38 + (i % 3) * 0.07, 0.56, 0.55 + Math.floor(i / 3) * 0.07, g, 0.8);
+    for(let i = 0; i < 3; i++){ cyl(0.055, 0.055, 0.11, 0xf0ead8, 0.68 + i * 0.15, 1.19, -0.12, g, 8); cyl(0.056, 0.056, 0.03, 0xc22e22, 0.68 + i * 0.15, 1.22, -0.12, g, 8); }
+  }
+  if(def.id === 'supcua'){ // nồi lớn hé nắp + 2 chồng bát + 3 bát topping mép quầy
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.35, 0.44, 14), steel);
+    pot.position.set(-0.52, 1.31, 0.02); g.add(pot);
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.37, 0.07, 14), steel);
+    lid.position.set(-0.38, 1.56, 0.02); lid.rotation.z = -0.35; g.add(lid);
+    for(const sx of [0.5, 0.92]) for(let i = 0; i < 4; i++) cyl(0.11, 0.085, 0.05, 0xf0ead8, sx, 1.16 + i * 0.048, 0.32, g, 10);
+    const tops = [0xe8c33c, 0xf0ead8, 0xd8542e];
+    for(let i = 0; i < 3; i++){ cyl(0.095, 0.075, 0.06, 0x8a6a42, -0.2 + i * 0.3, 1.15, 0.82, g, 10); ball(0.075, tops[i], -0.2 + i * 0.3, 1.19, 0.82, g, 0.5); }
+  }
+  if(def.id === 'dau'){ // bậc 3 tầng dâu + thùng bơ + ly kem bơ
+    for(let s = 0; s < 3; s++) box(1.15 - s * 0.18, 0.16, 0.34, wood, 0.72, 1.16 + s * 0.17, -0.18 + s * 0.05, g, false);
+    for(let s = 0; s < 3; s++) for(let i = 0; i < 4 - (s === 2 ? 1 : 0); i++)
+      ball(0.05, 0xd8342a, 0.32 + i * 0.26, 1.28 + s * 0.17, -0.13 + s * 0.05, g, 0.95);
+    box(0.56, 0.3, 0.42, wood, -1.05, 1.05, 0.3, g, false);
+    for(let i = 0; i < 6; i++) ball(0.105, 0x51783c, -1.22 + (i % 3) * 0.18, 1.26, 0.22 + Math.floor(i / 3) * 0.17, g, 0.85); // bơ 034
+    const kc = [0xf5e6b8, 0xe88ac0, 0xbfe3c0, 0xf5e6b8];
+    for(let i = 0; i < 4; i++) cyl(0.055, 0.042, 0.12, kc[i], -0.12 + i * 0.17, 1.19, 0.85, g, 8); // ly kem bơ mép quầy
+  }
+}
+// V4.9 MỤC 7: cột hơi SPRITE mềm 2 lớp cho sạp nóng mẫu (thay cảm giác points rời)
+const steamSprites = [];
+function addSteamSprites(x, y, z){
+  for(let i = 0; i < 3; i++){
+    const m = new THREE.SpriteMaterial({ map:haloTex, color:0xf7f2e6, transparent:true, opacity:0, depthWrite:false });
+    const sp = new THREE.Sprite(m);
+    sp.position.set(x, y, z); sp.scale.set(0.8, 0.8, 1);
+    worldGroup.add(sp);
+    steamSprites.push({ sp, x, y, z, ph: i / 3 });
+  }
+}
 function buildStall(def){
   const g = cloneAsset('stall');
   // V4.7: sạp mặt tiền đông (sữa/cà phê/yaourt, x 21..33 z 7..12.2) đứng DƯỚI hành lang sân thượng —
@@ -1263,9 +1689,12 @@ function buildStall(def){
   g.rotation.y = def.rotY || 0;
   worldGroup.add(g);
   recolor(g, 'Awning', DIST[def.district].awn);
+  // V5.1 (chỉ thị mái sạp 14:16): MỌI sạp đều có bạt SỌC (dấu ấn thật research/11) —
+  // biến thể sọc theo hash id để các sạp kề nhau không trùng hệt
   const stripeVar = def.stripes !== undefined ? def.stripes
-    : (def.district === 'produce' ? 1 : def.district === 'wool' ? 2 : (def.nightOnly ? 0 : -1));
-  if(stripeVar >= 0){
+    : (def.district === 'produce' ? 1 : def.district === 'wool' ? 2
+      : (def.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 3));
+  if(stripeVar >= 0 && def.roof !== 'tin'){
     const awnMesh = g.getObjectByName('Awning');
     if(awnMesh) awnMesh.material = stripeMat(stripeVar);
   }
@@ -1274,6 +1703,15 @@ function buildStall(def){
     if(o.name.indexOf('Pot') === 0) o.visible = !!def.smoke;
     else if(o.name.indexOf('Grill') === 0) o.visible = def.prop === 'grill';
     else if(o.name.indexOf('Phin') === 0) o.visible = def.prop === 'phin';
+    // V5.1 BLENDER-FIRST: hàng tĩnh + ô dù + mái tôn dựng trong stall.glb
+    else if(o.name === 'SkewerTrays') o.visible = def.id === 'xien';
+    else if(o.name === 'CheCups') o.visible = def.id === 'che';
+    else if(o.name === 'YaourtTower') o.visible = def.id === 'yaourt';
+    else if(o.name === 'BowlStack') o.visible = def.id === 'dauhu' || def.id === 'banhuot' || def.id === 'suadau';
+    else if(o.name === 'CornGrill') o.visible = def.id === 'khoai' || def.id === 'khoainuong';
+    else if(o.name === 'Umbrella') o.visible = !!def.umb;
+    else if(o.name === 'TinRoof') o.visible = def.roof === 'tin';
+    else if(o.name === 'Awning' || o.name === 'Awning2') o.visible = def.roof !== 'tin';
   });
   const lanterns = []; let lanternMat = null;
   g.traverse(o => {
@@ -1286,6 +1724,11 @@ function buildStall(def){
   const s = makeStallSign(def);
   s.position.set(0, 2.5, 1.03); g.add(s);
   box(4.34, 1.08, 0.07, 0x4c3423, 0, 2.5, 0.98, g, false);
+  { // V4.9 MỤC 7: thẻ giá cắm mép quầy phải + cọc giữ
+    const pc = makePriceCard(def.menu && def.menu[0] ? def.menu[0].price : 15);
+    pc.position.set(1.42, 1.34, 1.04); pc.rotation.x = -0.22; g.add(pc);
+    box(0.03, 0.3, 0.03, 0x6a5136, 1.42, 1.12, 1.0, g, false);
+  }
   if(def.smoke){
     const th = def.rotY || 0, lx = -0.9, lz = 0.15;
     addSmoke(def.x + lx*Math.cos(th) + lz*Math.sin(th), baseY + 1.7, def.z - lx*Math.sin(th) + lz*Math.cos(th));
@@ -1297,6 +1740,10 @@ function buildStall(def){
   if(def.special && (def.smoke || def.steam)){
     const th = def.rotY || 0, lx = def.smoke ? -0.9 : 0.95, lz = def.smoke ? 0.15 : -0.42;
     addSteamBig(def.x + lx*Math.cos(th) + lz*Math.sin(th), baseY + 1.8, def.z - lx*Math.sin(th) + lz*Math.cos(th), 3.4);
+  }
+  if(['sua','supcua','banhcan','banhtrang','suadau','che','dauhu','banhuot'].includes(def.id)){ // V4.9 MỤC 7: hơi sprite tại điểm nấu
+    const th = def.rotY || 0, lx = def.smoke ? -0.9 : 0.95, lz = def.smoke ? 0.15 : -0.42;
+    addSteamSprites(def.x + lx*Math.cos(th) + lz*Math.sin(th), baseY + 1.75, def.z - lx*Math.sin(th) + lz*Math.cos(th));
   }
   {
     const bulbMat = new THREE.MeshBasicMaterial({ color:0x9a958a });
@@ -1316,7 +1763,11 @@ function buildStall(def){
   glowDisc(def.x + Math.sin(def.rotY || 0) * 2.4, def.z + Math.cos(def.rotY || 0) * 2.4, 3.8);
   decorateStall(g, def);
   const chotFx = enhanceStallChot(g, def);
-  const vendor = makePerson(def.shirt || 0x6a7a68, 0x4a4640, 'nonla');
+  if(HERO_STALLS.has(def.id)) designHeroStall(g, def); // V4.9 MỤC 7: 6 sạp mẫu
+  const _vlook = rollLook('vendor', def.shirt || 0x6a7a68); // V5.1: tiểu thương đa dạng (len sọc/tạp dề/beanie — nón lá chỉ ~20%)
+  const vendor = makePerson(_vlook.shirt, _vlook.pants, _vlook.hat, _vlook.skin, _vlook.hatColor);
+  if(_vlook.scarf){ const _vsc = vendor.getObjectByName('Scarf'); if(_vsc){ _vsc.visible = true; recolor(vendor, 'Scarf', pickA([0xd9a62e, 0xa62b25, 0x3a6bc2, 0x8668c4, 0xd97a30])); } } // màu khăn để literal: SCARF_COLS khai báo sau điểm build sạp (TDZ)
+  applyLook(vendor, _vlook, 'vendor');
   vendor.position.set(0.4, 0, -1.15); vendor.rotation.y = 0;
   g.add(vendor);
   if(chotFx.pourStream){
@@ -1328,6 +1779,37 @@ function buildStall(def){
     cyl(0.012, 0.012, 0.07, 0x6a7074, 0, 0.12, 0, kettle, 6);
     kettle.position.set(0.30, 1.02, 0.36);
     vendor.add(kettle);
+  } else { // V4.9 MỤC 7: đạo cụ cầm tay theo hoạt ảnh nghề (trước đây chỉ sạp rót có ấm, còn lại tay không)
+    const anim = ANIM_BY_ID[def.id] || ANIM_BY_DIST[def.district] || 'idle';
+    const prop = new THREE.Group();
+    const steel = new THREE.MeshStandardMaterial({ color:0xb9c0c4, roughness:0.35, metalness:0.7 });
+    if(anim === 'flip'){ // xẻng lật bánh
+      const h = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.24, 6), steel); h.rotation.x = 1.1; prop.add(h);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.015, 0.2), steel); b.position.set(0, -0.1, 0.13); b.rotation.x = 0.5; prop.add(b);
+    } else if(anim === 'stir'){ // muôi khuấy dài
+      const h = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.34, 6), steel); h.rotation.x = 0.9; prop.add(h);
+      const cup = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), steel); cup.scale.y = 0.5; cup.position.set(0, -0.12, 0.16); prop.add(cup);
+    } else if(anim === 'scoop' || anim === 'pour'){ // muỗng múc
+      const h = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.22, 6), steel); h.rotation.x = 1.0; prop.add(h);
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), steel); b.scale.y = 0.45; b.position.set(0, -0.07, 0.11); prop.add(b);
+    } else if(anim === 'turn'){ // kẹp gắp nướng
+      for(const dx of [-0.025, 0.025]){ const t = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.3, 0.035), steel); t.position.set(dx, -0.05, 0.08); t.rotation.x = 0.7; prop.add(t); }
+    } else if(anim === 'weigh'){ // cân tay: đòn + sợi + đĩa
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.4, 6), steel); beam.rotation.z = Math.PI / 2 - 0.12; prop.add(beam);
+      const str = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.12, 4), steel); str.position.set(0.2, -0.07, 0); prop.add(str);
+      const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.025, 10), steel); pan.position.set(0.2, -0.14, 0); prop.add(pan);
+    } else if(anim === 'pack'){ // túi giấy gói hàng
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.1), new THREE.MeshStandardMaterial({ color:0xc9a06a, roughness:0.95 }));
+      bag.position.set(0, -0.05, 0.05); prop.add(bag);
+    } else if(anim === 'bouquet'){ // bó hoa nhỏ cầm tay
+      const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.09, 0.24, 8), new THREE.MeshStandardMaterial({ color:0xf0ead8, roughness:0.9 }));
+      cone.rotation.x = 2.6; prop.add(cone);
+      for(let i = 0; i < 3; i++){ const f = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshStandardMaterial({ color:[0xd84a35, 0xe88ac0, 0xe8c33c][i], roughness:0.8 })); f.position.set((i - 1) * 0.07, 0.1, 0.06); prop.add(f); }
+    } else if(anim === 'arrange'){ // khăn/áo len cầm tay
+      const cl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.26, 0.04), new THREE.MeshStandardMaterial({ color:def.shirt || 0x8c6a3a, roughness:0.95 }));
+      cl.position.set(0, -0.04, 0.05); cl.rotation.x = 0.4; prop.add(cl);
+    }
+    if(prop.children.length){ prop.position.set(0.40, 1.0, 0.38); vendor.add(prop); }
   }
   solid(def.x, def.z, 1.9, 1.25, !!def.nightOnly);
   const front = { x: def.x + Math.sin(def.rotY||0) * 2.1, z: def.z + Math.cos(def.rotY||0) * 2.1 };
@@ -1343,7 +1825,7 @@ const STALL_DEFS = [
   { id:'banhtrang', name:'BÁNH TRÁNG NƯỚNG', district:F, x:-36, z:10.15, rotY:Math.PI, smoke:true, prop:'grill', special:true, shirt:0x7a4a2e, menu:[
     { name:'Bánh tráng nướng trứng', price:20, buff:'leg', sec:60, type:'food', desc:'Pizza Đà Lạt — trứng, hành, tép khô' },
     { name:'Bánh tráng nướng phô mai', price:26, buff:'leg', sec:75, type:'food', desc:'Thêm phô mai kéo sợi' } ] },
-  { id:'khoai', name:'KHOAI & BẮP NƯỚNG', district:F, x:-31, z:10.15, rotY:Math.PI, smoke:true, special:true, shirt:0x96683f, menu:[
+  { id:'khoai', name:'KHOAI & BẮP NƯỚNG', district:F, x:-31, z:10.15, rotY:Math.PI, smoke:true, special:true, roof:'tin', shirt:0x96683f, menu:[
     { name:'Khoai lang mật nướng', price:12, buff:'warm', sec:60, type:'food', desc:'Nướng than, thơm mật' },
     { name:'Bắp nướng mỡ hành', price:14, buff:'warm', sec:60, type:'food', desc:'Bắp nếp dẻo, mỡ hành béo' } ] },
   { id:'banhcan', name:'BÁNH CĂN', district:F, x:-26, z:10.15, rotY:Math.PI, smoke:true, shirt:0x6b8f3e, menu:[
@@ -1360,7 +1842,7 @@ const STALL_DEFS = [
     { name:'Cà phê phin đen', price:18, buff:'alert', sec:90, type:'drink', desc:'Arabica Cầu Đất, chờ nhỏ giọt' },
     { name:'Cacao nóng', price:18, buff:'alert', sec:70, type:'drink', desc:'Cacao nguyên chất, ít ngọt' },
     { name:'Cà phê sữa nóng', price:20, buff:'alert', sec:80, type:'drink', desc:'Phin sữa đặc kiểu xưa' } ] },
-  { id:'yaourt', name:'YAOURT & SINH TỐ', district:D, x:32, z:10.15, rotY:Math.PI, shirt:0x35507a, menu:[
+  { id:'yaourt', name:'YAOURT & SINH TỐ', district:D, x:32, z:10.15, rotY:Math.PI, umb:true, shirt:0x35507a, menu:[
     { name:'Yaourt phô mai', price:14, buff:'alert', sec:40, type:'food', desc:'Đặc sản yaourt Đà Lạt' },
     { name:'Sinh tố bơ', price:22, buff:'alert', sec:50, type:'drink', desc:'Bơ sáp béo ngậy' } ] },
   { id:'len1', name:'LEN BÀ BẢY', district:W, x:-24, z:15, rotY:0, shirt:0xc95d7e, menu:[
@@ -1380,7 +1862,7 @@ const STALL_DEFS = [
   { id:'khoainuong', name:'KHOAI & BẮP NƯỚNG', district:F, x:6.2, z:-21.6, rotY:Math.PI/2, smoke:true, shirt:0xd97c2e, menu:[
     { name:'Khoai lang nướng mật', price:15, buff:'warm', sec:50, type:'food', desc:'Nướng than ngay chiếu nghỉ — thơm lừng cả dốc' },
     { name:'Bắp nướng mỡ hành', price:12, buff:'warm', sec:45, type:'food', desc:'Bắp nếp dẻo, mỡ hành béo' } ] },
-  { id:'suadau', name:'SỮA ĐẬU NÀNH NÓNG', district:D, x:6.2, z:-10.4, rotY:Math.PI/2, smoke:true, shirt:0xe8c87e, menu:[
+  { id:'suadau', name:'SỮA ĐẬU NÀNH NÓNG', district:D, x:6.2, z:-10.4, rotY:Math.PI/2, smoke:true, umb:true, shirt:0xe8c87e, menu:[
     { name:'Sữa đậu nành nóng', price:10, buff:'warm', sec:50, type:'drink', desc:'Nóng hổi giữa dốc — ấm bụng đêm Đà Lạt' },
     { name:'Đậu hũ nước đường gừng', price:12, buff:'warm', sec:50, type:'drink', desc:'Mềm mịn, gừng cay nhẹ' } ] },
   { id:'hoa', name:'HOA TƯƠI ĐÀ LẠT', district:P, x:37.5, z:10.15, rotY:Math.PI, shirt:0x8668c4, menu:[
@@ -1402,11 +1884,11 @@ const STALL_DEFS = [
   { id:'xien', name:'XIÊN NƯỚNG ĐÊM', district:F, x:-12, z:3, rotY:0, smoke:true, nightOnly:true, shirt:0x7a4a2e, menu:[
     { name:'Xiên thịt nướng', price:18, buff:'warm', sec:50, type:'food', desc:'Nướng than hoa, cay nhẹ' },
     { name:'Chân gà nướng', price:22, buff:'leg', sec:50, type:'food', desc:'Giòn, chấm muối ớt xanh' } ] },
-  { id:'che', name:'CHÈ NÓNG ĐÊM', district:D, x:6, z:3, rotY:0, smoke:true, nightOnly:true, shirt:0xe8c87e, menu:[
+  { id:'che', name:'CHÈ NÓNG ĐÊM', district:D, x:6, z:3, rotY:0, smoke:true, nightOnly:true, umb:true, shirt:0xe8c87e, menu:[
     { name:'Chè trôi nước', price:14, buff:'warm', sec:50, type:'drink', desc:'Gừng nóng, vừng thơm' } ] },
-  { id:'tron', name:'BÁNH TRÁNG TRỘN', district:F, x:30, z:3, rotY:0, nightOnly:true, shirt:0x6b8f3e, menu:[
+  { id:'tron', name:'BÁNH TRÁNG TRỘN', district:F, x:30, z:3, rotY:0, nightOnly:true, roof:'tin', shirt:0x6b8f3e, menu:[
     { name:'Bánh tráng trộn', price:18, buff:'leg', sec:45, type:'food', desc:'Xoài, khô bò, rau răm' } ] },
-  { id:'dauhu', name:'ĐẬU HŨ NÓNG', district:D, x:-38, z:3, rotY:0, smoke:true, nightOnly:true, shirt:0xe8c87e, menu:[
+  { id:'dauhu', name:'ĐẬU HŨ NÓNG', district:D, x:-38, z:3, rotY:0, smoke:true, nightOnly:true, umb:true, shirt:0xe8c87e, menu:[
     { name:'Đậu hũ nước gừng', price:12, buff:'warm', sec:55, type:'drink', desc:'Mềm mịn, gừng ấm' } ] },
   { id:'banhuot', name:'BÁNH ƯỚT LÒNG GÀ', district:F, x:-56, z:10.15, rotY:Math.PI, smoke:true, special:true, shirt:0xc95d7e, menu:[
     { name:'Bánh ướt lòng gà', price:25, buff:'leg', sec:60, type:'food', desc:'Bánh ướt nóng, lòng gà, rau thơm — đặc sản phố chợ' },
@@ -1437,6 +1919,12 @@ for(const def of STALL_DEFS) buildStall(def);
     for(const px of [-2.05, 2.05]) box(0.09, 1.9, 0.09, 0x5a4632, px, 0.95, 0.55, g);
     for(let gi = 0; gi < 3; gi++)
       ball(0.21, GOODS[(qn + gi) % GOODS.length], -1.1 + gi * 1.1, 1.12, 0.1, g, 0.75);
+    if(qn % 3 === 0){ // V4.9 MỤC 7: khay hàng NGHIÊNG cho 1/3 số quầy (plan/A4)
+      for(const tx of [-0.95, 0.95]){
+        const tr = box(0.95, 0.05, 0.62, 0x74522f, tx, 1.24, 0.42, g, false); tr.rotation.x = -0.34;
+        for(let ti = 0; ti < 3; ti++) ball(0.1, GOODS[(qn + ti + 2) % GOODS.length], tx - 0.26 + ti * 0.26, 1.36, 0.36, g, 0.8);
+      }
+    }
     const sg = signMesh('QUẦY SỐ ' + qn, 3.6, 0.95, '#f3e3c2', '#b02020', CATS[qn % CATS.length]);
     sg.position.set(0, 2.55, 0.62); g.add(sg);
   }
@@ -1446,6 +1934,24 @@ for(const def of STALL_DEFS) buildStall(def);
     new THREE.MeshStandardMaterial({ color:0x8fb6c9, transparent:true, opacity:0.4, roughness:0.15, metalness:0.1 }));
   glass.position.set(0, 4.35, 26.55); worldGroup.add(glass);
   box(56, 0.09, 0.09, 0x6a4a30, 0, 4.95, 26.55, worldGroup);
+  // V4.9 MỤC 7: dải len GRADIENT treo mặt lan can lửng + dây bóng dọc lan can + sàn kim cương (plan/A4 — đa dạng chiều dọc)
+  const knitCols = [0xb03a30, 0xe07b2a, 0xe8c33c, 0x3f7a44, 0x2e6da4, 0x74566b, 0xd66a8c, 0x8c6a3a];
+  for(const kx of [-19.5, 0, 19.5]) for(let i = 0; i < 8; i++)
+    box(0.36, 0.78, 0.05, knitCols[i], kx - 1.4 + i * 0.4, 4.42, 26.42, worldGroup, false);
+  box(56, 0.03, 0.03, 0x2e2a24, 0, 5.14, 26.4, worldGroup, false);
+  const railBulbMat = new THREE.MeshBasicMaterial({ color:0xffc46b });
+  for(let i = 0; i < 21; i++){
+    const bx = -27 + i * 2.7;
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), railBulbMat);
+    bulb.position.set(bx, 5.02 - Math.sin(i * 2.4) * 0.05, 26.4); worldGroup.add(bulb);
+  }
+  { const c = document.createElement('canvas'); c.width = c.height = 256; const g2 = c.getContext('2d');
+    g2.fillStyle = '#7a7268'; g2.fillRect(0, 0, 256, 256);
+    g2.fillStyle = '#8d8478';
+    for(let ry = 0; ry < 4; ry++) for(let rx = 0; rx < 4; rx++){ g2.save(); g2.translate(rx * 64 + 32, ry * 64 + 32); g2.rotate(Math.PI / 4); g2.fillRect(-21, -21, 42, 42); g2.restore(); }
+    const dt = new THREE.CanvasTexture(c); dt.wrapS = dt.wrapT = THREE.RepeatWrapping; dt.repeat.set(11, 3); dt.colorSpace = THREE.SRGBColorSpace;
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(58, 15.6), new THREE.MeshStandardMaterial({ map:dt, roughness:1, polygonOffset:true, polygonOffsetFactor:-2 }));
+    fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.56, 20.2); fl.receiveShadow = true; worldGroup.add(fl); }
 }
 { // V4.7: người mua đứng trước ~80% quầy trang trí trong nhà lồng (đông như ảnh thật 16/19)
   const inner2 = stalls.filter(s => s.x >= -34 && s.x <= 34 && s.z >= 12 && s.z <= 28);
@@ -1472,7 +1978,13 @@ const wanderers = [];
 const _ranks = Array.from({length: 40}, (_, i) => i / 40).sort(() => Math.random() - 0.5);
 function routeY(p){ return p.length > 2 ? p[2] : groundH(p[0], p[1]); }
 function addWanderer(route, shirt, opts={}){
-  const p = makePerson(shirt, 0x4a4640, opts.hat || 'cap');
+  const look = rollLook('wanderer', shirt); // V5.1: phom/mũ/quần/tông da đa dạng (quần hết 100% một màu)
+  if(opts.hat === 'nonla'){ look.hat = 'nonla'; look.hatColor = undefined; }
+  else if(opts.hat === 'beanie' && look.hat === 'none'){ look.hat = 'beanie'; look.hatColor = pickA(NPC_BEANIE); }
+  else if(opts.hat === 'none' && look.form !== 'hoodie') look.hat = 'none';
+  const p = makePerson(look.shirt, look.pants, look.hat, look.skin, look.hatColor);
+  if(look.scarf){ const sc = p.getObjectByName('Scarf'); if(sc){ sc.visible = true; recolor(p, 'Scarf', pickA([0xd9a62e, 0xa62b25, 0x3a6bc2, 0x8668c4, 0xd97a30])); } }
+  applyLook(p, look, 'wanderer');
   worldGroup.add(p);
   const jx = (Math.random() - 0.5) * 1.4, jz = (Math.random() - 0.5) * 1.4;
   const rt = route.map(pt => [pt[0] + jx, pt[1] + jz, pt[2]]);
@@ -1489,7 +2001,10 @@ function addWanderer(route, shirt, opts={}){
   p.position.set(st[0], routeY(st), st[1]);
   wanderers.push(w); npcZoneOf(st[0], st[1]); return w;
 }
-const RB = [[-14.5,-6,0],[-17.3,0.7,0],[-24,3.5,0],[-30.7,0.7,0],[-33.5,-6,0],[-30.7,-12.7,0],[-24,-15.5,0],[-17.3,-12.7,0]]; // vòng bùng binh (y=0 phẳng)
+// V4.8: vòng đi bộ quanh đảo R10.5 — cung nam/tây/bắc (trên thềm phẳng mới)
+// rồi QUAY LẠI theo cung; không khép vòng qua phía bắc (đảo tựa sườn đồi).
+const RB_ARC = [[-12.9,-0.8],[-15.5,3.6],[-21,6.1],[-28,6.0],[-33.5,2.6],[-36.2,-3.2],[-34.8,-10.2],[-32.3,-14.2]];
+const RB = RB_ARC.concat(RB_ARC.slice(0, -1).reverse());
 addWanderer([[-40,-1],[30,-1],[38,5],[12,10.5],[-14,10.5],[-38,5]], 0x5f7a8c, { speed:1.5 });
 addWanderer([[30,6],[-30,6],[-36,-2],[24,-1]], 0x8c6a5a, { speed:1.2, hat:'none' });
 addWanderer([[-10,16],[-28,20],[28,20],[10,24]], 0x6a7a68, { speed:1.1, hat:'nonla', sched:'day' });
@@ -1559,12 +2074,16 @@ const CROWD_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26];
 const CROWD_HATS = ['beanie','beanie','cap','none','beanie','cap','nonla'];
 const SCARF_COLS = [0xd9a62e, 0xa62b25, 0x3a6bc2, 0x8668c4, 0xd97a30]; // lấy từ bảng 14 màu
 function pickA(a){ return a[Math.floor(Math.random() * a.length)]; }
-function crowdPerson(scarfChance){
-  const g = makePerson(pickA(CROWD_SHIRTS), pickA(CROWD_PANTS), pickA(CROWD_HATS));
-  if(Math.random() < (scarfChance === undefined ? 0.35 : scarfChance)){
+function crowdPerson(scarfChance, role, forceChild){ // V5.1: dress theo vai trò (research/18) — phom/mũ/khăn/tông da/scale/vật cầm
+  role = role || 'crowd';
+  const look = rollLook(role);
+  if(forceChild) look.child = true;
+  const g = makePerson(look.shirt, look.pants, look.hat, look.skin, look.hatColor);
+  if(Math.random() < (scarfChance === undefined ? (look.scarf ? 1 : 0) : scarfChance)){
     const sc = g.getObjectByName('Scarf');
     if(sc){ sc.visible = true; recolor(g, 'Scarf', pickA(SCARF_COLS)); }
   }
+  applyLook(g, look, role);
   return g;
 }
 let _staticSeq = 0;
@@ -1603,13 +2122,15 @@ const STAIR_SITTERS = [
 ];
 for(const [sx, sz, sched] of STAIR_SITTERS){
   const y = stoolWorld(sx, sz, Math.random() < 0.75 ? 0x2456a6 : 0xc23b2e);
-  const p = crowdPerson(0.55);
+  const p = crowdPerson(0.55, 'sitter');
   p.position.set(sx, y + 0.30, sz);
   p.rotation.y = (Math.random() - 0.5) * 0.44;
   const L = p.userData.limbs;
   if(L){ L.lLeg.rotation.x = -1.45; L.rLeg.rotation.x = -1.45; L.rArm.rotation.x = -1.05; L.lArm.rotation.x = -0.75; }
   addStatic(p, sched, 'sit');
-  cyl(0.04, 0.035, 0.09, 0xf0ead8, sx + 0.32, y + 0.05, sz + 0.38, worldGroup, 8); // ly đồ uống trên bậc
+  cyl(0.05, 0.042, 0.13, 0xf0ead8, sx + 0.32, y + 0.065, sz + 0.38, worldGroup, 8); // V5.1: ly trên bậc LỚN hơn (cỡ thật r0.06 h0.13)
+  cyl(0.008, 0.008, 0.10, 0xd8342a, sx + 0.34, y + 0.15, sz + 0.38, worldGroup, 5); // ống hút đỏ
+  if(Math.random() < 0.4) box(0.24, 0.30, 0.15, pickA([0xe8c832, 0xf0ead8]), sx - 0.34, y + 0.15, sz + 0.30, worldGroup, false); // túi nilon đồ ăn cạnh người
 }
 const QUEUES = [ // V4.7: hàng chờ dày hơn (34 -> 49 người)
   { id:'banhtrang', n:4, dir:'out', sp:0.48 }, { id:'khoai', n:3, dir:'out', sp:0.48 },
@@ -1631,7 +2152,8 @@ for(const q of QUEUES){
     } else { // sạp đêm: hàng dọc theo mặt quầy (tránh làn xe, đúng cảnh chen ngang)
       px = s.front.x + (i - (q.n - 1) / 2) * q.sp; pz = s.front.z - out.z * 0.1;
     }
-    const p = crowdPerson(0.4);
+    const p = crowdPerson(0.4, 'queue');
+    if(i === q.n - 1 && Math.random() < 0.6) npcHoldCup(p); // V5.1: người cuối hàng hay cầm sẵn ly (research/18)
     p.position.set(px, s.baseY, pz); // V4.7: bám nền của sạp (an toàn ở dải dưới hành lang)
     p.rotation.y = Math.atan2(-out.x, -out.z) + (Math.random() - 0.5) * 0.24;
     addStatic(p, s.nightOnly ? 'night' : 'all', 'queue');
@@ -1665,7 +2187,7 @@ for(const q of QUEUES){
     const sg = signMesh(ss.sign, 1.7, 0.42, '#7a1f1a', '#ffd98a');
     sg.position.set(ss.x + 0.3 * ss.flip, y + 2.02, ss.z);
     sg.rotation.y = ss.flip > 0 ? Math.PI/2 : -Math.PI/2; worldGroup.add(sg);
-    const v = crowdPerson(0.5);
+    const v = crowdPerson(0.5, 'vendor');
     v.position.set(ss.x + 1.15 * ss.flip, y, ss.z + 0.3);
     v.rotation.y = ss.flip > 0 ? -Math.PI/2 : Math.PI/2;
     addStatic(v, 'night', 'vendor');
@@ -1755,8 +2277,8 @@ groundVendor(-15.2, -6.5, 'night'); groundVendor(-16.8, -3.8, 'night');
 groundVendor(12.7, -27, 'night'); groundVendor(12.9, -15, 'night'); groundVendor(12.6, -6, 'night');
 // V4.7: hàng rong thêm ở hai đầu đường vào rộng
 groundVendor(-35, 12.9, 'night'); groundVendor(-70, -8.6, 'night');
-{ // V4.7: 8 người đứng quanh VÒNG BÙNG BINH (ngắm tượng đài/đợi bạn — ảnh thật 05) + 8 người ngắm hàng trước dãy sạp mặt tiền
-  for(const [px, pz] of [[-14.6,-6],[-17.4,0.7],[-24,3.4],[-30.7,0.7],[-33.4,-6],[-30.7,-12.7],[-24,-15.4],[-17.4,-12.7]]){
+{ // V4.8: 8 người đứng quanh VÒNG BÙNG BINH R10.5 (ngắm tượng đài/đợi bạn — ảnh thật 05) + 8 người ngắm hàng trước dãy sạp mặt tiền
+  for(const [px, pz] of [[-12.9,-3.4],[-14.8,1.6],[-19.5,5.6],[-26,6.2],[-31.5,3.4],[-35.6,-2.2],[-34.8,-9.4],[-32.2,-13.8]]){
     const p = crowdPerson(0.45);
     p.position.set(px, groundH(px, pz), pz);
     p.rotation.y = Math.atan2(-24 - px, -6 - pz) + (Math.random() - 0.5) * 0.5;
@@ -1769,8 +2291,29 @@ groundVendor(-35, 12.9, 'night'); groundVendor(-70, -8.6, 'night');
     addStatic(p, bx > 30 ? 'all' : 'night', 'stand');
   }
 }
-{ // V4.7: 3 người ngồi ghế nhựa trước dãy nhà BẮC (mặt tiền mới z=-15.2/-16.2), quay ra đường ngắm chợ
-  for(const [sx, sz] of [[-62, -14.4], [-52, -15.4], [-42, -14.4]]){
+{ // V4.8: dồn thêm người vào các KHUNG NHÌN CHUẨN (research/17 điểm 10):
+  // hàng đứng trước mặt tiền + trước đảo phía nam + cụm ở đầu đường vào
+  for(const [px, pz, sc] of [[-30,7.6,'night'],[-18,8.1,'all'],[-4,7.6,'night'],[10,8.1,'all'],[22,7.6,'night'],[32,8.1,'all'],[-19,7.9,'all'],[-29,7.9,'night']]){
+    const p = crowdPerson(0.45);
+    p.position.set(px, groundH(px, pz), pz);
+    p.rotation.y = (Math.random() - 0.5) * 0.5; // quay mặt về phía sạp/mặt tiền
+    addStatic(p, sc, 'stand');
+  }
+  for(const [cx, cz, sc, n] of [[-70,6.5,'night',3],[-63,-4,'all',2],[-56,7.5,'night',2]]){
+    for(let i = 0; i < n; i++){
+      const a = i / n * Math.PI * 2 + cx * 0.7;
+      const px = cx + Math.cos(a) * 0.55, pz = cz + Math.sin(a) * 0.55;
+      const p = crowdPerson(0.45);
+      p.position.set(px, groundH(px, pz), pz);
+      p.rotation.y = Math.atan2(cx - px, cz - pz);
+      addStatic(p, sc, 'chat');
+    }
+  }
+}
+addWanderer([[-40,9.3],[40,9.3],[42,6],[0,5.6],[-42,6.2]], 0xc95d7e, { speed:1.15, hat:'beanie', sched:'night' }); // V4.8: dạo trước mặt tiền
+addWanderer([[-78,4],[-58,5.5],[-40,4],[-30,6.5],[-40,7.5],[-58,7],[-78,6]], 0x2e6da4, { speed:1.25, hat:'cap', sched:'night' }); // V4.8: dạo đường vào <-> đảo
+{ // V4.8: 3 người ngồi ghế nhựa trước dãy nhà BẮC mới (mặt tiền z=-12.4/-13.2), quay ra đường ngắm chợ
+  for(const [sx, sz] of [[-62, -11.6], [-52, -12.4], [-42, -11.6]]){
     const y = stoolWorld(sx, sz, Math.random() < 0.6 ? 0x2456a6 : 0xc23b2e);
     const p = crowdPerson(0.5);
     p.position.set(sx, y + 0.30, sz);
@@ -1910,12 +2453,13 @@ function prepVehicle(g, wheels, withRider){
   }
   return { wheels, coneMat };
 }
-function makeMoto(color, withRider){
+const RIDER_SHIRTS = [0xf0ead8, 0xe8e2d4, 0x2e2a26, 0x232120].concat(CROWD_SHIRTS); // V5.2: người cưỡi theo bảng đám đông v5.1 (trắng kem + đen áp đảo) — mũ bảo hiểm bắt buộc (research/19 mục 2.4)
+function makeMoto(color, withRider, riderShirt){
   const g = MOTO_TPL.clone(true);
   g.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
   recolor(g, 'BikeBody', color);
   if(withRider !== false){
-    recolor(g, 'RiderShirt', pickA(CROWD_SHIRTS));
+    recolor(g, 'RiderShirt', riderShirt !== undefined ? riderShirt : pickA(RIDER_SHIRTS));
     recolor(g, 'Helmet', pickA([0xd23b2e, 0xf0ead8, 0x2e6da4, 0xe8a13c, 0x30303a]));
   }
   const info = prepVehicle(g, [g.getObjectByName('WheelF'), g.getObjectByName('WheelR')], withRider !== false);
@@ -1930,17 +2474,216 @@ function makeCar(color){
   worldGroup.add(g);
   return Object.assign({ g }, info);
 }
-for(let i = 0; i < 5; i++){
-  const v = makeMoto(pickA(BIKE_COLS));
-  vehicles.push(Object.assign(v, { kind:'ring', cx:-24, cz:-6, r:10.6, a: i / 5 * Math.PI * 2 + 0.4, speed: 5.2 + Math.random() * 1.6, wr:0.33 }));
+// ================= V5.2 P2: HỆ TUYẾN XE (research/19 mục 2.1/2.4) =================
+// 3 tuyến waypoint RIÊNG cho xe (không dùng đường đi bộ):
+//  (a) VÒNG ĐẢO 2 làn trên cung phẳng nam–tây–bắc đảo (góc đông-bắc đảo tựa sườn
+//      đồi/thềm thang nên không khép vòng kín được — phát hiện v4.8): làn NGOÀI đi
+//      ngược chiều kim đồng hồ, làn TRONG đi chiều ngược lại, 2 đầu cung xe quay
+//      đầu sang làn kia (steer) thành dòng liên tục. Bán kính bám vành đường R16.
+//  (b) TRỤC ĐƯỜNG VÀO 2 chiều: làn đông dùng vehBumpE (né hàng chờ + bàn ăn),
+//      làn tây dùng islandBump cũ.
+//  (c) VÒNG CHÂN ĐỒI bãi xe (đông) – sau lưng sạp mặt tiền – vòng xuống quảng
+//      trường – về bãi xe (loop kín).
+// Trần 14 xe chạy đồng thời. Xe chậm lại khi người chơi/NPC cắt ngang phía trước
+// và giữ giãn cách với xe trước cùng làn — KHÔNG bao giờ xuyên người.
+function buildRoute(pts, loop){
+  const P = pts.map(p => ({ x:p[0], z:p[1] }));
+  const cum = [0];
+  const n = P.length, segs = loop ? n : n - 1;
+  for(let i = 0; i < segs; i++){
+    const a = P[i], b = P[(i + 1) % n];
+    cum.push(cum[i] + Math.hypot(b.x - a.x, b.z - a.z));
+  }
+  return { P, cum, L: cum[cum.length - 1], loop: !!loop };
 }
-{ const v = makeCar(0xf0ead8); vehicles.push(Object.assign(v, { kind:'ring', cx:-24, cz:-6, r:11.9, a:2.2, speed:4.6, wr:0.37 })); }
-for(let i = 0; i < 4; i++){
-  const v = makeMoto(pickA(BIKE_COLS));
-  const dir = i % 2 === 0 ? 1 : -1;
-  vehicles.push(Object.assign(v, { kind:'road', dir, lane: dir > 0 ? -1.5 : 4.5, x: -70 + i * 38, speed: 6 + Math.random() * 2, wr:0.33, roadOnly:true })); // V4.7: làn khớp đường rộng
+function routeSample(rt, u){
+  const L = rt.L;
+  u = rt.loop ? ((u % L) + L) % L : Math.max(0, Math.min(L, u));
+  let i = 0;
+  while(i < rt.cum.length - 2 && rt.cum[i + 1] < u) i++;
+  const segLen = (rt.cum[i + 1] - rt.cum[i]) || 1;
+  const f = (u - rt.cum[i]) / segLen;
+  const a = rt.P[i], b = rt.P[(i + 1) % rt.P.length];
+  return { x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, dx: (b.x - a.x) / segLen, dz: (b.z - a.z) / segLen };
 }
-{ const v = makeCar(0xb03a30); vehicles.push(Object.assign(v, { kind:'road', dir:-1, lane:4.5, x:30, speed:5.4, wr:0.37, roadOnly:true })); } // V4.7
+function ringPts(r, rSouth, bulgeR){
+  const pts = [];
+  for(const th of [140, 160, 180, 200, 210, 220, 240, 260, 280, 300, 320, 340]){
+    const a = th * Math.PI / 180;
+    let rr = r;
+    if(th >= 250 && th <= 290) rr = rSouth;
+    if(bulgeR && th === 210) rr = bulgeR;
+    if(bulgeR && th >= 320) rr = 15.2;
+    pts.push([-24 + rr * Math.cos(a), -6 - rr * Math.sin(a)]);
+  }
+  return pts;
+}
+const ROUTE_RING_OUT = buildRoute(ringPts(14.2, 12.9, 16.2), false); // V5.2: cung nam thu r 12.9 (bản r14.2 chạy sát 0.2u trước mặt sạp súp cua — harness tuyến bắt)
+const ROUTE_RING_IN = buildRoute(ringPts(12.7, 11.9, 0), false);
+const ROUTE_ROAD_E = buildRoute((() => { const p = []; for(let x = -86; x <= 86; x += 4) p.push([x, laneZE(x)]); return p; })(), false);
+const ROUTE_ROAD_W = buildRoute((() => { const p = []; for(let x = 86; x >= -86; x -= 4) p.push([x, laneZW(x)]); return p; })(), false);
+const ROUTE_HILL = buildRoute([[54,12.3],[20,12.3],[-16,12.3],[-48.5,12.3],[-48.5,-1.2],[-38,-0.6],[-31,5.6],[-24,6.1],[-17,3.4],[-13.5,2.6],[-8,-1.1],[8,-1.4],[30,-1.3],[54,-1.2]], true); // điểm (-13.5,2.6) vòng né node giao lộ (-11.5,0.2) — harness tuyến
+const TRAFFIC = [];
+function spinWheels(v, dt, spd){ for(const w of v.wheels) if(w) w.rotation.x += spd * dt / v.wr; }
+function steerTo(v, tx, tz, speed, dt){
+  const p = v.g.position;
+  const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
+  if(d < 0.25) return true;
+  const step = Math.min(d, speed * dt);
+  p.x += dx / d * step; p.z += dz / d * step;
+  p.y += (roadY(p.x, p.z) - p.y) * Math.min(1, dt * 7);
+  v.g.rotation.y = angLerp(v.g.rotation.y, Math.atan2(dx, dz), Math.min(1, dt * 6));
+  return d - step < 0.25;
+}
+function addRouteVehicle(rt, opts){
+  opts = opts || {};
+  const isCar = !!opts.car;
+  const v = isCar ? makeCar(opts.color || 0xb03a30) : makeMoto(opts.color || pickA(BIKE_COLS), true, opts.riderShirt);
+  const glowMat = new THREE.MeshBasicMaterial({ color:0xffc98a, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending });
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(1.55, 14), glowMat);
+  glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.07, 1.35); v.g.add(glow); vehGlowMats.push(glowMat);
+  const tv = Object.assign(v, { kind:'route', rt, u: opts.u || 0, dirS: opts.dirS || 1,
+    base: opts.speed || 7, cur: 0, wr: isCar ? 0.37 : 0.33, pingpong: !!opts.pingpong,
+    mode: 'route', steerPts: null, steerNext: null, pending: null,
+    pull: opts.pull || null, pullState: 'off', pullT: 0, shopper: null });
+  tv.riderNode = v.g.getObjectByName('Rider');
+  tv.helmetNode = v.g.getObjectByName('Helmet');
+  vehicles.push(tv); TRAFFIC.push(tv);
+  const s0 = routeSample(rt, tv.u);
+  tv.g.position.set(s0.x, roadY(s0.x, s0.z), s0.z);
+  tv.g.rotation.y = Math.atan2(s0.dx * tv.dirS, s0.dz * tv.dirS);
+  return tv;
+}
+// (a) vòng đảo: 2 xe làn ngoài (CCW) + 2 xe làn trong (CW) — tới đầu cung thì
+// quay đầu sang làn kia nên dòng xe không bao giờ đối đầu cùng một làn
+addRouteVehicle(ROUTE_RING_OUT, { pingpong:true, speed:6.5, u:8 });
+addRouteVehicle(ROUTE_RING_OUT, { pingpong:true, speed:6.2, u: ROUTE_RING_OUT.L * 0.52 });
+addRouteVehicle(ROUTE_RING_IN, { pingpong:true, speed:6.0, u: ROUTE_RING_IN.L * 0.85, dirS:-1 });
+addRouteVehicle(ROUTE_RING_IN, { pingpong:true, speed:6.4, u: ROUTE_RING_IN.L * 0.35, dirS:-1 });
+// (b) trục đường vào: 2 đông + 2 tây (1 ô tô)
+addRouteVehicle(ROUTE_ROAD_E, { speed:7.5, u:20 });
+addRouteVehicle(ROUTE_ROAD_E, { speed:8.0, u:100 });
+addRouteVehicle(ROUTE_ROAD_W, { speed:7.8, u:40 });
+addRouteVehicle(ROUTE_ROAD_W, { speed:8.2, u:150 });
+addRouteVehicle(ROUTE_ROAD_W, { speed:5.6, u:118, car:true, color:0xf0ead8 });
+// (c) vòng chân đồi: 3 xe
+addRouteVehicle(ROUTE_HILL, { speed:6.5, u:15 });
+addRouteVehicle(ROUTE_HILL, { speed:7.0, u: ROUTE_HILL.L * 0.45 });
+addRouteVehicle(ROUTE_HILL, { speed:6.2, u: ROUTE_HILL.L * 0.75 });
+// 2 xe TẤP LỀ MUA HÀNG (chu trình khép kín, research/19 mục 2.4) — tổng 14 xe
+addRouteVehicle(ROUTE_ROAD_E, { speed:7.2, u:55, pull:{ stallId:'sua', trigX:12, park:[19.6,4.4], path:[[16,2.2],[19.6,4.4]] } });
+addRouteVehicle(ROUTE_ROAD_E, { speed:7.4, u:150, pull:{ stallId:'banhtrang', trigX:-44, park:[-33.2,4.5], path:[[-40,0.2],[-36.5,2.6],[-33.2,4.5]] } });
+function ringSwitch(v){
+  const other = v.rt === ROUTE_RING_OUT ? ROUTE_RING_IN : ROUTE_RING_OUT;
+  const atEnd = v.u >= v.rt.L - 0.05;
+  const ou = atEnd ? other.L - 0.05 : 0.05; // lùi vào trong 0.05 để không kích hoạt quay đầu lặp ngay khung sau
+  const pt = routeSample(other, ou);
+  v.mode = 'steer'; v.steerPts = [[pt.x, pt.z]]; v.steerSpeed = 3;
+  v.pending = { rt: other, u: ou, dirS: -v.dirS }; v.steerNext = 'ringSwitch';
+}
+function startPullover(v){
+  v.pullState = 'in'; v.mode = 'steer';
+  v.steerPts = v.pull.path.map(p => [p[0], p[1]]); v.steerSpeed = 3.2; v.steerNext = 'pullDwell';
+}
+function finishSteer(v){
+  const nx = v.steerNext; v.steerPts = null; v.steerNext = null;
+  if(nx === 'ringSwitch' && v.pending){
+    v.rt = v.pending.rt; v.u = v.pending.u; v.dirS = v.pending.dirS; v.pending = null; v.mode = 'route';
+  } else if(nx === 'pullDwell'){
+    v.pullState = 'dwell'; v.pullT = 0; v.mode = 'dwell';
+    if(v.riderNode) v.riderNode.visible = false;
+    if(v.helmetNode) v.helmetNode.visible = false;
+    const stall = stalls.find(s => s.id === v.pull.stallId);
+    if(stall){
+      const w = addWanderer([[v.pull.park[0], v.pull.park[1]], [stall.front.x, stall.front.z],
+        [stall.front.x + 0.7, stall.front.z + 0.3], [v.pull.park[0], v.pull.park[1]]],
+        pickA(CROWD_SHIRTS), { speed:1.25 });
+      w.g.position.set(v.pull.park[0], groundH(v.pull.park[0], v.pull.park[1]), v.pull.park[1]);
+      w.i = 0; v.shopper = w;
+    }
+  } else if(nx === 'pullRejoin'){
+    v.u += 14; v.pullState = 'off'; v.pull.cool = 200; v.mode = 'route';
+  }
+}
+function endDwell(v){
+  if(v.shopper){
+    const ix = wanderers.indexOf(v.shopper);
+    if(ix >= 0) wanderers.splice(ix, 1);
+    worldGroup.remove(v.shopper.g); v.shopper.active = false; v.shopper = null;
+  }
+  if(v.riderNode) v.riderNode.visible = true;
+  if(v.helmetNode) v.helmetNode.visible = true;
+  v.pullState = 'out'; v.mode = 'steer';
+  const back = v.pull.path.slice(0, -1).reverse();
+  const lp = routeSample(v.rt, v.u + 14);
+  v.steerPts = back.concat([[lp.x, lp.z]]); v.steerSpeed = 3.4; v.steerNext = 'pullRejoin';
+}
+function updateTraffic(dt){
+  for(const v of TRAFFIC){
+    if(v.mode === 'steer'){
+      const pt = v.steerPts[0];
+      if(steerTo(v, pt[0], pt[1], v.steerSpeed || 3, dt)){
+        v.steerPts.shift();
+        if(!v.steerPts.length) finishSteer(v);
+      }
+      spinWheels(v, dt, 2.2);
+      continue;
+    }
+    if(v.mode === 'dwell'){
+      v.pullT += dt; v.cur = 0;
+      const shopBack = v.shopper && Math.hypot(v.shopper.g.position.x - v.pull.park[0], v.shopper.g.position.z - v.pull.park[1]) < 1.7;
+      if((v.pullT > 9 && shopBack) || v.pullT > 17) endDwell(v);
+      continue;
+    }
+    if(v.pull && v.pull.cool > 0) v.pull.cool -= dt;
+    let target = v.base;
+    const pos = routeSample(v.rt, v.u);
+    const hx = pos.dx * v.dirS, hz = pos.dz * v.dirS;
+    for(const o of TRAFFIC){ // giãn cách xe trước cùng làn/cùng chiều (KHÔNG sàn tốc — sim v5.2 bắt: sàn 0.8 khiến xe sau chui dần vào xe trước)
+      if(o === v || o.rt !== v.rt || o.dirS !== v.dirS || o.mode !== 'route') continue;
+      let gap = (o.u - v.u) * v.dirS;
+      if(v.rt.loop) gap = ((gap % v.rt.L) + v.rt.L) % v.rt.L;
+      if(gap > 0 && gap < 7) target = Math.min(target, Math.max(0, o.cur * (gap - 2.4) / 3));
+      // xe khác đang tấp lề/dừng cũng là vật cản tĩnh phía trước
+      if(o.mode !== 'route'){
+        const ox = o.g.position.x - pos.x, oz = o.g.position.z - pos.z;
+        const oa = ox * hx + oz * hz, ol = Math.abs(-ox * hz + oz * hx);
+        if(oa > 0 && oa < 5 && ol < 1.7) target = Math.min(target, v.base * Math.max(0, (oa - 1.6) / 3.4));
+      }
+    }
+    // chậm lại khi người chơi/NPC cắt ngang phía trước (không xuyên người)
+    let nearest = 99;
+    const px = playerState.x - pos.x, pz = playerState.z - pos.z;
+    const pa = px * hx + pz * hz, pl = Math.abs(-px * hz + pz * hx);
+    if(pa > 0 && pa < nearest && pl < 1.7) nearest = pa;
+    for(const w of wanderers){
+      if(!w.active) continue;
+      const wx = w.g.position.x - pos.x, wz = w.g.position.z - pos.z;
+      if(Math.abs(wx) > 7 || Math.abs(wz) > 7) continue;
+      const wa = wx * hx + wz * hz, wl = Math.abs(-wx * hz + wz * hx);
+      if(wa > 0 && wa < nearest && wl < 1.7) nearest = wa;
+    }
+    if(nearest < 6.5) target = Math.min(target, v.base * Math.max(0, (nearest - 1.6) / 3.8));
+    if(nearest < 1.3){ target = 0; v.cur = 0; } // phanh cứng bảo vệ người — sim v5.2: TUYỆT ĐỐI không xuyên người
+    v.cur += (target - v.cur) * Math.min(1, dt * (target < v.cur ? 3.5 : 1.6)); // giảm tốc nhanh hơn tăng tốc
+    if(target === 0 && v.cur < 0.05) v.cur = 0;
+    v.u += v.dirS * v.cur * dt;
+    if(v.rt.loop){ v.u = ((v.u % v.rt.L) + v.rt.L) % v.rt.L; }
+    else if(v.pingpong){
+      if(v.u >= v.rt.L - 0.01 || v.u <= 0.01){ ringSwitch(v); continue; }
+    } else if(v.u > v.rt.L || v.u < 0){ // wrap về đầu tuyến — chờ nếu đầu tuyến đang có xe (tránh 2 xe đè nhau ở mép bản đồ)
+      const blocked = TRAFFIC.some(o => o !== v && o.rt === v.rt && o.mode === 'route' && o.u < 9);
+      if(blocked){ v.u = v.rt.L; v.cur = 0; }
+      else { if(v.u > v.rt.L) v.u -= v.rt.L; if(v.u < 0) v.u += v.rt.L; }
+    }
+    const p2 = routeSample(v.rt, v.u);
+    v.g.position.set(p2.x, v.g.position.y, p2.z);
+    v.g.position.y += (roadY(p2.x, p2.z) - v.g.position.y) * Math.min(1, dt * 7);
+    v.g.rotation.y = angLerp(v.g.rotation.y, Math.atan2(hx, hz), Math.min(1, dt * 5));
+    spinWheels(v, dt, v.cur);
+    if(v.pull && v.pullState === 'off' && !(v.pull.cool > 0) && p2.x >= v.pull.trigX && p2.x <= v.pull.trigX + 26) startPullover(v);
+  }
+}
 function parkedRow(z, x0, x1, rotY, gaps){
   for(let x = x0; x <= x1; x += 1.35){
     if(gaps.some(gp => x > gp[0] && x < gp[1])) continue;
@@ -1966,6 +2709,27 @@ function parkedRowY(z, x0, x1, rotY){
 parkedRowY(-7.2, -78, -53, 0);
 parkedRowY(9.9, -78, -53, 0);
 parkedRow(8.9, 40, 52, 0, []); // thêm xe đậu phía đông trước chợ
+// V4.8: VÀNH XE ĐẬU quanh đảo bùng binh R10.5 (research/17 điểm 2) — xe máy
+// đậu dọc lề đảo ở các cung nam/tây/bắc (cung đông-bắc đảo tựa thềm thang)
+// + 3 ô tô đậu dọc phía tây đảo.
+for(const deg of [20, 45, 70, 95, 120, 150, 180, 200, 238]){
+  const a = deg * Math.PI / 180;
+  // V5.0: 2 xe ở cung 200/238 gần góc máy bùng binh nhất — bản cũ (205/225, R12.6, màu ngẫu
+  // nhiên có thể gần-đen, quay lưng thẳng vào máy) đọc thành "khối đen hình chữ nhật" ở tiền
+  // cảnh góc A. Đẩy ra R13.8, xoay 3/4 và cố định màu đỏ/xanh cho đọc rõ là xe máy.
+  const nearCam = (deg === 200 || deg === 238);
+  const v = makeMoto(nearCam ? (deg === 200 ? 0xb03a30 : 0x2e6da4) : pickA(BIKE_COLS), false);
+  const rr = nearCam ? 13.8 : 12.6;
+  v.g.position.set(-24 + Math.cos(a) * rr, 0.02, -6 + Math.sin(a) * rr);
+  v.g.rotation.set(0, Math.atan2(-Math.sin(a), Math.cos(a)) + (nearCam ? 0.55 : (Math.random() - 0.5) * 0.15), 0.10);
+  v.g.traverse(o => { o.castShadow = false; });
+}
+for(const [px, pz] of [[-40.2, -8], [-40.8, -3], [-40.2, 2.5]]){
+  const v = makeCar(pickA([0xf0ead8, 0xb03a30, 0x35507a]));
+  v.g.position.set(px, 0.02, pz);
+  v.g.rotation.set(0, (Math.random() - 0.5) * 0.1, 0);
+  v.g.traverse(o => { o.castShadow = false; });
+}
 
 
 const twinkles = [];
@@ -2005,6 +2769,409 @@ const banner = new THREE.Mesh(bannerGeo, new THREE.MeshStandardMaterial({
 banner.position.set(0, 6.4, 5.2); worldGroup.add(banner);
 const bannerBase = bannerGeo.attributes.position.array.slice();
 box(0.12, 6.4, 0.12, 0x555049, -8.6, 3.2, 5.2); box(0.12, 6.4, 0.12, 0x555049, 8.6, 3.2, 5.2);
+
+// ================= V4.9 MỤC 7: CHI TIẾT + BỐ CỤC TOÀN MAP =================
+{ // --- dây LỒNG ĐÈN GIẤY LỚN + tua đỏ giăng ngang theo cụm (nghiên cứu 12, gap 5) ---
+  const paperMat = new THREE.MeshStandardMaterial({ color:0xffc46b, emissive:0xffa63d, emissiveIntensity:0.35, roughness:0.7 });
+  signGlowMats.push(paperMat); // sáng theo chế độ đêm qua applyDayNight
+  const cordMat2 = mat(0x2e2a24);
+  function lanternString(x0, y0, z0, x1, y1, z1, n=7, r=0.30){
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(x0, y0, z0),
+      new THREE.Vector3((x0 + x1) / 2, Math.min(y0, y1) - 0.85, (z0 + z1) / 2),
+      new THREE.Vector3(x1, y1, z1));
+    worldGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.02, 5), cordMat2));
+    for(let i = 1; i <= n; i++){
+      const p = curve.getPoint(i / (n + 1));
+      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.3, 5), cordMat2);
+      wire.position.set(p.x, p.y - 0.12, p.z); worldGroup.add(wire);
+      const lm = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), paperMat);
+      lm.scale.y = 1.22; lm.position.set(p.x, p.y - 0.3 - r * 0.6, p.z); worldGroup.add(lm);
+      box(0.05, 0.17, 0.05, 0xc22e22, p.x, p.y - 0.3 - r * 1.9, p.z, worldGroup, false);
+    }
+  }
+  lanternString(-62, 9.2, -13, -62, 9.2, 13);            // ngang đường vào, phía ngoài
+  lanternString(-48, 8.6, -13, -48, 8.6, 13, 6, 0.26);   // ngang đường vào, gần đảo — cao độ + cỡ khác
+  lanternString(-20, 8.4, 11.5, -20, 8.4, -4);           // ngang phố trước mặt tiền
+  lanternString(-11.5, 11.6, -14, 11.5, 11.6, -14);      // ngang bậc thang ở chiếu nghỉ giữa
+}
+{ // --- MẶT TIỀN: đồng hồ chạy theo giờ game + dây cờ tam giác + giỏ hoa treo (plan/A3, mục 18) ---
+  const clockG = new THREE.Group(); clockG.position.set(0, 17.7, 11.42); worldGroup.add(clockG);
+  const face = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.16, 28), new THREE.MeshStandardMaterial({ color:0xf0ead8, roughness:0.6 }));
+  face.rotation.x = Math.PI / 2; clockG.add(face);
+  clockG.add(new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 8, 28), new THREE.MeshStandardMaterial({ color:0x8c2f26, roughness:0.6 })));
+  const tickMat = new THREE.MeshBasicMaterial({ color:0x4a3423 });
+  for(let i = 0; i < 12; i++){
+    const a = i / 12 * Math.PI * 2;
+    const tick = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.22, 0.03), tickMat);
+    tick.position.set(Math.sin(a) * 1.24, Math.cos(a) * 1.24, -0.1); tick.rotation.z = -a; clockG.add(tick);
+  }
+  const handMat = new THREE.MeshBasicMaterial({ color:0x33241a });
+  const hourH = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.78, 0.04), handMat);
+  hourH.geometry.translate(0, 0.32, 0); hourH.position.z = -0.12; clockG.add(hourH);
+  const minH = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.12, 0.04), handMat);
+  minH.geometry.translate(0, 0.48, 0); minH.position.z = -0.13; clockG.add(minH);
+  window.M7_CLOCK = { hourH, minH };
+  const cordMat3 = mat(0x2e2a24);
+  const pCurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(-31, 7.9, 11.4), new THREE.Vector3(0, 7.2, 11.4), new THREE.Vector3(31, 7.9, 11.4));
+  worldGroup.add(new THREE.Mesh(new THREE.TubeGeometry(pCurve, 24, 0.015, 5), cordMat3));
+  const triGeo = new THREE.BufferGeometry();
+  triGeo.setAttribute('position', new THREE.Float32BufferAttribute([-0.21, 0, 0, 0.21, 0, 0, 0, -0.42, 0], 3));
+  triGeo.computeVertexNormals();
+  const penCols = [0xc8372d, 0xe8862e, 0xe8c832, 0x3f9e4d, 0x2e6da4, 0x8668c4];
+  for(let i = 0; i < 22; i++){
+    const p = pCurve.getPoint((i + 0.5) / 22);
+    const f = new THREE.Mesh(triGeo, new THREE.MeshStandardMaterial({ color:penCols[i % 6], roughness:0.95, side:THREE.DoubleSide }));
+    f.position.copy(p); worldGroup.add(f);
+  }
+  for(let x = -30; x <= 30; x += 6){ // giỏ hoa treo dọc băng dưới dây cờ
+    cyl(0.17, 0.12, 0.2, 0xa8542e, x, 7.28, 11.42, worldGroup, 8);
+    ball(0.17, [0xd66a8c, 0xe8c832, 0xc8372d][(((x / 6) % 3) + 3) % 3], x, 7.48, 11.42, worldGroup, 0.75);
+  }
+}
+{ // --- RẠP: 2 banner dọc + cặp chậu lớn đối xứng ở sảnh (mau-np-03) ---
+  function vBanner(x, text, bg){
+    const c = document.createElement('canvas'); c.width = 192; c.height = 640;
+    const g2 = c.getContext('2d');
+    g2.fillStyle = bg; g2.fillRect(0, 0, 192, 640);
+    g2.strokeStyle = '#e8c87e'; g2.lineWidth = 6; g2.strokeRect(10, 10, 172, 620);
+    g2.fillStyle = '#ffd98a'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+    g2.font = 'bold 74px Arial, sans-serif';
+    const chars = text.split('');
+    chars.forEach((ch, i) => g2.fillText(ch, 96, 78 + i * 82));
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 5.4), new THREE.MeshStandardMaterial({ map:t, roughness:0.9, side:THREE.DoubleSide }));
+    m.position.set(x, 17 + 3.6, -56 + 7.15); worldGroup.add(m);
+  }
+  vBanner(-19 - 8.6, 'RẠPHÒA', '#7a1f1a');
+  vBanner(-19 + 8.6, 'PHIMHAY', '#274a63');
+  function planter(x, z, yB){
+    cyl(0.52, 0.4, 0.75, 0x8a4a34, x, yB + 0.37, z, worldGroup, 12);
+    ball(0.55, 0x4d7340, x, yB + 0.95, z, worldGroup, 0.8);
+    ball(0.2, 0xd66a8c, x + 0.3, yB + 1.25, z + 0.15, worldGroup, 0.8);
+    ball(0.17, 0xe8c832, x - 0.32, yB + 1.2, z - 0.1, worldGroup, 0.8);
+  }
+  planter(-19 - 10.2, -47.6, 17); planter(-19 + 10.2, -47.6, 17); // cặp chậu sảnh rạp
+  planter(-9.8, -16, groundH(-9.8, -16)); planter(9.8, -16, groundH(9.8, -16)); // cặp chậu chiếu nghỉ thang
+  // --- THANG: 3 cặp đèn trụ đối xứng dọc thang (plan/A6) ---
+  lamp(-10.6, -8); lamp(10.6, -8); lamp(-10.6, -16); lamp(10.6, -16); lamp(-10.6, -24); lamp(10.6, -24);
+  // --- CỘT BIỂN CHỈ ĐƯỜNG ở 2 nút giao ---
+  function fingerPost(x, z, lines){
+    const y = groundH(x, z);
+    cyl(0.06, 0.08, 3.1, 0x6a5136, x, y + 1.55, z, worldGroup, 8);
+    lines.forEach((tx, i) => {
+      const b = signMesh(tx, 2.6, 0.52, '#4c3428', '#ffe9b0');
+      b.position.set(x + (i % 2 ? -0.45 : 0.45), y + 2.78 - i * 0.62, z);
+      b.rotation.y = (i % 2 ? Math.PI : 0) + (i % 2 ? 0.3 : -0.3);
+      worldGroup.add(b);
+    });
+  }
+  fingerPost(-12.8, 4.2, ['CHỢ ĐÀ LẠT →', '← BÙNG BINH HOA', 'THANG CHỢ →']);
+  fingerPost(13.8, -0.8, ['← VÒNG XOAY', 'RẠP HÒA BÌNH →', 'GÓC HÁT →']);
+}
+{ // --- NỀN LÁT ĐÁ canvas cho phố trước chợ + đường vào (nghiên cứu 12, gap 8) ---
+  function stoneTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const g2 = c.getContext('2d');
+    g2.fillStyle = '#57504a'; g2.fillRect(0, 0, 512, 512);
+    const tints = ['#7d766c', '#847c71', '#766e64', '#7a7369']; // V4.9-GPT: đá TỐI hơn = mặt sân ẩm
+    for(let ty = 0; ty < 2; ty++) for(let tx = 0; tx < 2; tx++){
+      g2.fillStyle = tints[(tx + ty * 2) % 4];
+      g2.fillRect(tx * 256 + 5, ty * 256 + 5, 246, 246);
+      g2.fillStyle = 'rgba(255,255,255,0.05)'; g2.fillRect(tx * 256 + 5, ty * 256 + 5, 246, 30);
+    }
+    for(let i = 0; i < 2600; i++){
+      g2.fillStyle = 'rgba(' + (Math.random() > 0.5 ? '255,250,240' : '20,16,12') + ',' + (Math.random() * 0.07) + ')';
+      g2.fillRect(Math.random() * 512, Math.random() * 512, 2.2, 2.2);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+  const stoneTex = stoneTexture();
+  function pave(w, d, x, z, rx, rz){
+    const t2 = stoneTex.clone(); t2.needsUpdate = true; t2.repeat.set(rx, rz);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d),
+      new THREE.MeshStandardMaterial({ map:t2, roughness:0.45, polygonOffset:true, polygonOffsetFactor:-2 })); // V4.9-GPT: sân ẩm bắt sáng vàng
+    m.rotation.x = -Math.PI / 2; m.position.set(x, 0.03, z); m.receiveShadow = true; worldGroup.add(m);
+  }
+  pave(96, 15, 0, 5.2, 13, 2);
+  pave(38, 17, -60, 2, 5, 2);
+}
+
+// ================= V4.9 MỤC 7 — LỚP GỢI Ý ChatGPT ĐÃ LỌC (bỏ: trăng khổng lồ, neon tường, tượng sửa khác, người ảnh chụp) =================
+{ // G1: hoa giấy phủ sườn tây — biến mảng tường phẳng ở góc bùng binh thành sườn hoa như ảnh gợi ý + ảnh thật Đà Lạt
+  const bougCols = [0xd63384, 0xe75480, 0xc22e6e, 0xe88ac0];
+  function bougCluster(x, z, s=1){
+    const g = new THREE.Group(); g.position.set(x, groundH(x, z), z); worldGroup.add(g);
+    ball(0.55 * s, 0x3d6034, 0, 0.25, 0, g, 0.6);
+    for(let i = 0; i < 6; i++){
+      const a = i * 1.05 + x;
+      ball((0.15 + (i % 3) * 0.05) * s, bougCols[i % 4], Math.cos(a) * 0.42 * s, 0.42 + (i % 2) * 0.16, Math.sin(a) * 0.42 * s, g, 0.9);
+    }
+  }
+  for(const bx of [-42, -36, -30, -24]) for(const bz of [-19.5, -23, -26.5])
+    bougCluster(bx + (bz * 7 % 2), bz, 1.45 * (1 + ((bx + bz) % 3) * 0.12));
+  for(const bx of [-40, -33, -26]) bougCluster(bx, -28.8, 1.8); // mép trên dày — hoa tràn xuống
+  for(const bx of [-44, -20]) bougCluster(bx, -17.2, 1.2);      // chân sườn
+  for(const bx of [-41, -37.5, -34, -30.5, -27, -23.5]) bougCluster(bx, -16.6, 1.7); // POLISH: hàng mép sườn hướng quảng trường — đọc từ góc bùng binh
+  // G2: vòng cẩm tú cầu quanh chân tượng + đèn nấm trong thảm hoa đảo
+  const hydCols = [0x7f9fd4, 0xe88ac0, 0xf0ead8, 0xb39ddb, 0x5b84c4];
+  function hydBush(x, z, y=0.92){ // V5.0: nâng từ 0.35 — mặt thảm đảo (Lawn) top 0.93, bụi cũ bị CHÌM chỉ ló ngọn hoa nên đọc phẳng ở góc bùng binh
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    ball(0.5, 0x40642f, 0, 0.22, 0, g, 0.65);
+    for(let i = 0; i < 5; i++){
+      const a = i * 1.26 + x * 2;
+      ball(0.17, hydCols[i % 5], Math.cos(a) * 0.3, 0.48, Math.sin(a) * 0.3, g, 0.95);
+    }
+    ball(0.19, hydCols[Math.abs(Math.round(x * 10)) % 5], 0, 0.58, 0, g, 0.95);
+  }
+  for(let i = 0; i < 10; i++){
+    const a = -0.5 + i * 0.42;
+    hydBush(-28.2 + Math.cos(a) * 3.9, -2.8 + Math.sin(a) * 3.9);
+  }
+  hydBush(-18.5, 1.8); hydBush(-30.5, 3.6, 0.05); hydBush(-15.8, -9.5); // V5.0: bụi (-30.5,3.6) nằm NGOÀI đĩa đảo (r11.6) nên giữ bám vành đường
+  const mushMat = new THREE.MeshStandardMaterial({ color:0xffe2b0, emissive:0xffb45e, emissiveIntensity:0, roughness:0.5 });
+  uplightMats.push(mushMat);
+  function mushLight(x, z, y=0.92){ // V5.0: nâng từ 0.35 — chao đèn cũ nằm DƯỚI mặt thảm 0.93 nên không thấy trong khung đêm
+    cyl(0.03, 0.04, 0.24, 0x6a6257, x, y + 0.12, z, worldGroup, 6);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), mushMat);
+    dome.position.set(x, y + 0.28, z); worldGroup.add(dome);
+  }
+  for(let i = 0; i < 12; i++){
+    const a = i / 12 * Math.PI * 2 + 0.3;
+    mushLight(-24 + Math.cos(a) * (5.6 + (i % 3) * 1.3), -6 + Math.sin(a) * (5.6 + (i % 3) * 1.3));
+  }
+  // V5.0 ĐIỂM 3: gò cẩm tú cầu LỚN cung nam-tây đảo (phía góc máy bùng binh) + vành đèn nấm 2
+  // + bậc đá quanh bệ tượng + người ngồi vành đảo — thảm hoa cũ đọc như dải phẳng vì bụi nhỏ + chìm.
+  function hydBushL(x, z, y=0.92){
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    ball(0.78, 0x40642f, 0, 0.34, 0, g, 0.62);
+    for(let i = 0; i < 7; i++){
+      const a = i * 0.9 + x * 2;
+      ball(0.26, hydCols[i % 5], Math.cos(a) * 0.46, 0.72, Math.sin(a) * 0.46, g, 0.95);
+    }
+    ball(0.29, hydCols[Math.abs(Math.round(x * 7)) % 5], 0, 0.88, 0, g, 0.95);
+  }
+  for(let i = 0; i < 9; i++){
+    const a = 0.6 + i * 0.3;
+    hydBushL(-24 + Math.cos(a) * 8.8, -6 + Math.sin(a) * 8.8);
+    if(i % 2 === 0) hydBushL(-24 + Math.cos(a + 0.15) * 9.5, -6 + Math.sin(a + 0.15) * 9.5);
+  }
+  for(let i = 0; i < 8; i++){
+    const a = 0.75 + i * 0.3;
+    mushLight(-24 + Math.cos(a) * 9.3, -6 + Math.sin(a) * 9.3);
+  }
+  // bậc đá quanh chân tượng (tượng lệch tâm (-28.2,-2.8), vòng trong GLB top 1.3) + 4 đá góc
+  box(8.8, 0.24, 8.8, 0x8a8074, -28.2, 1.02, -2.8, worldGroup, false);
+  for(const [sx, sz] of [[-32.3, -6.9], [-24.1, -6.9], [-32.3, 1.3], [-24.1, 1.3]])
+    ball(0.42, 0x847c71, sx, 1.18, sz, worldGroup, 0.55);
+  // người ngồi vành nam đảo (mép Base top 0.55) nhìn ra quảng trường
+  for(const [px, pz] of [[-24, 5.0], [-28.6, 4.0], [-21.2, 4.6]]){
+    const p = crowdPerson(0.45, 'sitter');
+    p.position.set(px, 0.55, pz);
+    p.rotation.y = Math.atan2(px + 24, pz + 6);
+    const L = p.userData.limbs;
+    if(L){ L.lLeg.rotation.x = -1.45; L.rLeg.rotation.x = -1.45; L.rArm.rotation.x = -0.7; }
+    addStatic(p, 'night', 'sit');
+  }
+  // V5.1 MỤC B: bộ đồ ăn ĐẦY ĐỦ trên bàn (ảnh 38): ly sữa THỦY TINH + ly giấy +
+  // ống hút + chén chấm đỏ + món chính theo cụm (tô súp/đĩa bánh căn/khay xiên).
+  // Trước đây mỗi bàn chỉ có ĐÚNG 1 ly trụ trắng gần như vô hình.
+  function tableSet(g, variant){
+    const glassM = new THREE.MeshStandardMaterial({ color:0xf5ead2, roughness:0.15, transparent:true, opacity:0.5 });
+    const milk = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.042, 0.085, 10), mat(0xf7efdd));
+    milk.position.set(-0.13, 0.507, 0.06); g.add(milk);
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.12, 10), glassM);
+    glass.position.set(-0.13, 0.525, 0.06); g.add(glass);
+    cyl(0.05, 0.042, 0.13, 0xf0ead8, 0.14, 0.53, -0.10, g, 8);
+    cyl(0.008, 0.008, 0.10, 0xd8342a, 0.16, 0.62, -0.10, g, 5);
+    cyl(0.045, 0.03, 0.03, 0xc22e22, 0.02, 0.482, 0.16, g, 8);
+    if(variant % 3 === 0){
+      cyl(0.105, 0.07, 0.075, 0xf0ead8, 0.05, 0.50, -0.02, g, 12); // tô súp
+      cyl(0.09, 0.09, 0.02, 0xe8862e, 0.05, 0.545, -0.02, g, 12);
+      const dk = cyl(0.006, 0.006, 0.24, 0x8a5f3a, 0.12, 0.55, 0.03, g, 5); dk.rotation.z = 1.25; dk.rotation.x = 0.2; // đũa gác tô
+    } else if(variant % 3 === 1){
+      cyl(0.13, 0.13, 0.02, 0xe8e2d4, 0.03, 0.475, 0.0, g, 14); // đĩa bánh căn
+      for(let i = 0; i < 4; i++) cyl(0.038, 0.038, 0.025, 0xe8b93c, 0.03 + (i % 2 ? 0.05 : -0.05), 0.50, (i < 2 ? 0.05 : -0.05), g, 8);
+    } else {
+      box(0.24, 0.02, 0.14, 0x9aa2a6, 0.03, 0.475, 0.0, g, false); // khay xiên mini
+      for(let i = 0; i < 3; i++){
+        const sk = cyl(0.006, 0.006, 0.22, 0xd8b98a, -0.03 + i * 0.06, 0.53, 0.0, g, 5); sk.rotation.z = 1.1;
+        ball(0.032, i % 2 ? 0xa63c22 : 0x7fae5a, 0.06 + i * 0.015, 0.56, 0.0, g, 1);
+      }
+    }
+  }
+  // G3: bộ bàn thấp + ghế nhựa ĐỎ ở thang / quanh đảo / trước chợ
+  function eatSet(x, z){
+    const g = new THREE.Group(); g.position.set(x, groundH(x, z), z); worldGroup.add(g);
+    box(0.58, 0.05, 0.58, 0x74522f, 0, 0.44, 0, g, false);
+    box(0.08, 0.42, 0.08, 0x5a4632, 0, 0.21, 0, g, false);
+    plasticStool(g, 0.55, 0.15, 0xc22e22); plasticStool(g, -0.5, -0.2, 0xc22e22); plasticStool(g, 0.05, 0.58, 0xd8402e);
+    tableSet(g, Math.abs(Math.floor(x * 3 + z * 7)));
+  }
+  eatSet(-6.8, -13.5); eatSet(6.8, -13.5);
+  eatSet(-31, 4.5); eatSet(-17.5, 5.5); eatSet(-2, 8.4);
+  // G4: xô hoa tươi vỉa hè
+  function flowerBucket(x, z){
+    const g = new THREE.Group(); g.position.set(x, groundH(x, z), z); worldGroup.add(g);
+    cyl(0.26, 0.19, 0.5, 0x9aa2a6, 0, 0.25, 0, g, 10);
+    for(let i = 0; i < 5; i++){
+      const a = i * 1.26 + z;
+      ball(0.14, hydCols[i % 5], Math.cos(a) * 0.13, 0.58, Math.sin(a) * 0.13, g, 0.95);
+    }
+    ball(0.15, 0xf0ead8, 0, 0.66, 0, g, 0.95);
+  }
+  for(const fx of [-30, -18, 14, 26]) flowerBucket(fx, 11.35);
+  flowerBucket(-52, 12.6); flowerBucket(-38.5, -13.6);
+  // G5: bảng phấn menu ở sạp hoa + sạp nướng
+  function chalkBoard(x, z, rotY, title, lines){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 320;
+    const g2 = c.getContext('2d');
+    g2.fillStyle = '#2e2a26'; g2.fillRect(0, 0, 256, 320);
+    g2.strokeStyle = '#c9a86a'; g2.lineWidth = 8; g2.strokeRect(6, 6, 244, 308);
+    g2.fillStyle = '#ffd94d'; g2.textAlign = 'center'; g2.font = 'bold 40px Arial'; g2.fillText(title, 128, 58);
+    g2.fillStyle = '#f0ead8'; g2.font = '27px Arial';
+    lines.forEach((ln, i) => g2.fillText(ln, 128, 118 + i * 44));
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const g = new THREE.Group(); g.position.set(x, groundH(x, z), z); g.rotation.y = rotY; worldGroup.add(g);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.15, 0.05), new THREE.MeshStandardMaterial({ map:t, roughness:0.95 }));
+    b.position.set(0, 0.62, 0); b.rotation.x = -0.16; g.add(b);
+    box(0.06, 0.5, 0.06, 0x5a4632, -0.35, 0.25, -0.08, g, false);
+    box(0.06, 0.5, 0.06, 0x5a4632, 0.35, 0.25, -0.08, g, false);
+  }
+  chalkBoard(35.6, 7.4, -0.5, 'HOA ĐÀ LẠT', ['Cẩm tú cầu', 'Hồng · Baby', 'Lavender']);
+  chalkBoard(-38.6, 7.6, 0.4, 'ĐỒ NƯỚNG', ['Bắp nướng', 'Khoai lang', 'Xiên que']);
+  // G6: đèn lồng đỏ trong ô lam tầng 2 + dây đèn dọc băng mặt tiền
+  const redLampMat = new THREE.MeshStandardMaterial({ color:0xd8342a, emissive:0xc22020, emissiveIntensity:0.35, roughness:0.6 });
+  signGlowMats.push(redLampMat);
+  for(let x = -30; x <= 30; x += 3.75){
+    cyl(0.012, 0.012, 0.5, 0x2e2a24, x, 10.85, 11.42, worldGroup, 5);
+    const lm = new THREE.Mesh(new THREE.SphereGeometry(0.155, 10, 8), redLampMat);
+    lm.position.set(x, 10.5, 11.42); lm.scale.y = 1.2; worldGroup.add(lm);
+  }
+  stringLights(-32, 11.25, 11.5, 0, 11.25, 11.5, 0.45, 11);
+  stringLights(0, 11.25, 11.5, 32, 11.25, 11.5, 0.45, 11);
+  // G7: tranh tường ATISÔ trên gable tây (hướng đường vào)
+  { const c = document.createElement('canvas'); c.width = 512; c.height = 320;
+    const g2 = c.getContext('2d');
+    g2.fillStyle = '#e8dcc0'; g2.fillRect(0, 0, 512, 320);
+    g2.fillStyle = '#7fae5a';
+    for(let i = 0; i < 4; i++){ g2.beginPath(); g2.ellipse(90 + i * 26, 210 - i * 8, 30, 44, 0.3, 0, 6.29); g2.fill(); }
+    g2.fillStyle = '#4d7340';
+    for(let i = 0; i < 3; i++){ g2.beginPath(); g2.ellipse(96 + i * 30, 196 - i * 10, 19, 30, 0.3, 0, 6.29); g2.fill(); }
+    g2.fillStyle = '#33502e'; g2.beginPath(); g2.moveTo(400, 250); g2.lineTo(436, 130); g2.lineTo(472, 250); g2.closePath(); g2.fill();
+    g2.fillStyle = '#b03a30'; g2.textAlign = 'center'; g2.font = 'bold 64px Arial';
+    g2.fillText('ATISÔ', 300, 108); g2.fillText('ĐÀ LẠT', 300, 178);
+    g2.fillStyle = '#6a5136'; g2.font = 'bold 30px Arial'; g2.fillText('ĐẶC SẢN CAO NGUYÊN', 256, 282);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(9.5, 5.9), new THREE.MeshStandardMaterial({ map:t, roughness:0.95 }));
+    m.position.set(-34.3, 9.9, 20); m.rotation.y = -Math.PI / 2; worldGroup.add(m); }
+  // G9: xe máy đậu tiền cảnh nam đảo + mũ trên yên
+  const gm1 = makeMoto(0x8c2f26, false); gm1.position.set(-13.8, 0, 8.6); gm1.rotation.y = 0.7; worldGroup.add(gm1);
+  const gm2 = makeMoto(0x2e4a6e, false); gm2.position.set(-17.6, 0, 9.8); gm2.rotation.y = 0.45; worldGroup.add(gm2);
+  ball(0.11, 0xd8402e, -13.55, 0.78, 8.35, worldGroup, 0.8);
+}
+{ // V5.0 ĐIỂM 2: TIỀN CẢNH GÓC BÙNG BINH — nửa dưới khung A trước đây là mặt sân tối trống.
+  // Thêm cụm ăn uống trên thảm đảo (tây-bắc) + vành tây đảo + sạp hoa xô tiền cảnh, toàn bộ
+  // ở phía z<0: tránh hành lang auto-walk (nút AW chạy z 0.5..8 phía nam đảo) và làn xe chạy.
+  function eatCluster(x, z, y){
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    box(0.58, 0.05, 0.58, 0x74522f, 0, 0.44, 0, g, false);
+    box(0.08, 0.42, 0.08, 0x5a4632, 0, 0.21, 0, g, false);
+    plasticStool(g, 0.55, 0.15, 0xc22e22); plasticStool(g, -0.5, -0.2, 0xc22e22); plasticStool(g, 0.05, 0.58, 0xd8402e);
+    // V5.1: bộ bàn đầy đủ như tableSet (block khác scope nên dựng inline): ly sữa + ly giấy + tô + chén chấm
+    cyl(0.055, 0.048, 0.12, 0xf7efdd, -0.13, 0.525, 0.06, g, 10);
+    cyl(0.05, 0.042, 0.13, 0xf0ead8, 0.14, 0.53, -0.10, g, 8);
+    cyl(0.008, 0.008, 0.10, 0xd8342a, 0.16, 0.62, -0.10, g, 5);
+    cyl(0.105, 0.07, 0.075, 0xf0ead8, 0.05, 0.50, -0.02, g, 12);
+    cyl(0.045, 0.03, 0.03, 0xc22e22, 0.02, 0.482, 0.16, g, 8);
+    return g;
+  }
+  function eatPerson(x, z, y, rotY){
+    const p = crowdPerson(0.5, 'sitter');
+    p.position.set(x, y + 0.30, z); p.rotation.y = rotY;
+    const L = p.userData.limbs;
+    if(L){ L.lLeg.rotation.x = -1.45; L.rLeg.rotation.x = -1.45; L.rArm.rotation.x = -1.0; L.lArm.rotation.x = -0.7; }
+    addStatic(p, 'night', 'sit');
+  }
+  // cụm A: trên thảm đảo tây-bắc (mặt thảm 0.93) — bàn + 2 người ngồi quay vào nhau
+  eatCluster(-30.0, -13.5, 0.93);
+  eatPerson(-29.45, -13.35, 0.93, -1.2); eatPerson(-30.5, -13.7, 0.93, 1.9);
+  // cụm B: vành tây đảo (mép Base 0.55) — bàn + 2 người, ngay trước người đứng ngắm tượng
+  eatCluster(-33.8, -7.6, 0.55);
+  eatPerson(-33.25, -7.45, 0.55, -1.4); eatPerson(-34.3, -7.8, 0.55, 1.7);
+  // sạp hoa xô tiền cảnh trên thảm cạnh cụm A + người bán đứng ở vành
+  function flowerStall(x, z, y){
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    const cols = [0xe88ac0, 0xf0ead8, 0x7f9fd4, 0xd8b13c, 0xc22e6e];
+    for(let i = 0; i < 3; i++){
+      const bx = (i - 1) * 0.62, bz = (i % 2) * 0.3 - 0.15;
+      cyl(0.26, 0.19, 0.5, 0x9aa2a6, bx, 0.25, bz, g, 10);
+      for(let j = 0; j < 5; j++){
+        const a = j * 1.26 + i;
+        ball(0.14, cols[(i + j) % 5], bx + Math.cos(a) * 0.13, 0.58, bz + Math.sin(a) * 0.13, g, 0.95);
+      }
+      ball(0.15, 0xf0ead8, bx, 0.66, bz, g, 0.95);
+    }
+  }
+  flowerStall(-30.9, -11.6, 0.93);
+  const fv = crowdPerson(0.45, 'vendor');
+  fv.position.set(-31.9, 0.55, -12.7); fv.rotation.y = 2.6;
+  addStatic(fv, 'night', 'vendor');
+  // thêm người ngồi vào 2 bộ bàn G3 sẵn có ở nam đảo (trước đây chỉ có bàn ghế trống)
+  eatPerson(-30.45, 4.65, 0, 2.8); eatPerson(-31.5, 4.3, 0, -0.4);
+  eatPerson(-17.0, 5.7, 0, 2.9);
+}
+{ // V5.1 MỤC C: NGƯỜI TỤ QUANH TƯỢNG + XE ĐẬU LỀ TÂY + NEON PHÔNG (research/18 mục 3)
+  // Nhóm chụp ảnh trước tượng (mặt thảm 0.93, phía NAM tượng — ảnh 32): quay mặt vào
+  // tượng, 1 người giơ điện thoại (kind 'chat' tự nâng tay theo chu kỳ).
+  const statueT = { x:-28.2, z:-2.8 };
+  function photoPerson(x, z, withPhone){
+    const p = crowdPerson(0.3, 'crowd');
+    p.position.set(x, 0.93, z);
+    p.rotation.y = Math.atan2(statueT.x - x, statueT.z - z);
+    if(withPhone) npcHoldPhone(p);
+    addStatic(p, 'night', withPhone ? 'chat' : 'stand');
+  }
+  photoPerson(-29.6, 1.6, false); photoPerson(-28.4, 2.3, true); photoPerson(-27.2, 1.5, false);
+  photoPerson(-25.9, 2.6, false); photoPerson(-24.9, 1.9, true);
+  // cụm gia đình: 2 người lớn + 1 trẻ em (scale 0,70-0,78)
+  const fam1 = crowdPerson(0.3, 'crowd'); fam1.position.set(-23.6, 0.93, 3.4); fam1.rotation.y = Math.atan2(statueT.x + 23.6, statueT.z - 3.4); addStatic(fam1, 'night', 'stand');
+  const fam2 = crowdPerson(0.3, 'crowd', true); fam2.position.set(-22.9, 0.93, 2.9); fam2.rotation.y = Math.atan2(statueT.x + 22.9, statueT.z - 2.9); addStatic(fam2, 'night', 'stand');
+  // ngồi vành đảo thêm ở phía tây/bắc (mép Base 0.55, quay ra ngoài như ảnh 32)
+  for(const [px, pz] of [[-19.5, 3.4], [-34.9, -4.2], [-34.2, -9.8], [-30.5, -15.9]]){
+    const p = crowdPerson(0.45, 'sitter');
+    p.position.set(px, 0.55, pz);
+    p.rotation.y = Math.atan2(px + 24, pz + 6);
+    const L = p.userData.limbs;
+    if(L){ L.lLeg.rotation.x = -1.45; L.rLeg.rotation.x = -1.45; L.rArm.rotation.x = -0.7; }
+    addStatic(p, 'night', 'sit');
+  }
+  // hàng xe máy đậu DÀI lề tây đảo (ảnh 28: hàng xe kín lề) + lấp vành cung tây-bắc
+  for(let i = 0; i < 10; i++){
+    const v = makeMoto(pickA(BIKE_COLS), false);
+    v.g.position.set(-39.6 + (Math.random() - 0.5) * 0.2, 0, -13.5 + i * 1.45);
+    v.g.rotation.set(0, Math.PI / 2 + (Math.random() - 0.5) * 0.15, 0.10);
+    v.g.traverse(o => { o.castShadow = false; });
+  }
+  for(const deg of [160, 170, 190, 215, 227, 250, 262]){
+    const a = deg * Math.PI / 180;
+    const v = makeMoto(pickA(BIKE_COLS), false);
+    v.g.position.set(-24 + Math.cos(a) * 12.9, 0.1, -6 + Math.sin(a) * 12.9);
+    v.g.rotation.set(0, -a + Math.PI / 2 + (Math.random() - 0.5) * 0.2, 0.10);
+    v.g.traverse(o => { o.castShadow = false; });
+  }
+  // biển NEON phông đêm (research/18 điểm 3.3.5): xanh dương trên khách sạn đông,
+  // vàng trên khách sạn đồi — "bức tường sáng" sau chợ
+  function neonSign(text, w2, h2, bg, fg, x, y, z, rotY){
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w2, h2),
+      new THREE.MeshBasicMaterial({ map: makeSignTexture(text, bg, fg) }));
+    m.position.set(x, y, z); m.rotation.y = rotY; worldGroup.add(m);
+  }
+  neonSign('THANH BÌNH HOTEL', 9, 1.6, '#0d2c56', '#7fd0ff', 59.9, 12.5, 8, -Math.PI / 2);
+  neonSign('SANDALS FLORA', 11, 1.8, '#3a2c08', '#ffd94d', 0, 30.0, -72.9, 0);
+}
 const fogPlanes = [];
 {
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
@@ -2611,6 +3778,7 @@ const DAILY_POOL = [
   { id:'order', name:'🧾 Giao đơn mua hộ', goal:1 },
   { id:'sing', name:'🎤 Hát cùng góc hát', goal:1 },
   { id:'sit', name:'🪑 Ngồi ăn tại sạp nóng', goal:1 },
+  { id:'deliver', name:'🛵 Giao hàng bằng xe', goal:1, xu:90, xp:55 }, // V5.2 research/19: thưởng CAO HƠN nhiệm vụ đi bộ (90 Xu/55 XP)
 ];
 function todayKey(){ return new Date().toDateString(); }
 // V4.6 — cân bằng: thưởng quest ngày gom về 1 bảng hằng (áp cho cả quest hôm nay lẫn quest TỒN dồn ngày).
@@ -2656,14 +3824,15 @@ function ensureDaily(){
 function dailyProg(id, n){
   ensureDaily();
   const def = DAILY_POOL.find(x => x.id === id); if(!def) return;
+  const xuR = def.xu || DAILY_REWARD_XU, xpR = def.xp || DAILY_REWARD_XP; // V5.2: quest có thưởng riêng (giao hàng) ghi đè mức mặc định
   let changed = false;
   const d = G.daily;
   if(d && d.ids.includes(id) && !d.done[id]){
     d.prog[id] = (d.prog[id] || 0) + n; changed = true;
     if(d.prog[id] >= def.goal){
-      d.done[id] = true; state.xu += DAILY_REWARD_XU; sfxCoin();
-      toast('🎯 Xong thử thách ngày: ' + def.name + ' (+' + DAILY_REWARD_XU + ' Xu, +' + DAILY_REWARD_XP + ' XP)', 'stamp');
-      gainXP(DAILY_REWARD_XP, true);
+      d.done[id] = true; state.xu += xuR; sfxCoin();
+      toast('🎯 Xong thử thách ngày: ' + def.name + ' (+' + xuR + ' Xu, +' + xpR + ' XP)', 'stamp');
+      gainXP(xpR, true);
     }
   }
   // V4.6: cùng hành động cũng tính cho quest TỒN đang chờ (nếu trùng loại).
@@ -2672,9 +3841,9 @@ function dailyProg(id, n){
     c.prog = (c.prog || 0) + n; changed = true;
     if(c.prog >= def.goal){
       G.dailyCarry.splice(i, 1);
-      state.xu += DAILY_REWARD_XU; sfxCoin();
-      toast('🎯 Xong thử thách TỒN từ ' + fmtDay(c.from) + ': ' + def.name + ' (+' + DAILY_REWARD_XU + ' Xu, +' + DAILY_REWARD_XP + ' XP)', 'stamp');
-      gainXP(DAILY_REWARD_XP, true);
+      state.xu += xuR; sfxCoin();
+      toast('🎯 Xong thử thách TỒN từ ' + fmtDay(c.from) + ': ' + def.name + ' (+' + xuR + ' Xu, +' + xpR + ' XP)', 'stamp');
+      gainXP(xpR, true);
     }
   }
   if(changed){ save(); updateHUD(); }
@@ -2689,7 +3858,7 @@ function renderQuestPanel(){
     const def = DAILY_POOL.find(x => x.id === id);
     const p = Math.min(def.goal, G.daily.prog[id] || 0);
     return (G.daily.done[id] ? '✔ ' : '') + def.name + ' <b>' + p + '/' + def.goal + '</b>';
-  }).join(' • ') + ' <span style="opacity:.8">(mỗi mục +' + DAILY_REWARD_XU + ' Xu)</span>';
+  }).join(' • ') + ' <span style="opacity:.8">(mỗi mục +' + DAILY_REWARD_XU + ' Xu · giao hàng xe +90 Xu)</span>';
   if(G.dailyCarry && G.dailyCarry.length){ // V4.6: quest tồn hiển thị rõ ngày gốc + số ngày còn lại
     h += '<br><b>↩️ Tồn từ hôm trước:</b> ' + G.dailyCarry.map(c => {
       const def = DAILY_POOL.find(x => x.id === c.id); if(!def) return '';
@@ -2716,8 +3885,90 @@ function iconSprite(emoji, scl){
   sp.scale.set(scl || 1, scl || 1, 1);
   return sp;
 }
+// ===== V5.2 P3: NHIỆM VỤ NGÀY "GIAO HÀNG BẰNG XE" (research/19 mục 2.3) =====
+// Gắn với quest 'deliver' trong DAILY_POOL (tôn trọng cơ chế dồn quest tồn):
+// khi quest ngày/tồn có 'deliver' chưa xong, một sạp ngẫu nhiên phát 📦 → người
+// chơi tới nhận → chở tới NPC chờ ở khu khác trong 85 giây → dailyProg tính
+// thưởng 90 Xu/55 XP; giao trong lúc đang cưỡi xe thuê +20 Xu ship nhanh.
+const DELIV_DESTS = [
+  { name:'Bùng binh chợ', x:-13.5, z:4.5 },
+  { name:'Quảng trường chợ', x:2, z:5 },
+  { name:'Đỉnh đồi', x:8, z:-52 },
+  { name:'Góc hát Đà Lạt', x:26, z:-46 },
+  { name:'Rạp Hòa Bình', x:-28, z:-44 },
+  { name:'Cầu nổi', x:24, z:-24 },
+];
+let delivery = null, deliveryChip = '', deliveryCooldown = 0;
+function delivMarker(x, z, y, emoji){
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 1.12, 24),
+    new THREE.MeshBasicMaterial({ color:0xffd94d, transparent:true, opacity:0.85, side:THREE.DoubleSide, depthWrite:false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06; g.add(ring);
+  const spr = iconSprite(emoji, 1.15); spr.position.y = 2.3; g.add(spr);
+  g.position.set(x, y, z); worldGroup.add(g);
+  return g;
+}
+function clearDelivery(){
+  if(!delivery) return;
+  if(delivery.marker) worldGroup.remove(delivery.marker);
+  if(delivery.npcSt){ delivery.npcSt.active = false; worldGroup.remove(delivery.npcSt.g); }
+  delivery = null;
+}
+function startDelivery(){
+  const pool = stalls.filter(s => !s.nightOnly || isNight);
+  if(!pool.length) return;
+  const stall = pickA(pool);
+  let dest = null;
+  for(let i = 0; i < 10 && !dest; i++){
+    const c = pickA(DELIV_DESTS);
+    if(Math.hypot(c.x - stall.front.x, c.z - stall.front.z) >= 45) dest = c;
+  }
+  if(!dest) dest = DELIV_DESTS[0];
+  delivery = { phase:'pickup', stall, dest, t:0, marker: delivMarker(stall.front.x, stall.front.z, stall.baseY, '📦'), npcSt:null };
+  toast('🛵 Nhận đơn giao hàng: tới sạp ' + stall.name + ' lấy 📦 nhé!');
+}
+function tickDelivery(dt){
+  deliveryChip = '';
+  if(deliveryCooldown > 0) deliveryCooldown -= dt;
+  const want = !state.questDone && G.daily && ((G.daily.ids.includes('deliver') && !G.daily.done['deliver']) ||
+    (G.dailyCarry || []).some(c => c.id === 'deliver'));
+  if(!want){ if(delivery) clearDelivery(); return; }
+  if(!delivery){ if(deliveryCooldown <= 0) startDelivery(); return; }
+  const d = delivery;
+  if(d.marker){
+    d.marker.rotation.y += dt * 1.2;
+    const spr = d.marker.children[1];
+    if(spr) spr.position.y = 2.3 + Math.sin(perfNow() * 0.004) * 0.15;
+  }
+  if(d.phase === 'pickup'){
+    deliveryChip = '🛵 <b>Đơn giao hàng:</b> tới sạp <b>' + d.stall.name + '</b> nhận 📦';
+    if(Math.hypot(playerState.x - d.stall.front.x, playerState.z - d.stall.front.z) < 2.3){
+      d.phase = 'carry'; d.t = 85;
+      worldGroup.remove(d.marker);
+      d.marker = delivMarker(d.dest.x, d.dest.z, groundH(d.dest.x, d.dest.z), '🎯');
+      const np = crowdPerson(true, 'wanderer');
+      np.position.set(d.dest.x, groundH(d.dest.x, d.dest.z), d.dest.z);
+      np.rotation.y = Math.random() * 6.28;
+      d.npcSt = addStatic(np, 'all', 'chat'); // polish v5.2: người nhận dùng dáng chat (giơ tay vẫy) thay vì đứng im
+      toast('📦 Đã nhận hàng! Giao tới ' + d.dest.name + ' trong 85 giây — đi xe cho nhanh!');
+      sfxCoin();
+    }
+  } else {
+    d.t -= dt;
+    deliveryChip = '🛵 <b>Giao hàng:</b> tới <b>' + d.dest.name + '</b> — còn ' + Math.max(0, Math.ceil(d.t)) + 's' + (riding > 0 ? ' (đang đi xe: +20 Xu nhanh!)' : '');
+    if(Math.hypot(playerState.x - d.dest.x, playerState.z - d.dest.z) < 2.4){
+      const fast = riding > 0;
+      dailyProg('deliver', 1);
+      if(fast){ state.xu += 20; updateHUD(); toast('⚡ Giao bằng xe — thưởng ship nhanh +20 Xu!'); }
+      clearDelivery(); deliveryCooldown = 20;
+    } else if(d.t <= 0){
+      toast('⏰ Hết giờ giao hàng — đơn này hỏng, lát thử lại nhé');
+      clearDelivery(); deliveryCooldown = 20;
+    }
+  }
+}
 const PHOTO_SPOTS = [
-  { id:'monument', name:'Tượng đài Vòng xoay Hòa Bình', x:-20.2, z:-1.6 },
+  { id:'monument', name:'Tượng đài Vòng xoay Hòa Bình', x:-13.2, z:2.8 }, // V4.8: ra mép đông-nam đảo R10.5
   { id:'facade', name:'Mặt tiền Chợ Đà Lạt lên đèn', x:0, z:1.2 },
   { id:'hilltop', name:'Đỉnh đồi Hòa Bình nhìn xuống chợ', x:10, z:-57 },
   { id:'bridge', name:'Giữa cầu nổi vào tầng 2', x:17.5, z:-12 },
@@ -2949,33 +4200,70 @@ const rentBike = makeMoto(0xd83a2e, false);
   box(0.09, 2.4, 0.09, 0x555049, RENT_PT.x - 1.8, groundH(RENT_PT.x, RENT_PT.z) + 1.2, RENT_PT.z, worldGroup, false);
   box(0.09, 2.4, 0.09, 0x555049, RENT_PT.x + 1.8, groundH(RENT_PT.x, RENT_PT.z) + 1.2, RENT_PT.z, worldGroup, false);
 }
-function toggleRide(){
-  if(riding > 0){ endRide(); return; }
-  if(singing) stopSing(true);
-  if(sitting > 0) sitting = 0;
-  const free = levelFromXp(G.xp) >= 5;
-  if(!free && state.xu < 30){ toast('Thuê xe cần 30 Xu — đạt Cấp 5 là thuê MIỄN PHÍ đó!'); return; }
-  if(!free) state.xu -= 30;
-  riding = 90;
+// ===== V5.2 P3: THUÊ XE NÂNG CẤP (research/19 mục 2.3) =====
+// Xuống xe Ở BẤT CỨ ĐÂU: xe ở lại tại chỗ, đồng hồ thuê vẫn chạy; tới gần xe bấm
+// E để cưỡi tiếp trong giờ còn lại; nút "🛵 Trả xe" đưa xe về bãi; 10s cuối hiện
+// đếm ngược cảnh báo trên HUD, hết giờ xe TỰ ĐƯỢC DẮT VỀ BÃI (không biến mất
+// đột ngột). Giá 30 Xu/90s + Cấp 5 miễn phí giữ nguyên. Trạng thái thuê là tạm
+// thời — KHÔNG lưu vào save chohb3d-v1.
+let rentParked = 0, rentReturn = 0;
+function mountBike(){
   rentBike.visible = false;
   rideMesh = makeMoto(0xd83a2e, false);
   player.add(rideMesh);
   rideMesh.position.set(0, 0.02, 0.15); rideMesh.rotation.y = 0;
   const L = player.userData.limbs;
   if(L){ L.lLeg.rotation.x = -0.9; L.rLeg.rotation.x = -0.9; L.lArm.rotation.x = -0.85; L.rArm.rotation.x = -0.85; }
+}
+function unmountBike(){ if(rideMesh){ player.remove(rideMesh); rideMesh = null; } }
+function toggleRide(){
+  if(riding > 0){ parkBike(); return; }
+  if(rentParked > 0){ remountBike(); return; }
+  if(rentReturn > 0) return;
+  if(singing) stopSing(true);
+  if(sitting > 0) sitting = 0;
+  const free = levelFromXp(G.xp) >= 5;
+  if(!free && state.xu < 30){ toast('Thuê xe cần 30 Xu — đạt Cấp 5 là thuê MIỄN PHÍ đó!'); return; }
+  if(!free) state.xu -= 30;
+  riding = 90;
+  mountBike();
   sfxCoin(); save(); updateHUD();
   toast(free ? '🏍 Lên xe! (Cấp 5 — miễn phí) 90 giây dạo chợ, E để xuống xe' : '🏍 Lên xe! 90 giây dạo chợ — bấm E để xuống xe (-30 Xu)');
 }
-function endRide(){
-  if(riding <= 0 && !rideMesh) return;
-  riding = 0;
-  if(rideMesh){ player.remove(rideMesh); rideMesh = null; }
+function parkBike(){
+  if(riding <= 0) return;
+  rentParked = riding; riding = 0;
+  unmountBike();
+  rentBike.position.set(playerState.x, groundH(playerState.x, playerState.z), playerState.z);
+  rentBike.rotation.y = playerState.face;
   rentBike.visible = true;
-  toast('🏍 Đã xuống xe — xe về lại bãi trước chợ');
+  toast('🛵 Đã xuống xe — xe đỗ tại đây, còn ' + Math.ceil(rentParked) + 's thuê. Tới gần xe bấm E để đi tiếp, hoặc bấm nút 🛵 Trả xe để trả về bãi.');
 }
+function remountBike(){
+  if(rentParked <= 0) return;
+  riding = rentParked; rentParked = 0;
+  mountBike();
+  toast('🏍 Đi tiếp! Còn ' + Math.ceil(riding) + 's thuê');
+}
+function startBikeReturn(fromPlayer){
+  unmountBike(); riding = 0; rentParked = 0; rentReturn = 1.6;
+  if(fromPlayer) rentBike.position.set(playerState.x, groundH(playerState.x, playerState.z), playerState.z);
+  rentBike.visible = true;
+}
+function returnBike(){
+  if(riding <= 0 && rentParked <= 0) return;
+  startBikeReturn(riding > 0);
+  toast('🛵 Đã trả xe — xe đang về bãi trước chợ. Cảm ơn bạn!');
+}
+function expireRide(){
+  startBikeReturn(riding > 0);
+  toast('⏰ Hết giờ thuê — xe được dắt về bãi trước chợ');
+}
+function endRide(){ if(riding > 0 || rentParked > 0) expireRide(); } // tên cũ giữ cho điểm gọi sót (nếu có)
 const eventChipEl = document.getElementById('eventChip');
 let achTimer = 0;
 function tickV43(dt, t){
+  tickDelivery(dt); // V5.2 P3: nhiệm vụ giao hàng bằng xe
   for(const cp of collectPts){
     if(G.found[cp.def.id]) continue;
     cp.mesh.rotation.y = t * 2.2;
@@ -2997,11 +4285,31 @@ function tickV43(dt, t){
   }
   tickSit(dt);
   tickSing(dt, t);
-  if(riding > 0){
+  if(riding > 0){ // V5.2: đếm ngược cảnh báo 10s cuối trên HUD
     riding -= dt;
-    chip = '🏍 <b>Đang thuê xe</b> — còn ' + Math.ceil(Math.max(0, riding)) + 's (E để xuống xe)';
-    if(riding <= 0) endRide();
+    chip = riding <= 10
+      ? '⏳ <b>Sắp hết giờ thuê!</b> — còn ' + Math.ceil(Math.max(0, riding)) + 's (hết giờ xe tự về bãi)'
+      : '🏍 <b>Đang thuê xe</b> — còn ' + Math.ceil(Math.max(0, riding)) + 's (E để xuống xe — xe đỗ lại tại chỗ)';
+    if(riding <= 0){ riding = 0; expireRide(); }
+  } else if(rentParked > 0){ // V5.2: xe đang đỗ tự do vẫn đếm ngược giờ thuê
+    rentParked -= dt;
+    chip = rentParked <= 10
+      ? '⏳ <b>Xe sắp hết giờ thuê!</b> — còn ' + Math.ceil(Math.max(0, rentParked)) + 's'
+      : '🛵 <b>Xe đang đỗ</b> — còn ' + Math.ceil(Math.max(0, rentParked)) + 's thuê (tới gần xe bấm E để đi tiếp)';
+    if(rentParked <= 0){ rentParked = 0; expireRide(); }
   }
+  { const rbBtn = document.getElementById('btnReturnBike'); // V5.2: nút Trả xe chỉ hiện khi đang có thuê
+    if(rbBtn) rbBtn.style.display = (riding > 0 || rentParked > 0) ? '' : 'none'; }
+  if(rentReturn > 0){ // V5.2: xe tự lăn về bãi (~1.6s) thay vì biến mất đột ngột
+    rentReturn -= dt;
+    const k = Math.min(1, dt * 1.4);
+    rentBike.position.x += (RENT_PT.x - rentBike.position.x) * k;
+    rentBike.position.z += (RENT_PT.z - rentBike.position.z) * k;
+    rentBike.position.y = groundH(rentBike.position.x, rentBike.position.z);
+    rentBike.rotation.y = angLerp(rentBike.rotation.y, Math.atan2(RENT_PT.x - rentBike.position.x, RENT_PT.z - rentBike.position.z), Math.min(1, dt * 3));
+    if(rentReturn <= 0){ rentBike.position.set(RENT_PT.x, groundH(RENT_PT.x, RENT_PT.z), RENT_PT.z); rentBike.rotation.y = -0.5; }
+  }
+  if(!chip) chip = deliveryChip; // V5.2: chip giao hàng khi không có chip thuê xe
   eventChipEl.style.display = chip ? 'block' : 'none';
   if(chip) eventChipEl.innerHTML = chip;
   achTimer += dt;
@@ -3048,6 +4356,7 @@ function buyUpgrade(key){
   toast('⬆ Đã nâng ' + u.name + ' lên cấp ' + (lv + 2) + '!');
 }
 document.getElementById('btnUpgrade').addEventListener('click', openUpgrade);
+document.getElementById('btnReturnBike').addEventListener('click', () => { returnBike(); }); // V5.2 P3
 
 function sellPrice(it){
   let p = Math.max(1, Math.round((it.price || 10) * 0.6));
@@ -3251,9 +4560,10 @@ function applyDayNight(){
     moonLight.color.set(0xffc98a); moonLight.intensity = 0.55;
     skyUni.topC.value.set(0x131c3a); skyUni.midC.value.set(0x3d2b52); skyUni.botC.value.set(0xa86834);
     moonSpr.material.opacity = 0.8; moonBall.material.opacity = 0.95;
-    for(const c of clouds) c.material.opacity = 0.05;
+    for(const c of clouds) c.material.opacity = 0.21; // V5.1: mây đêm đọc rõ hơn (vệt mỏng trôi, ảnh GPT gợi ý)
     amb.intensity = 0.26; amb.color.set(0xffc98a); // V4.4: fill ấm mạnh hơn để không còn vùng chết tối
     monuLight.intensity = 150; spot1.intensity = 2100; spot2.intensity = 2100;
+    if(window.STATUE_FX){ for(const m of window.STATUE_FX.mats) m.emissiveIntensity = 0.5; for(const s of window.STATUE_FX.spots) s.intensity = 650; } // V5.1: tượng rọi sáng đêm
     for(const m of haloMats) m.opacity = 0.5;
     renderer.toneMappingExposure = 1.34; // V4.4: chợ đêm là nơi SÁNG NHẤT thành phố (v4.3 khóa 1.05)
     for(const l of lampLights){ l.intensity = 120; l.color.setHex(0xff9a3d); }
@@ -3265,6 +4575,7 @@ function applyDayNight(){
     for(const m of hotelSignMats) m.emissiveIntensity = 2.4;
     for(const m of vehHeadMats) m.emissiveIntensity = 3.0;
     for(const m of vehTailMats) m.emissiveIntensity = 2.8; // V4.4
+    for(const m of vehGlowMats) m.opacity = 0.33; // V5.2: vệt sáng đèn pha trên mặt đường — vòng đảo đêm đọc thành vành sáng chuyển động
     for(const m of uplightMats) m.emissiveIntensity = 2.8; // V4.4
     stringBulbMat.color.setHex(0xfff3cf); // V4.4: dây bóng sạp bật sáng
     starMat.opacity = 0.9; smokeMat.opacity = 0.62; bigSmokeMat.opacity = 0.5;
@@ -3278,6 +4589,7 @@ function applyDayNight(){
     for(const c of clouds) c.material.opacity = 0.42;
     amb.intensity = 0.12; amb.color.set(0xd8e8f8);
     monuLight.intensity = 0; spot1.intensity = 0; spot2.intensity = 0;
+    if(window.STATUE_FX){ for(const m of window.STATUE_FX.mats) m.emissiveIntensity = 0; for(const s of window.STATUE_FX.spots) s.intensity = 0; }
     for(const m of haloMats) m.opacity = 0;
     renderer.toneMappingExposure = 1.05;
     for(const l of lampLights){ l.intensity = 0; l.color.setHex(0xffffff); }
@@ -3289,14 +4601,16 @@ function applyDayNight(){
     for(const m of hotelSignMats) m.emissiveIntensity = 0.3;
     for(const m of vehHeadMats) m.emissiveIntensity = 0.4;
     for(const m of vehTailMats) m.emissiveIntensity = 0.3;
+    for(const m of vehGlowMats) m.opacity = 0;
     for(const m of uplightMats) m.emissiveIntensity = 0;
     stringBulbMat.color.setHex(0xb8b0a0);
     starMat.opacity = 0; smokeMat.opacity = 0.32; bigSmokeMat.opacity = 0.2;
     btn.textContent = '🌙 Chợ đêm';
   }
   for(const s of stalls) if(s.nightOnly) s.group.visible = isNight;
-  for(const v of vehicles) if(v.roadOnly) v.g.visible = !isNight;
+  for(const v of vehicles) if(v.roadOnly) v.g.visible = !isNight || v.nightRoad; // V5.1: một nửa xe đường vẫn chạy đêm (vệt đèn qua đảo, ảnh 28)
   for(const v of vehicles) if(v.coneMat) v.coneMat.opacity = isNight ? 0.27 : 0;
+  if(window.M7_CLOCK){ const gh = gameHour(); window.M7_CLOCK.hourH.rotation.z = -((gh % 12) / 12) * Math.PI * 2; window.M7_CLOCK.minH.rotation.z = -(gh % 1) * Math.PI * 2; } // V4.9 MỤC 7: đồng hồ mặt tiền theo giờ game
   if(window.WD_NIGHT){ for(const e of window.WD_NIGHT.mats) e.m.emissiveIntensity = isNight ? e.night : e.day; window.WD_NIGHT.refresh(); }
 }
 document.getElementById('btnDayNight').addEventListener('click', () => {
@@ -3449,7 +4763,7 @@ function tickTutorial(dt, t){
 }
 // --- Tự đi: đồ thị waypoint hành trình (trục chính khớp tuyến LOOP/hành trình sẵn có) ---
 const AW_NODES = [
-  [-76,2],[-62,2],[-50,2],[-40,2],[-33,0],[-24,3.4],[-16,1],[-4,4.5],[0,1],[-2,-6],[-2,-14],[-2,-22],[-2,-29],[0,-36],[6,-45],[24,-51],
+  [-76,2],[-62,2],[-50,2],[-40,2],[-35,4.6],[-18.5,5.8],[-11.5,0.2],[-4,1.9],[0,1],[-2,-6],[-2,-14],[-2,-22],[-2,-29],[0,-36],[6,-45],[24,-51], // V4.8: nút 4/5/6 vòng qua phía NAM đảo R10.5 — V5.2 (harness tuyến): nút 4/5 nhích khỏi tâm làn xe (nút 5 = điểm qua đường giữa 2 làn trục đông tại x -18.5, cách mỗi làn ≥0.85; xe chậm lại khi người qua)
   [8,5.5],[16,6.5],[22,7.2],
   [0,6],[0,11],[0,16],
   [12,-44],[17.5,-32],[17.5,-16],[17.5,0],[17.5,7],[24,9.8],[30.3,11],[30.3,15],
@@ -4019,7 +5333,8 @@ function interact(){
   else if(currentInteract.type === 'sit') startSit(currentInteract.spot);
   else if(currentInteract.type === 'chat') chatNpc(currentInteract.g);
   else if(currentInteract.type === 'rent') toggleRide();
-  else if(currentInteract.type === 'ride') endRide();
+  else if(currentInteract.type === 'ride') parkBike(); // V5.2: E khi đang cưỡi = xuống xe, xe ĐỖ LẠI tại chỗ
+  else if(currentInteract.type === 'remount') remountBike(); // V5.2: cưỡi tiếp trong giờ thuê còn lại
 }
 let dragging = false, lastPX = 0, lastPY = 0;
 const cvs = renderer.domElement;
@@ -4100,7 +5415,7 @@ function animate(){
   if(singing && moving) stopSing();
   if(sitting > 0){ if(moving){ sitting = 0; toast('🚶 Đứng dậy đi tiếp'); } moving = false; }
   let speed = 7 * [1, 1.15, 1.3][state.upgrades.shoes];
-  if(riding > 0) speed = 15; // V4.3: xe máy nhanh hơn hẳn đi bộ
+  if(riding > 0) speed = 11.5; // V5.2 research/19: cưỡi tối đa ~11 u/s để còn đọc được chợ // V4.3: xe máy nhanh hơn hẳn đi bộ
   if(buffs.alert) speed *= 1.15;
   if(effWarmthNow() < 25) speed *= 0.7;   // lạnh quá: đi chậm + run (đồ đang mặc cộng vào effWarmthNow)
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw);
@@ -4170,6 +5485,10 @@ function animate(){
     if(d < 0.7){ w.i = (w.i + 1) % w.route.length; continue; }
     pos.x += dx / d * w.speed * dt;
     pos.z += dz / d * w.speed * dt;
+    if(riding > 0 && dP < 3.0 && dP > 0.01){ // V5.2: NPC né nhẹ sang bên khi xe người chơi tới gần (không để xe đâm ngã người)
+      pos.x += (pos.x - playerState.x) / dP * (3.0 - dP) * dt * 2.2;
+      pos.z += (pos.z - playerState.z) / dP * (3.0 - dP) * dt * 2.2;
+    }
     if(w.flatY !== undefined) pos.y += (w.flatY - pos.y) * Math.min(1, dt*6);
     else {
       let gy = groundH(pos.x, pos.z);
@@ -4208,21 +5527,7 @@ function animate(){
       if(st.head) st.head.rotation.x = Math.sin(t * 0.7 + st.ph) * 0.05;
     }
   }
-  for(const v of vehicles){
-    if(!v.g.visible) continue;
-    if(v.kind === 'ring'){
-      v.a += v.speed / v.r * dt;
-      const x = v.cx + Math.cos(v.a) * v.r, z = v.cz + Math.sin(v.a) * v.r;
-      v.g.position.set(x, 0, z);
-      v.g.rotation.y = Math.atan2(-Math.sin(v.a), Math.cos(v.a));
-    } else {
-      v.x += v.dir * v.speed * dt;
-      if(v.x > 86) v.x = -86; if(v.x < -86) v.x = 86;
-      v.g.position.set(v.x, entryRampY(v.x), v.lane); // V4.2: bám dốc đường vào
-      v.g.rotation.y = v.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-    }
-    for(const w of v.wheels) if(w) w.rotation.x += v.speed * dt / v.wr;
-  }
+  updateTraffic(dt); // V5.2: hệ tuyến xe (thay vòng xe đường thẳng cũ)
   for(const s of stalls){
     if(s.group.visible === false) continue;
     vendorAnim(s, t, now);
@@ -4247,6 +5552,14 @@ function animate(){
       s.bulb.bulbMat.color.setHex(isNight ? 0xfff3cf : 0x9a958a);
       s.bulb.haloMat.opacity = isNight ? 0.6 + 0.06 * Math.sin(t * 6.3 + s.bulb.ph) * Math.sin(t * 2.9 + s.bulb.ph * 1.7) : 0;
     }
+  }
+  for(const c of clouds){ c.position.x += dt * 0.55; if(c.position.x > 320) c.position.x = -320; } // V5.1: mây trôi chậm
+  for(const ss of steamSprites){ // V4.9 MỤC 7: cột hơi sprite bốc lên + tản dần
+    const p = (t * 0.45 + ss.ph) % 1;
+    ss.sp.position.y = ss.y + p * 1.7;
+    ss.sp.position.x = ss.x + Math.sin(t * 1.3 + ss.ph * 9) * 0.14 * p;
+    const sc = 0.7 + p * 1.5; ss.sp.scale.set(sc, sc, 1);
+    ss.sp.material.opacity = (isNight ? 0.30 : 0.20) * Math.sin(p * Math.PI);
   }
   for(const sp of smokePts){
     const pos = sp.pts.geometry.attributes.position;
@@ -4346,8 +5659,13 @@ function animate(){
       const dS = Math.hypot(playerState.x - sp2.x, playerState.z - sp2.z);
       if(dS < 1.9 && (!currentInteract || dS < currentInteract.d)) currentInteract = { type:'sit', d:dS, spot:sp2 };
     }
-    const dR = Math.hypot(playerState.x - RENT_PT.x, playerState.z - RENT_PT.z);
-    if(dR < 3.6 && (!currentInteract || dR < currentInteract.d)) currentInteract = { type:'rent', d:dR };
+    if(rentParked > 0){ // V5.2: xe đang đỗ tự do → ưu tiên tương tác cưỡi tiếp
+      const dB = Math.hypot(playerState.x - rentBike.position.x, playerState.z - rentBike.position.z);
+      if(dB < 2.8 && (!currentInteract || dB < currentInteract.d)) currentInteract = { type:'remount', d:dB };
+    } else if(rentReturn <= 0){
+      const dR = Math.hypot(playerState.x - RENT_PT.x, playerState.z - RENT_PT.z);
+      if(dR < 3.6 && (!currentInteract || dR < currentInteract.d)) currentInteract = { type:'rent', d:dR };
+    }
     const npcN = nearestNpc(2.7);
     if(npcN && (!currentInteract || npcN.d < currentInteract.d)) currentInteract = { type:'chat', d:npcN.d, g:npcN.g };
   }
@@ -4361,7 +5679,8 @@ function animate(){
     else if(currentInteract.type === 'sit') ctxEl.innerHTML = currentInteract.spot.cafe ? '☕ <b>E</b> Ngồi quán cà phê vợt — hồi ấm nhanh + tỉnh táo' : '🪑 <b>E</b> Ngồi ăn tại chỗ ở ' + currentInteract.spot.stall.name + ' — hồi Độ Ấm nhanh';
     else if(currentInteract.type === 'chat') ctxEl.innerHTML = '💬 <b>E</b> Trò chuyện với người đi chợ';
     else if(currentInteract.type === 'rent') ctxEl.innerHTML = '🏍 <b>E</b> Thuê xe máy dạo chợ — ' + (levelFromXp(G.xp) >= 5 ? 'MIỄN PHÍ cho Cấp 5!' : '30 Xu / 90 giây');
-    else if(currentInteract.type === 'ride') ctxEl.innerHTML = '🏍 <b>E</b> Xuống xe / trả xe';
+    else if(currentInteract.type === 'ride') ctxEl.innerHTML = '🏍 <b>E</b> Xuống xe (xe đỗ lại tại đây)';
+    else if(currentInteract.type === 'remount') ctxEl.innerHTML = '🏍 <b>E</b> Cưỡi tiếp — còn ' + Math.ceil(rentParked) + 's thuê';
     else ctxEl.innerHTML = stageState.performing ? '<b>E</b> Góc Hát Đà Lạt đang diễn — nghe hát / tặng Xu 🎶' : '<b>E</b> Góc Hát Đà Lạt (diễn 17:00–21:00)';
   } else ctxEl.style.display = 'none';
 
