@@ -2273,10 +2273,10 @@ const STALL_DEFS = [
     { name:'Sữa đậu nành nóng', price:15, buff:'warm', sec:90, type:'drink', desc:'Ly sữa nóng trứ danh chợ đêm' },
     { name:'Sữa đậu xanh lá dứa', price:16, buff:'warm', sec:80, type:'drink', desc:'Thơm lá dứa' },
     { name:'Bánh su kem', price:10, buff:'warm', sec:35, type:'food', desc:'Ăn kèm sữa là chuẩn bài' } ] },
-  { id:'hongtra', name:'HỒNG TRÀ HÒA BÌNH', district:D, x:17, z:11.0, rotY:Math.PI, steam:true, special:true, shirt:0xb5483a, menu:[
-    { name:'Hồng trà (signature)', price:12, buff:'warm', sec:70, type:'drink', desc:'Hồng trà đậm vị — món đặc trưng của HTHB, ki-ốt 30–32 Khu Hòa Bình' },
+  { id:'hongtra', name:'HỒNG TRÀ HÒA BÌNH', district:D, x:6.0, z:-35.5, rotY:0, steam:true, special:true, shirt:0xb5483a, menu:[
+    { name:'Hồng trà nóng (signature)', price:12, buff:'warm', sec:70, type:'drink', desc:'Ki-ốt 30–32 Khu Hòa Bình — hồng trà đậm vị Signature của Phan Minh Trà' },
     { name:'Hồng trà sữa', price:15, buff:'warm', sec:70, type:'drink', desc:'Hồng trà pha sữa béo nhẹ' },
-    { name:'Trà sữa hạnh nhân chôm chôm', price:18, buff:'alert', sec:50, type:'drink', desc:'Món gợi ý đầu tiên trên trang chủ HTHB' } ] },
+    { name:'Trà sữa hạnh nhân chôm chôm', price:18, buff:'alert', sec:50, type:'drink', desc:'Món đặc trưng nổi tiếng trên trang chủ HTHB' } ] },
   { id:'caphe', name:'CÀ PHÊ PHIN', district:D, x:27, z:11.0, rotY:Math.PI, prop:'phin', steam:true, special:true, shirt:0x96683f, menu:[
     { name:'Cà phê phin đen', price:18, buff:'alert', sec:90, type:'drink', desc:'Arabica Cầu Đất, chờ nhỏ giọt' },
     { name:'Cacao nóng', price:18, buff:'alert', sec:70, type:'drink', desc:'Cacao nguyên chất, ít ngọt' },
@@ -4447,7 +4447,9 @@ function buyItem(stall, item){
   if(state.bag.length >= bagCap()){ toast('🧺 Giỏ đầy (' + bagCap() + ' món)! Bán bớt đồ trong Giỏ (B) hoặc nâng cấp Túi đồ (U) nhé'); return; }
   state.xu -= price; save(); updateHUD(); closeModal('menuModal');
   questFlags.bought = true; // V4.2: móc cho nhiệm vụ dẫn đường chặng 3
-  if(stall.id === 'sua' && item.name === 'Sữa đậu nành nóng') tutFlags.sua = true; // V4.7: bước 2 hướng dẫn
+  if(stall.id === 'hoasua' || (stall.id === 'sua' && item.name.indexOf('Sữa') >= 0)) tutFlags.hoasua = true;
+  if(stall.id === 'hongtra') tutFlags.hongtra = true;
+  if(stall.id === 'sua' && item.name === 'Sữa đậu nành nóng') tutFlags.sua = true;
   gainXP(6); dailyProg('spend', price);
   cooking = { stall, item, t:0, dur:2 };
   stall.vendor.userData.cookUntil = performance.now() + 2000;
@@ -4500,7 +4502,8 @@ function eatItem(idx){
   collectDacSan(it.name); // V4.6: ăn/uống lần đầu cũng ghi sổ (đường dự phòng cho đồ có sẵn trong giỏ)
   eatUntil = performance.now() + 900;
   gainXP(4); dailyProg('eat', 1);
-  if(it.name === 'Sữa đậu nành nóng') tutFlags.drank = true; // V4.7: bước 3 hướng dẫn
+  if(it.name.indexOf('Sữa') >= 0 || it.name.indexOf('nành') >= 0) tutFlags.drank = true;
+  if(it.name === 'Sữa đậu nành nóng') tutFlags.drank = true;
   save(); updateHUD(); checkQuest(); openBag();
   toast((it.type === 'drink' ? '🥤 Đã uống ' : '🍽 Đã ăn ') + it.name + (it.buff ? ' — nhận buff ' + BUFF_INFO[it.buff].name : ''));
 }
@@ -5906,13 +5909,15 @@ function completeStage(){
 // Người chơi mới từng than "không biết chơi như nào luôn, đi dạo thôi à?" — lần đầu vào chợ
 // chỉ hiện MỘT thẻ lớn ghi đúng MỘT việc; xong việc thẻ tự chuyển bước + thưởng nhỏ;
 // bấm vào thẻ = nhân vật TỰ ĐI tới đích theo đồ thị waypoint hành trình; thao tác khác thì hủy tự đi.
-const tutFlags = { sua:false, drank:false, chatted:false, pass:false };
+const tutFlags = { sua:false, drank:false, chatted:false, pass:false, hoasua:false, hongtra:false };
 const tutCardEl = document.getElementById('tutCard');
 const tutStepEl = document.getElementById('tutStep');
 const tutTxtEl = document.getElementById('tutTxt');
 const tutDistEl = document.getElementById('tutDist');
 const guidePanelEl = document.getElementById('guidePanel');
 function suaFront(){ const s = stalls.find(s => s.id === 'sua'); return s ? { x:s.front.x, z:s.front.z } : { x:22, z:8.05 }; }
+function hoasuaFront(){ const s = stalls.find(s => s.id === 'hoasua'); return s ? { x:s.front.x, z:s.front.z } : { x:-128, z:17.4 }; }
+function hongtraFront(){ const s = stalls.find(s => s.id === 'hongtra'); return s ? { x:s.front.x, z:s.front.z } : { x:6.0, z:-33.45 }; }
 function nearestNpcPos(){
   let best = null, bd = 1e18;
   for(const st of statics){ if(!st.active || !st.g.visible) continue;
@@ -5921,16 +5926,24 @@ function nearestNpcPos(){
   for(const w of wanderers){ if(!w.active || !w.g.visible) continue;
     const d = Math.hypot(w.g.position.x - playerState.x, w.g.position.z - playerState.z);
     if(d < bd){ bd = d; best = { x:w.g.position.x, z:w.g.position.z }; } }
-  return best || { x:-30, z:-6 }; // GEOMETRY-2: tâm đảo mới
+  return best || { x:-30, z:-6 };
 }
 const TUT_STEPS = [
-  { txt:'Đi tới vòng sáng ở sạp Sữa đậu nành', target:() => suaFront(),
-    check:() => { const f = suaFront(); return Math.hypot(playerState.x - f.x, playerState.z - f.z) < 3.0; } },
-  { txt:'Bấm E mở sạp và Mua 1 ly Sữa đậu nành nóng', target:() => suaFront(), check:() => tutFlags.sua },
-  { txt:'Mở Giỏ (phím B) và Uống ly sữa để hồi ấm', target:null, check:() => tutFlags.drank },
-  { txt:'Leo cầu thang lớn lên Quảng trường trên đồi', target:() => ({ x:0, z:-33 }), check:() => playerState.y > 15.5 },
-  { txt:'Nói chuyện với 1 người đi chợ (tới gần, bấm E)', target:() => nearestNpcPos(), check:() => tutFlags.chatted },
-  { txt:'Mở Hộ chiếu (phím P) nhận dấu đầu tiên của bạn', target:null, check:() => tutFlags.pass },
+  { txt:'Dạo bước dọc đường Nguyễn Thị Minh Khai vào chợ đêm',
+    target:() => ({ x:-28, z:0 }),
+    check:() => Math.hypot(playerState.x - (-28), playerState.z - 0) < 12.0 || playerState.x > -28 },
+  { txt:'Leo cầu thang di sản Ngô Viết Thụ (Góc Hong Kong) lên đồi',
+    target:() => ({ x:0, z:-33 }),
+    check:() => playerState.y > 15.5 && playerState.z < -28 },
+  { txt:'Check-in Quảng trường Khu Hòa Bình & Rạp 3 Tháng 4',
+    target:() => ({ x:-19, z:-48 }),
+    check:() => Math.hypot(playerState.x - (-19), playerState.z - (-48)) < 8.0 },
+  { txt:'Xuống dốc Tăng Bạt Hổ uống sữa nóng ở Quán Hoa Sữa (3F Tăng Bạt Hổ)',
+    target:() => hoasuaFront(),
+    check:() => tutFlags.hoasua || tutFlags.drank },
+  { txt:'Ghé Ki-ốt 30–32 Khu Hòa Bình thưởng thức Hồng Trà Hòa Bình',
+    target:() => hongtraFront(),
+    check:() => tutFlags.hongtra },
 ];
 function tutorialActive(){ return !state.tutorialDone && state.tutStep < TUT_STEPS.length; }
 function arrowFor(tx, tz){
@@ -5958,7 +5971,7 @@ function refreshNextTaskLine(){
 function completeTutStep(){
   const last = state.tutStep >= TUT_STEPS.length - 1;
   gainXu(last ? 50 : 15); gainXP(last ? 20 : 10); sfxTing();
-  toast(last ? '🎉 Xong bước cuối của hướng dẫn!' : '✔ Xong bước ' + (state.tutStep + 1) + '/6! +15 Xu +10 XP');
+  toast(last ? '🎉 Tuyệt vời! Bạn đã hoàn thành trọn vẹn hành trình Chợ Hòa Bình Đà Lạt!' : '✔ Xong bước ' + (state.tutStep + 1) + '/' + TUT_STEPS.length + '! +15 Xu +10 XP');
   state.tutStep++;
   if(last) finishTutorial(); else { save(); updateHUD(); }
 }
@@ -5980,7 +5993,7 @@ function tickTutorial(dt, t){
     let by = groundH(tg.x, tg.z); if(by - playerState.y > 3) by = playerState.y; // V4.7: đích dưới hành lang -> vòng sáng ở mặt đất
     beacon.position.set(tg.x, by, tg.z); }
   else beacon.visible = false;
-  tutStepEl.textContent = '🧭 LẦN ĐẦU ĐI CHỢ — BƯỚC ' + (state.tutStep + 1) + '/6';
+  tutStepEl.textContent = '🧭 HÀNH TRÌNH ĐÀ LẠT — BƯỚC ' + (state.tutStep + 1) + '/' + TUT_STEPS.length;
   if(tutTxtEl.textContent !== step.txt) tutTxtEl.textContent = step.txt;
   tutDistEl.textContent = (tg
     ? arrowFor(tg.x, tg.z) + ' còn ' + Math.round(Math.hypot(tg.x - playerState.x, tg.z - playerState.z)) + 'm — chạm vào thẻ này để nhân vật TỰ ĐI tới đó'
@@ -6130,7 +6143,8 @@ function drawMinimap(t){
   c.fillStyle = '#a89878'; c.fillRect(mmX(-11), mmY(-30), (22 / 304) * 156, (28 / 128) * 156);   // bậc thang (V4.7: rộng 22)
   c.fillStyle = '#7fb2c9'; c.beginPath(); c.arc(mmX(27), mmY(5.2), 3.4, 0, 6.29); c.fill();      // đài phun nước (GEOMETRY-2: tâm 27)
   c.fillStyle = '#c95d7e'; c.fillRect(mmX(35.5), mmY(14), (10 / 304) * 156, (13.5 / 128) * 156); // SWEEP-1: khu quần áo
-  c.fillStyle = '#ffb52e'; c.beginPath(); c.arc(mmX(-128), mmY(19.5), 2.4, 0, 6.29); c.fill();   // SWEEP-1: Hoa Sữa (Tăng Bạt Hổ)
+  c.fillStyle = '#ffb52e'; c.beginPath(); c.arc(mmX(-128), mmY(19.5), 2.4, 0, 6.29); c.fill();   // Quán Hoa Sữa (Tăng Bạt Hổ)
+  c.fillStyle = '#b5483a'; c.beginPath(); c.arc(mmX(6.0), mmY(-35.5), 2.4, 0, 6.29); c.fill();     // Ki-ốt 30-32: Hồng Trà Hòa Bình
   c.fillStyle = '#e23b2e'; c.beginPath(); c.arc(mmX(-183), mmY(-20), 2.2, 0, 6.29); c.fill();   // GEOMETRY-2: mốc Jollibee
   c.fillStyle = '#7fae5a'; c.beginPath(); c.arc(mmX(-183), mmY(31.5), 2.2, 0, 6.29); c.fill();  // GEOMETRY-2: mốc L'angfarm
   c.fillStyle = '#ffd98a'; c.beginPath(); c.arc(mmX(31), mmY(-52), 2.4, 0, 6.29); c.fill();       // góc hát
