@@ -1122,8 +1122,57 @@ function brandShop(x, z, rotY, kind){ // BLENDER-DEEP-2 + V6: kiến trúc cao n
     s.position.set(cx, 20.15, cz + 0.1); worldGroup.add(s);
     solid(cx, cz - 1.5, 2.7, 0.8);
   };
-  rimCafe(-17, -32.5, 'CÀ PHÊ SƯỜN ĐỒI', 0x7a4a2e);
-  rimCafe(17.5, -32.5, 'TRÀ CHIỀU HÒA BÌNH', 0x5a6b46);
+  // V6 CHUẨN ĐỊA LÝ & ẢNH THẬT 08/10: Hai công trình biểu tượng ôm trọn 2 bên đỉnh cầu thang
+  // 1. Phía Tây: THƯƠNG XÁ LA TULIPE (3 tầng, mái ngói đỏ, biển xanh chữ trắng "LỐI VÀO MUA SẮM" - ảnh 08)
+  function buildLaTulipe(x, z, y){
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    box(8.8, 8.8, 6.2, 0xe8dcbe, 0, 4.4, 0, g);
+    box(9.2, 0.3, 6.6, 0x7a3024, 0, 8.95, 0, g, false);
+    const rLen = Math.hypot(4.6, 2.2);
+    const sl1 = box(rLen, 0.16, 6.8, 0x8a3828, -2.2, 9.9, 0, g, false); sl1.rotation.z = Math.atan2(2.2, 4.4);
+    const sl2 = box(rLen, 0.16, 6.8, 0x8a3828, 2.2, 9.9, 0, g, false); sl2.rotation.z = -Math.atan2(2.2, 4.4);
+    box(8.2, 1.8, 0.15, 0xe8dcbe, 0, 9.7, 3.11, g, false);
+    const tulipeSign = signMesh('Thương xá La Tulipe', 7.8, 1.35, '#0d3b66', '#ffffff', 'LỐI VÀO MUA SẮM');
+    tulipeSign.position.set(0, 5.2, 3.2); g.add(tulipeSign);
+    box(6.8, 2.4, 0.15, 0x2e3538, 0, 1.4, 3.12, g, false);
+    const wp = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 2.0), new THREE.MeshStandardMaterial({ color:0xffecc4, emissive:0xff9a3c, emissiveIntensity:0.55, roughness:0.5 }));
+    wp.position.set(0, 1.4, 3.22); g.add(wp);
+    for(const wx of [-2.4, 0, 2.4]){
+      for(const wy of [4.2, 7.1]){
+        box(1.4, 1.4, 0.1, 0x3d3028, wx, wy, 3.12, g, false);
+        box(1.5, 0.5, 0.45, 0x1f1f22, wx, wy - 0.5, 3.35, g, false);
+        for(let fi = 0; fi < 3; fi++) ball(0.12, 0xd62828, wx - 0.4 + fi * 0.4, wy - 0.35, 3.35, g, 0.8);
+      }
+    }
+    const awn = box(7.6, 0.08, 1.6, 0xc8312b, 0, 2.85, 3.85, g, false); awn.rotation.x = -0.25;
+    solid(x, z, 4.5, 3.2);
+    return g;
+  }
+  buildLaTulipe(-17.5, -33.5, 17);
+
+  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH THANG (2 tầng, ốp gạch nung ấm, biển xanh lá, thông Đà Lạt - ảnh 08 & 10)
+  function buildLangfarmStairs(x, z, y){
+    const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
+    box(8.8, 6.4, 6.2, 0xd4a373, 0, 3.2, 0, g);
+    box(9.2, 0.3, 6.6, 0x4a3428, 0, 6.55, 0, g, false);
+    const rLen = Math.hypot(4.6, 2.1);
+    const sl1 = box(rLen, 0.16, 6.8, 0x2e5030, -2.2, 7.55, 0, g, false); sl1.rotation.z = Math.atan2(2.1, 4.4);
+    const sl2 = box(rLen, 0.16, 6.8, 0x2e5030, 2.2, 7.55, 0, g, false); sl2.rotation.z = -Math.atan2(2.1, 4.4);
+    box(8.2, 1.7, 0.15, 0xd4a373, 0, 7.35, 3.11, g, false);
+    const lfSign = signMesh("L'ANGFARM", 7.8, 1.25, '#1b4332', '#ffd98a', 'ĐẶC SẢN ĐÀ LẠT • MỨT • TRÀ • HOA KHÔ');
+    lfSign.position.set(0, 4.8, 3.2); g.add(lfSign);
+    box(6.8, 2.3, 0.15, 0x3d2817, 0, 1.35, 3.12, g, false);
+    const wp = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.9), new THREE.MeshStandardMaterial({ color:0xffecc4, emissive:0xff9a3c, emissiveIntensity:0.5, roughness:0.5 }));
+    wp.position.set(0, 1.35, 3.22); g.add(wp);
+    box(5.8, 0.08, 0.7, 0x74522f, 0, 0.95, 3.55, g, false);
+    const jarCols = [0xd8542e, 0xe8c33c, 0x9a4a7a, 0x3f7a44, 0xe07b2a];
+    for(let i = 0; i < 5; i++){ cyl(0.12, 0.12, 0.28, jarCols[i], -2.0 + i * 1.0, 1.15, 3.55, g, 8); }
+    pine(x + 5.2, z - 1.2, 1.35);
+    pine(x + 4.8, z + 3.2, 1.2);
+    solid(x, z, 4.5, 3.2);
+    return g;
+  }
+  buildLangfarmStairs(17.5, -33.5, 17);
   const kiosk = (cx, cz, name, c) => {
     box(2.6, 2.0, 2.2, 0x74522f, cx, 18.0, cz, worldGroup);
     box(2.9, 0.12, 2.5, c, cx, 19.1, cz, worldGroup);
@@ -1475,14 +1524,30 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   }
   streetSign('Đ. NGUYỄN THỊ MINH KHAI', -160, -17.6, 0);
   streetSign('Đ. NGUYỄN THỊ MINH KHAI', -70, 27.4, Math.PI);
-  streetSign('Đ. TĂNG BẠT HỔ', -174, 27.4, Math.PI);
   pine(-150, -23.5, 1.25); pine(-120, -24, 1.4); pine(-90, -23.5, 1.15); pine(-70, -24.5, 1.3);
   pine(-150, 36, 1.2); pine(-105, 36.5, 1.35);
   hydrangea(-138, -18.6, 0.9); hydrangea(-104, -18.6, 0.9); hydrangea(-146, 27.6, 0.9); hydrangea(-110, 27.6, 0.9);
-  // Nhà phố 4-5 tầng chạy liên tục dọc hai bên đường từ bùng binh đầu chợ (Jollibee & L'angfarm) tới tận chợ
+  // Nhà phố 4-5 tầng chạy liên tục dọc hai bên đường
   shophouse(-60.5, 35.5, 7.5, 5, 0xe8dcc4, 'PHỞ & BÚN BÒ ĐÊM', '#7a2e22', 0x9c4034);
   shophouse(-53, 35.5, 7, 4, 0xdcc7a8, 'TẠP HÓA CÔ TƯ', '#33502e', 0x2e6da4);
-  shophouse(-38.5, 35.5, 7, 5, 0xe4d2b0, 'NHÀ NGHỈ HOA SIM', '#4c3428', 0x74566b);
+  // V6 ĐỐI DIỆN BÙNG BINH (ảnh 27): THANH BÌNH HOTEL 5 tầng trắng + biển neon xanh dương
+  shophouse(-38.5, 35.5, 8.5, 5, 0xf0ece4, 'THANH BÌNH HOTEL', '#004085', 0x1d4ed8);
+  const tbNeon = signMesh('Thanh Bình Hotel', 7.2, 1.25, '#002855', '#00d2ff', '★ ★ ★  ĐÀ LẠT');
+  tbNeon.position.set(-38.5, groundH(-38.5, 35.5) + 16.6, 32.6); worldGroup.add(tbNeon);
+  // V6 SKYLINE ĐÊM ĐÀ LẠT (ảnh 06 & 27): DALAT CENTER & HÔTEL COLLINE trên đường chân trời xa
+  {
+    const skyY = 22;
+    box(28, 18, 12, 0x1a1e24, -20, skyY / 2, 70, worldGroup, false);
+    box(22, 15, 10, 0x181c22, 8, skyY / 2 - 1.5, 72, worldGroup, false);
+    for(let f = 1; f <= 5; f++){
+      box(27.8, 0.12, 0.15, 0xffaa33, -20, f * 3.2 + 1.2, 63.9, worldGroup, false);
+      box(21.8, 0.12, 0.15, 0xffaa33, 8, f * 2.8 + 1.0, 66.9, worldGroup, false);
+    }
+    const dcSign = signMesh('DALAT CENTER', 14, 2.2, '#14171c', '#ffb703', 'TRUNG TÂM THƯƠNG MẠI & KHÁCH SẠN');
+    dcSign.position.set(-20, 18.8, 63.8); worldGroup.add(dcSign);
+    const hcSign = signMesh('HÔTEL COLLINE', 12, 1.9, '#14171c', '#ffb703', 'COLLINE DA LAT');
+    hcSign.position.set(8, 15.6, 66.8); worldGroup.add(hcSign);
+  }
   shophouse(-62, -28.5, 7, 4, 0xd8c8ae, 'CÀ PHÊ SƯỜN ĐỒI', '#3a2e24', 0x51624a, Math.PI);
   shophouse(-52, -28.5, 6.5, 5, 0xe0d0b4, 'HOMESTAY THÔNG XANH', '#33502e', 0x68804f, Math.PI);
   shophouse(-42, -28.5, 7, 4, 0xe8dcc4, 'BÁNH MÌ & SỮA NÓNG', '#7a2e22', 0xb03a30, Math.PI);
@@ -2703,7 +2768,7 @@ const STALL_DEFS = [
   { id:'chao', name:'CHÁO & SÚP ĐÊM', district:F, x:-37, z:-19.7, rotY:0, smoke:true, nightOnly:true, shirt:0x96683f, menu:[
     { name:'Cháo gà nóng', price:25, buff:'warm', sec:55, type:'food', desc:'Cháo nhừ, gà xé, hành gừng' },
     { name:'Súp cua', price:20, buff:'warm', sec:50, type:'food', desc:'Cua, bắp, trứng cút — ăn khuya ấm bụng' } ] },
-  { id:'hoasua', name:'SỮA ĐẬU NÀNH HOA SỮA', district:D, x:-128, z:19.5, rotY:Math.PI, roof:'none', smoke:true, steam:true, special:true, shirt:0xe8c87e, menu:[
+  { id:'hoasua', name:'SỮA ĐẬU NÀNH HOA SỮA', district:D, x:-22, z:-43, rotY:0, roof:'none', smoke:true, steam:true, special:true, shirt:0xe8c87e, menu:[
     { name:'Sữa đậu nành nóng (nành đường)', price:10, buff:'warm', sec:60, type:'drink', desc:'Hoa Sữa 3F Tăng Bạt Hổ (số 64 cũ) — nồi sữa nấu tay mỗi ngày, ly 7–10k, uống ngay vỉa hè không mái che' },
     { name:'Nành bò', price:12, buff:'warm', sec:60, type:'drink', desc:'Sữa đậu nành pha sữa bò — món gọi nhiều nhất cùng nành đường' },
     { name:'Nành phụng', price:12, buff:'warm', sec:60, type:'drink', desc:'Sữa đậu nành pha sữa đậu phộng, bùi bùi' },
@@ -4642,16 +4707,17 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
     const ks = tex(lbl, 2.4, 0.52, '#3a2e24', '#ffd98a');
     ks.position.set(kx, 19.52, kz + 1.1); worldGroup.add(ks);
   }
-  // Hoa Sữa — 3F Tăng Bạt Hổ (số 64 cũ), ngồi ngay mép vỉa hè, không mái
-  const hy = groundH(-128, 19.5);
-  const hs = tex('3F TĂNG BẠT HỔ (64 CŨ)', 2.8, 0.55, '#e8d9b0', '#7a2e22', 'Quán Hoa Sữa · Nấu tay mỗi đêm');
-  hs.position.set(-128, hy + 3.3, 19.3); hs.rotation.y = Math.PI; worldGroup.add(hs);
+  // Hoa Sữa — 3F Tăng Bạt Hổ (số 64 cũ) ngay góc phố ẩm thực đêm Tăng Bạt Hổ trên đồi Khu Hòa Bình (y=17)
+  const hs = tex('3F TĂNG BẠT HỔ (64 CŨ)', 3.2, 0.65, '#e8d9b0', '#7a2e22', 'Quán Hoa Sữa · Hơn 40 năm · Nấu tay mỗi đêm');
+  hs.position.set(-22, 17 + 3.3, -44.2); worldGroup.add(hs);
+  const tbhSign = tex('ĐƯỜNG TĂNG BẠT HỔ', 3.0, 0.55, '#1e382b', '#ffd98a', 'Phố Ẩm Thực Đêm Đà Lạt');
+  tbhSign.position.set(-26.5, 17 + 2.8, -39); worldGroup.add(tbhSign);
   const sc = [0xd9362b, 0x2d6cb0, 0x2e9e5b];
   for(let i = 0; i < 6; i++){
-    const x = -131 + (i % 3) * 1.4 + (i > 2 ? 0.5 : 0), z = 17.4 - Math.floor(i / 3) * 1.1;
-    box(0.36, 0.32, 0.36, sc[i % 3], x, groundH(x, z) + 0.17, z, worldGroup, false);
+    const x = -24.2 + (i % 3) * 1.2, z = -39.8 - Math.floor(i / 3) * 1.1;
+    box(0.36, 0.32, 0.36, sc[i % 3], x, 17.16, z, worldGroup, false);
   }
-  box(0.9, 0.5, 0.9, 0xcfc7b8, -129.8, groundH(-129.8, 16.1) + 0.28, 16.1, worldGroup, false);
+  box(0.8, 0.46, 0.8, 0x2e6da4, -23.0, 17.23, -40.35, worldGroup, false);
 }
 {
   const dg = new THREE.Mesh(new THREE.CircleGeometry(11.5, 26), fogPlanes[0].m.material.clone());
@@ -6375,7 +6441,7 @@ const tutTxtEl = document.getElementById('tutTxt');
 const tutDistEl = document.getElementById('tutDist');
 const guidePanelEl = document.getElementById('guidePanel');
 function suaFront(){ const s = stalls.find(s => s.id === 'sua'); return s ? { x:s.front.x, z:s.front.z } : { x:22, z:8.05 }; }
-function hoasuaFront(){ const s = stalls.find(s => s.id === 'hoasua'); return s ? { x:s.front.x, z:s.front.z } : { x:-128, z:17.4 }; }
+function hoasuaFront(){ const s = stalls.find(s => s.id === 'hoasua'); return s ? { x:s.front.x, z:s.front.z } : { x:-22, z:-40.9 }; }
 function hongtraFront(){ const s = stalls.find(s => s.id === 'hongtra'); return s ? { x:s.front.x, z:s.front.z } : { x:6.0, z:-33.45 }; }
 function nearestNpcPos(){
   let best = null, bd = 1e18;
@@ -6388,19 +6454,19 @@ function nearestNpcPos(){
   return best || { x:-30, z:-6 };
 }
 const TUT_STEPS = [
-  { txt:'Từ Bùng binh đầu chợ (Jollibee & L\'angfarm), dạo bước dọc đường Nguyễn Thị Minh Khai vào Vòng xoay Hòa Bình',
+  { txt:'Từ đầu đường Nguyễn Thị Minh Khai, dạo bước qua phố chợ đêm lung linh vào Bùng binh Chợ Đà Lạt',
     target:() => ({ x:-28, z:0 }),
-    check:() => Math.hypot(playerState.x - (-28), playerState.z - 0) < 12.0 || playerState.x > -28 },
-  { txt:'Leo cầu thang di sản Ngô Viết Thụ (Góc Hong Kong) lên đồi',
-    target:() => ({ x:0, z:-33 }),
+    check:() => Math.hypot(playerState.x - (-28), playerState.z - 0) < 14.0 || (playerState.x > -32 && playerState.z < 6 && playerState.z > -8) },
+  { txt:'Leo Cầu thang di sản Ngô Viết Thụ (Góc Hong Kong), qua La Tulipe & L\'angfarm lên đồi',
+    target:() => ({ x:0, z:-31 }),
     check:() => playerState.y > 15.5 && playerState.z < -28 },
-  { txt:'Check-in Quảng trường Khu Hòa Bình & Rạp 3 Tháng 4',
+  { txt:'Check-in Quảng trường Khu Hòa Bình & Rạp 3 Tháng 4 (xây năm 1937)',
     target:() => ({ x:-19, z:-48 }),
     check:() => Math.hypot(playerState.x - (-19), playerState.z - (-48)) < 8.0 },
-  { txt:'Xuống dốc Tăng Bạt Hổ uống sữa nóng ở Quán Hoa Sữa (3F Tăng Bạt Hổ)',
+  { txt:'Rẽ dốc Tăng Bạt Hổ uống sữa nóng ở Quán Hoa Sữa vỉa hè (3F Tăng Bạt Hổ)',
     target:() => hoasuaFront(),
     check:() => tutFlags.hoasua || tutFlags.drank },
-  { txt:'Ghé Ki-ốt 30–32 Khu Hòa Bình thưởng thức Hồng Trà Hòa Bình',
+  { txt:'Ghé Ki-ốt 30–32 Khu Hòa Bình thưởng thức Hồng Trà Hòa Bình Signature',
     target:() => hongtraFront(),
     check:() => tutFlags.hongtra },
 ];

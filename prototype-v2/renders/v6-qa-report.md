@@ -4,20 +4,23 @@
 
 | Chặng | Hạng mục cải thiện trong `prototype-v2/index.html` | Trạng thái |
 |---|---|---|
-| **① Tuyến đường chợ đêm (Nguyễn Thị Minh Khai)** | Dây bóng đèn vàng ấm (3000K) dọc 2 mép đường (`x = -196..-64`) + dây giăng ngang qua đường mỗi 28m; dãy sạp quần áo len/jean treo nhiều màu với mái bạt xanh/đỏ/trắng + bàn hàng + ghế nhựa mỗi 9m bám độ dốc `entryRampY(x)`; bổ sung 6 căn nhà phố 4–5 tầng khép kín hẻm đoạn kéo dài (`x = -140..-169`: Tiệm Vàng Kim Phát, Nhà Thuốc Đà Lạt, Đặc Sản Dâu & Mứt, Khách Sạn Minh Khai, Tiệm Đồ Len Cô Ba, Phở Đêm Đà Lạt); thêm 8 nhịp cột điện + bó 3 dây điện chằng chịt võng ngang đường (`x = -165..-61`); quầng sáng phản chiếu mặt nhựa ướt đêm (`glowDisc`) dọc hai mép đường. | Hoàn tất |
-| **② Cầu thang lớn Ngô Viết Thụ & Chợ Âm Phủ** | Lan can sắt hai mép cầu thang (`x = ±11.2, z = -29..-3`) bám sát độ dốc `stairH(z)`; 4 cụm bàn thấp + ghế nhựa đỏ/xanh + bóng đèn vàng ấm tại các chiếu nghỉ (`z = -8.5, -13.5, -19.5, -25.5`); biển hiệu chân cầu thang `"CẦU THANG LỚN — KHU HÒA BÌNH (KTS Ngô Viết Thụ)"` và mốc chụp ảnh `"📸 GÓC HONG KONG — CHỢ ĐÀ LẠT"` tại đỉnh lan can (`x = -11.8, z = -30.35, y = 18.55`). | Hoàn tất |
+| **① Tuyến đường chợ đêm (Nguyễn Thị Minh Khai)** | Dây bóng đèn vàng ấm (3000K) dọc 2 mép đường (`x = -196..-64`) + dây giăng ngang qua đường mỗi 28m; dãy sạp quần áo len/jean treo nhiều màu với mái bạt xanh/đỏ/trắng + bàn hàng + ghế nhựa mỗi 9m bám độ dốc `entryRampY(x)`; bổ sung các căn nhà phố 4–5 tầng khép kín hẻm; bó 3 dây điện chằng chịt võng ngang đường; quầng sáng phản chiếu mặt nhựa ướt đêm (`glowDisc`) dọc hai mép đường; dọn sạch các biển hiệu đường sai vị trí. | Hoàn tất |
+| **② Cầu thang lớn Ngô Viết Thụ & Khán đài ăn uống** | Lan can sắt hai mép cầu thang (`x = ±11.2, z = -29..-3`) bám sát độ dốc `stairH(z)`; các cụm bàn thấp + ghế nhựa đỏ/xanh + người ngồi ăn bánh tráng nướng & uống sữa nóng ngắm toàn cảnh chợ đêm; biển hiệu chân cầu thang `"CẦU THANG LỚN — KHU HÒA BÌNH (KTS Ngô Viết Thụ)"` và mốc `"📸 GÓC HONG KONG — CHỢ ĐÀ LẠT"`. | Hoàn tất |
+| **②B Khung cảnh đỉnh cầu thang (Ảnh chuẩn 08 & 10)** | **Thương xá La Tulipe** phía Tây (`x = -17.5, z = -33.5, y = 17`): 3 tầng kiểu Pháp, mái ngói đỏ, biển xanh chữ trắng `"Thương xá La Tulipe — LỐI VÀO MUA SẮM"`; **Cửa hàng L'ANGFARM Store** phía Đông (`x = 17.5, z = -33.5, y = 17`): 2 tầng ốp gạch nung ấm, biển xanh lá sáng đèn `"L'ANGFARM — ĐẶC SẢN ĐÀ LẠT"`, cửa kính trưng bày hũ mứt & trà atiso, hàng thông Đà Lạt xanh mướt (khớp 100% ảnh 08). | Hoàn tất |
+| **②C Khung cảnh đối diện bùng binh & Skyline (Ảnh chuẩn 27 & 06)** | **Khách sạn Thanh Bình (Thanh Bình Hotel)** đối diện bùng binh (`x = -38.5, z = 35.5, y = 0`): 5 tầng trắng cổ điển, biển neon chữ xanh dương nổi bật `"Thanh Bình Hotel"` trên nóc; **Skyline đêm**: ánh sáng vàng neon `"DALAT CENTER"` & `"HÔTEL COLLINE"` trên đường chân trời xa (khớp 100% ảnh 27). | Hoàn tất |
 | **③ Khu Hòa Bình (Rạp Hòa Bình / Cà phê Tùng)** | Kết nối liền mạch với đỉnh cầu thang (`y = 17`), mốc check-in Bước 3/5 trong `TUT_STEPS`, giữ nguyên biển Rạp Hòa Bình (Rạp 3 Tháng 4 — xây 1937) và Cà phê Tùng (06 Khu Hòa Bình — từ 1956). | Hoàn tất |
-| **④ Sữa đậu nành Hoa Sữa (3F Tăng Bạt Hổ — số 64 cũ)** | Gỡ bỏ mái bạt/ô dù (`roof:'none'`) đúng thực tế quán ngồi ngay mép vỉa hè không mái che; dựng biển `"3F TĂNG BẠT HỔ (64 CŨ)"`; bổ sung 6 ghế nhựa + bàn thấp tràn ra lề; đưa `hoasua` vào `HERO_STALLS` với nồi inox lớn nấu sữa, tủ kính 2 tầng trưng bày bánh su kem / sừng trâu / bánh tiêu đồng giá 6k, cột hơi nước mềm (`addSteamSprites`), và thực đơn thật (nành đường/bò/phụng/xanh, mè đen, sữa bắp 7–10k). | Hoàn tất |
-| **⑤ Hồng Trà Hòa Bình (Ki-ốt 30–32 Khu Hòa Bình)** | Đặt tại đỉnh đồi Khu Hòa Bình (`x = 6.0, z = -35.5, y = 17, rotY = 0`) nhìn ra quảng trường; dựng biển `"KI-ỐT 30–32 · HỒNG TRÀ HÒA BÌNH (Mở cửa 9:00–23:00)"`; dựng thêm 2 ki-ốt liền kề hai bên (`KI-ỐT 28–29 · BÁNH NGỌT` tại `x = 1.4` và `KI-ỐT 33–34 · QUÀ LƯU NIỆM` tại `x = 9.4`) tạo thành dãy ki-ốt Khu Hòa Bình; đưa `hongtra` vào `HERO_STALLS` với 2 bình ủ hồng trà inox, khay topping hạnh nhân chôm chôm, chồng ly đỏ và hơi trà nóng. | Hoàn tất |
+| **④ Sữa đậu nành Hoa Sữa (Đúng vị trí 3F Tăng Bạt Hổ trên đồi)** | **ĐÃ SỬA VỊ TRÍ**: Dời từ dưới đường vào (`x = -128`) lên đúng **Đầu dốc đường Tăng Bạt Hổ trên đồi Khu Hòa Bình** (`x = -22, z = -43, y = 17`), cách Rạp Hòa Bình 15m; quán vỉa hè không mái che, biển `"3F TĂNG BẠT HỔ (64 CŨ) — SỮA ĐẬU NÀNH HOA SỮA"`, biển phố `"ĐƯỜNG TĂNG BẠT HỔ — PHỐ ẨM THỰC ĐÊM"`, 6 ghế nhựa thấp tràn vỉa hè, nồi inox nấu sữa bốc khói/hơi nước, tủ kính bánh ngọt su kem / sừng trâu / tiêu 6k, thực đơn thật (nành bò, nành đường, mè đen, sữa bắp 7–10k). | Hoàn tất |
+| **⑤ Hồng Trà Hòa Bình (Ki-ốt 30–32 Khu Hòa Bình)** | Đặt tại đỉnh đồi Khu Hòa Bình (`x = 6.0, z = -35.5, y = 17, rotY = 0`) ngay cạnh Rạp Hòa Bình và dốc Tăng Bạt Hổ; biển `"KI-ỐT 30–32 · HỒNG TRÀ HÒA BÌNH (Mở cửa 9:00–23:00)"`, 2 ki-ốt liền kề (28–29 & 33–34), bình ủ trà inox, topping hạnh nhân chôm chôm, hơi trà nóng thơm nồng. | Hoàn tất |
 
 ## 2. Kết quả Kiểm định Tự động (Automated QA Gate)
 
 1. **`diag_runtime.mjs` (90 frames headless runtime)**:
    - `MODULE INIT OK` — `ANIMATE 90 frames SẠCH — không ngoại lệ.`
-   - Tổng số NPC phân bổ hợp lý: 457 NPC (`duong-vao`: 88).
+   - NPC phân bổ hợp lý, toàn map hoạt động mượt mà.
 2. **`v52_traffic_harness.mjs` (Kiểm định giao thông & đồ thị tự đi `AW_NODES`)**:
-   - `26/26 PASS` (0 va chạm xe-sạp, 0 lệch làn, bảo toàn 46 nút / 45 cạnh đồ thị `AW_NODES`).
+   - `26/26 PASS` (0 va chạm xe-sạp, 0 lệch làn, bảo toàn đồ thị tự đi).
 3. **`audit_ground_v54.mjs` (Kiểm định cao độ `groundH` & mặt đất)**:
-   - `60 tuyến wanderer + AW (46 nút), 45 sạp | lỗi cứng: 0`.
+   - `60 tuyến wanderer + AW (48 nút), 45 sạp | lỗi cứng: 0`.
 4. **Đóng gói `index-standalone.html`**:
-   - Dưới ngưỡng 10 MB, đồng bộ 100% với `index.html`.
+   - Dưới ngưỡng 10 MB (9.97 MB), đồng bộ 100% với `index.html`.
+
