@@ -573,3 +573,1028 @@ Nguyên tắc mới: hình khối quan trọng dựng THẬT trong Blender (buil
 - Tam giác: 3.763.542 → 3.757.146 (chênh ~0,2% là dao động nạp GLB giữa 2 lần chạy — KHÔNG cắt nội dung)
 - Kiểm chứng sau tối ưu: diag init + 900 frame SẠCH; audit_ground_v54 0 lỗi cứng/0 nhảy lưới; harness giao thông 26/26; standalone đóng lại 10.409.634 byte ≤ 10.485.760
 - Ước lượng cải thiện thực tế: chi phí bóng (shadow pass) giảm ~một nửa; chi phí CPU cập nhật ma trận giảm ~một nửa số object; chi phí fragment ban ngày giảm mạnh nhờ bỏ 37 đèn khỏi shader; ban đêm (mặc định) giữ nguyên chất lượng sáng. Chưa đo được FPS thật trong trình duyệt (giới hạn môi trường) — chờ Chung Hy chơi thử xác nhận
+
+## V5.5 (09/11) — THEO ẢNH CHƠI THỬ THẬT CỦA CHUNG HY (image-59): CHÓI NGÀY / ĐƯỜNG HẸP / MẤT DANH TÍNH PHỐ / GÓC MỞ ĐẦU + NGHIÊN CỨU 21 + BẬC TAM CẤP + TĂNG BẠT HỔ + ĐÀI PHUN & QUẦN ÁO
+Nghiên cứu trước khi sửa: research/21-tham-khao-3d-va-duong-that.md + 5 ảnh theme/real-market/40–44 (SOURCES.md mục 40–44). Kết luận chính: trục thật là vòng xoay đài phun nước → NTMK → chợ → bậc tam cấp; quán Sữa đậu nành Hoa Sữa 64 Tăng Bạt Hổ cách chợ ~50m; không có mô hình 3D công khai đáng kể cho riêng chợ (photogrammetry Google Earth + UAV study) → ưu tiên silhouette + trục vista.
+### A. Đường vào — số đo trước/sau
+- Khoảng trống giữa 2 mặt sạp (front = tâm ± hướng×2,1): TRƯỚC 13,5u (bắc −4,6 / nam đoạn vào 8,9) → SAU 33,75u = ×2,5 ĐÚNG MỤC TIÊU (hàng bắc z −6,7 → −15,7, front −13,6; sạp nam đoạn vào z 11,0 → 22,25, front 20,15).
+- KHÔNG đạt ×2,5 ở sạp nam ĐOẠN MẶT TIỀN (x −31..43, giữ z 11,0): lưng sạp chạm cột nhà lồng z=12 — dời nữa là xuyên nhà lồng. Đã ghi rõ: đoạn này là sạp áp mặt tiền chợ (khác tính chất đoạn đường vào).
+- DÀI ×2: cổng chào x −81 → −131; spawn (−76 →) −126; entryRampY nắp min(2,0) → min(5,5); mặt cắt mới: nhựa giữa + vỉa hè bắc z −13,9..−11,1 + thềm sạp 2 bên (groundH viết lại 5 nhánh; ROUTE_HILL thêm vòng tây tới −129,5; AW 38 → 42 nút).
+- Biển chỉ đường + biển tên đường 'ĐƯỜNG TĂNG BẠT HỔ' tại góc quán (−130,6, 16,9).
+### B. Hạ chói ban ngày (rig NGÀY; đêm giữ nguyên V5.4)
+- exposure 1,05 → 0,88; sun 1,1 → 0,95; hemi 0,85 → 0,55; ambient 0,12 → 0,10; sky bottom 0xf2e3c2 → 0xe8d5ae; fogBase 0,0075 → 0,0058.
+- Mặt tiền trắng tinh → kem ấm: tint WallCream/ColumnCream → 0xe3d7bd (clone trong mk.traverse như MarketWin). Tách tông nền: nhựa 0x453f3a (sẫm nhất) < vỉa hè 0x84796a < sân sạp 0x978a78 (trước: plaza 0x8a7f72).
+- GIỚI HẠN KIỂM CHỨNG: render Blender KHÔNG tái hiện được grade web (GLB gốc vẫn trắng; chế độ ngày của render vẫn bị SkyDome đêm + đèn điểm đêm chi phối → bản K-ngày trong r25 trông tối kiểu đêm, CHỈ dùng kiểm bố cục). Grade web thật CHỈ chốt khi Chung Hy chơi thử — đây là điểm mù đã biết từ V5.4 (lệch grade môi trường kiểm ↔ web).
+### C. Danh tính đường Đà Lạt
+- 2 dãy nhà phố LIÊN TỤC 2 bên trục (cũ 3+3 → thêm 8 nhà đoạn kéo dài: nam z 26,5 x −80/−95/−110/−124; bắc z −24..−25 trên sườn), nhựa có vạch đứt bám dốc tới x −124, lề/vỉa hè 2 bên suốt trục, 14 đèn đường (thêm 6 đoạn kéo dài), cẩm tú cầu 2 mép thềm + đoạn kéo dài, khói bếp theo dãy mới.
+### D. Khung mở đầu (2 lỗi chồng nhau, đã truy tận gốc bằng raycast Blender)
+- Lỗi 1: BIỂN CỔNG chắn tâm khung — camera spawn (−136,2; 13,5) phía tây cổng x −131, người chơi phía đông: đường ngắm tới đầu người chơi cắt biển ở y 10,57 ∈ [9,8..10,8]. SỬA: nâng cổng — trụ 5,4 → 7,6; xà + biển gy+5,5 → gy+7,7 (biển 'KHU HÒA BÌNH — CHỢ ĐÀ LẠT' mặt chữ hướng tây); đường ngấm đi dưới biển, biển thành banner mép trên khung.
+- Lỗi 2: pitch quá cúi — render đối chiếu: pitch 0,55 (~31°) làm mặt nhựa chiếm ~70% khung, vista nén thành dải mỏng. SỬA: camPitch mặc định 0,8 (V5.4) → 0,55 → 0,38 (~22°); camera frame 0 = (−137,15; 11,73; 5,6) khớp công thức animate. Render K/L mới: thấy trọn trục dốc, 2 dãy nhà, tượng bùng binh cuối đường. Spawn giữ đầu đường (−126; 5,18; 5,6) mặt +x.
+### E. Bậc tam cấp + Tăng Bạt Hổ + đài phun/quần áo
+- Bậc: +10 người ngồi ăn theo cặp đối diện ở 2 chiếu nghỉ + chuyến C (STAIR_SITTERS), +2 sạp chân bậc (ĐẬU HŨ NÓNG chiếu 2, BẮP NƯỚNG chiếu 1), +2 cụm bàn thấp chân thang. Render M đạt: bậc rộng hoành tráng, đèn cầu, sạp bậc, tháp đồng hồ.
+- Tăng Bạt Hổ: sạp hoasua tại (−128; 19,5) cuối trục — nồi sữa phụ + khói/hơi, tủ bánh, 3 bàn thấp × 2 người + ly sữa, hàng chờ 4 (side), menu sữa đậu nành nóng 10 / sữa nành bò 12 / bánh tiêu 7 / sừng trâu 10 (district D). Render N đạt.
+- Đài phun nước tại (24,5; 5,2) — sân đông TRƯỚC chợ, ĐỐI DIỆN bậc tam cấp (neo theo lời Chung Hy + ảnh 44 vòng xoay phun nước): bồn Ø5,4 + đĩa nước + cột/bát + 6 tia + 4 uplight + glow disc + solid (FORBIDDEN trong harness). KHU QUẦN ÁO phía phải đối diện bậc: 2 sạp aokhoac (40; 17,5) + aolen (40; 22,5) district W rotY −π/2 + 5 giá treo đầy áo + kệ áo gấp + tấm sân; AW thêm nút 40 (36,2; 20) + 41 (42,5; 6,2), cạnh [27,41],[41,40] (đi vòng nam, né giếng thang + sạp cà phê — audit bắt được 2 lần cắt trước khi chốt).
+- Pull-over giao hàng #2: banhtrang → khoai (banhtrang đã dời z 22,25, xe không với tới; khoai front cách điểm đỗ 4,9u).
+### F. Cổng kiểm chứng (trên index.html CUỐI, sau mọi sửa)
+- diag_runtime 900 frame SẠCH + SEED_SAVE 300 frame SẠCH; audit_ground_v54: 57 tuyến + AW 42 nút + 31 sạp — 0 lỗi cứng, 0 nhảy lưới; harness giao thông 26/26 PASS.
+- Render draft Blender (480×360): K/L khung mở đầu ngày/đêm, M bậc tam cấp, N Hoa Sữa — đạt như mô tả trên; O/P (đài phun/quần áo) KHÔNG ra được khung sạch sau 3 lần đặt camera trong cảnh gương (khuất bởi khối thang/cầu/sạp mặt tiền) — 2 hạng mục này chỉ kiểm chứng bằng audit (tới được, không cắt solid) + harness (FORBIDDEN đài phun), CHƯA có ảnh render đối chiếu. Đám đông bị tắt trong render (dup_tree >10s/người dưới CPU chia sẻ) — đời sống trong render mỏng hơn game thật.
+- Ghép renders/r25-doi-chieu-v55.png (ảnh thật 40 | khung V5.4 từ image-59 | render V5.5).
+- Đóng gói standalone: 10.424.734 byte ≤ 10.485.760 (dư 61.026; V5.4 là 10.409.634, +15.100 cho toàn bộ V5.5 — không GLB mới).
+- CHƯA kiểm chứng được: grade NGÀY trên web thật + FPS thật — chỉ chốt khi Chung Hy chơi thử (môi trường kiểm không chạy được WebGL). Đúng 1 đợt polish (nâng cổng + pitch 0,38 + sửa góc render).
+
+## SWEEP-1 (09/11) — RÀ LỖI TOÀN BẢN ĐỒ SAU V5.5 (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Phương pháp: chạy lại toàn bộ cổng trên bản V5.5 (diag 900 + seed 300 SẠCH, audit 0/0, xe 26/26 — đường cơ sở đạt hết) → rà code từng hệ thống → 2 hạng mục V5.5 thiếu render được soi bằng cảnh Blender TỐI THIỂU dựng đúng số đo code (scripts/render_sweep1_mini.py; cảnh gương toàn map render_v55.py đặt camera 3 lần đều trượt/khuất do hình học xung quanh trong gương lệch game — shot S1/S2/S3 của render_sweep1.py không dùng làm bằng chứng, giữ file để đối chiếu). Đúng 1 đợt polish gồm 4 sửa dưới đây.
+
+### DANH SÁCH LỖI
+- [x] **SW-01 (HỆ THỐNG, trung bình–cao) — Minimap không phủ trục mới.** Bằng chứng: mmX=(x+88)/176*156 chỉ phủ x −88..88 trong khi V5.5 kéo trục tới cổng −131, spawn −126, Hoa Sữa −128 → chấm người chơi tại spawn nằm NGOÀI khung (mmX(−126) = −33px), vạch đường chỉ vẽ tới −85, không mốc nào cho đài phun/khu quần áo/Hoa Sữa. SỬA: mmX nới thành (x+140)/232*156 (phủ −140..92), các hệ số bề rộng 176→232, vạch đường kéo tới −133, thêm 3 mốc: đài phun (chấm xanh 24.5; 5.2), khu quần áo (khối hồng 35.5..45.5 × 14..27.5), Hoa Sữa (chấm vàng −128; 19.5). Chấm đích/tự đi dùng chung mmX/mmY nên tự khớp.
+- [x] **SW-02 (HÌNH HỌC, trung bình) — Tia đài phun nghiêng NGƯỢC dấu, chụm vào tâm.** Bằng chứng số: chạy three r160 thật (Euler XYZ như game): mọi tia có đầu tia r=0.095 (gần như chụm tại trục), chân tia r=0.745 → 6 tia thành hình chóp úp trên bát, không phải phun ra ngoài. Render mini M2 (trước sửa) thấy rõ "lồng nan" hội tụ. SỬA: rotation.z = −cos(a)·0.6, rotation.x = +sin(a)·0.6 → đầu tia r=0.745 xòe ra ngoài, vẫn nằm gọn trong bồn (r nước 2.45); render mini M1 (sau sửa) xác nhận tia xòe + bóng tia tỏa tròn trên mặt bồn.
+- [x] **SW-03 (BỐ CỤC, trung bình) — 2/3 giá quần áo bị sạp che khuất hẳn.** Bằng chứng: giá cao 1.55 đặt tại x=42.1 ngay sau 2 sạp (sạp cao ~3.2, lưng x≈41.9) → từ quảng trường phía tây không thấy áo treo, khu quần áo trông như 2 sạp thường (render mini M3/M4 trước sửa: áo chỉ ló qua khe 0.7 giữa 2 sạp). SỬA: dời 2 giá ra 2 ĐẦU TRƯỚC của dãy — (36.9; 14.9) và (36.9; 25.1), lệch mặt sạp (37.9) ≥1.35 theo z nên không chắn điểm tương tác; giá đầu nam (40; 26.3) giữ nguyên. Render mini M3/M4 sau sửa: 2 giá áo màu quay mặt ra quảng trường, mặt sạp vẫn trống — khu đọc rõ là KHU QUẦN ÁO.
+- [x] **SW-04 (VA CHẠM, nhẹ) — Giá treo thiếu collider.** Vật cao 1.55 mà không có solid() → người chơi đi xuyên qua giá (18 điểm solid toàn game đều là công trình/sạp/vật lớn tương tự). SỬA: thêm solid() cho cả 3 giá theo vị trí cuối (0.4 × 1.25, hướng dài dọc z vì rotY −π/2); đối chiếu tay: không cắt cạnh AW nào (41→40, 27→41 lệch ≥0.9), audit sau sửa vẫn 0/0.
+- [ ] **SW-05 (HIỆU NĂNG, nhẹ — ghi nhận, không sửa đợt này):** số đo PERF sau V5.5: 25.6k object · 20.9k mesh · 4.03M tam giác (+7.2% so với V5.4 sau tối ưu 3.76M) · caster ~8.45k (+6.5%) · đèn điểm bật ban đêm 37 (V5.4: 34 — do đèn đường đoạn kéo dài) · draw call ước lượng đêm ~21.1k (+8.7%), ngày ~29.6k (+8.3%). Tăng tỉ lệ với nội dung mới (đường dài ×2 + 3 khu mới); vật mới đã qua castOK + đóng băng ma trận (frozen 13.608 = 53%). Không cắt nội dung trong đợt rà lỗi; muốn ép thêm phải làm đợt hiệu năng riêng (merge hình học tĩnh — đã ghi nhận từ V5.4-D là hướng rủi ro cho frustum culling/bật-tắt sạp đêm).
+- [ ] **SW-06 (HỒ SƠ, nhẹ — ghi nhận):** mục V5.5 ghi "+5 giá treo" nhưng code game có 3 giá độc lập + 2 sạp (con số 5 là của cảnh gương render, nơi vẽ thêm giá tại vị trí sạp). Không ảnh hưởng game; lưu ý khi trích dẫn số liệu sau này.
+- [ ] **SW-07 (NHẸ — ghi nhận):** chưa có biển CHỈ ĐƯỜNG tới khu quần áo/đài phun (chỉ có biển tên đường Tăng Bạt Hổ + biển sạp). Khu nằm ngay sân đông, nhìn thấy từ quảng trường nên không coi là lỗi; nếu làm đợt trang trí tiếp theo thì thêm 1 biển chỉ đường ở góc sân (24; 10).
+
+### ĐÃ RÀ — ĐẠT, KHÔNG LỖI
+- Save cũ chohb3d-v1: load bằng Object.assign trên mặc định + guard riêng (wardrobe/equipped/soDacSan/dacSanGot/game/guide) — SEED_SAVE diag 300 frame SẠCH; sạp mới không cần migration (stamps/eaten khóa theo id, Sổ Đặc Sản tự suy từ STALL_DEFS nên 3 sạp mới đã có mặt).
+- QUEUES: hoasua có hàng chờ 4 (side, không lấn làn vòng tay); aokhoac/aolen không hàng chờ — NHẤT QUÁN với mọi sạp goods cũ (len1/len2/rau/dacsan/tra đều không có), không phải thiếu sót.
+- Tự đi AW: 42 nút liên thông toàn phần (chuỗi chính + nhánh 36–39 trục Tăng Bạt Hổ + nhánh 27→41→40 khu quần áo); audit 57 tuyến + AW + 31 sạp = 0 lỗi cứng, 0 nhảy lưới; mặt sạp 3 sạp mới tính đúng (hoasua (−128; 17.4), aokhoac/aolen x 37.9); hoạt cảnh tiểu thương suy theo district: hoasua 'pour', quần áo 'arrange' — hợp ngữ cảnh.
+- Ánh sáng: đối chiếu từng giá trị trong applyDayNight với chuẩn V5.5 — ngày exposure 0.88 / sun 0.95 / hemi 0.55 / amb 0.10 / fog 0.0058 / trời chân 0xe8d5ae; đêm exposure 1.22 / fog 0.0058 / nền 0x0e1a30 — KHÔNG hồi quy. Grade ngày trên web thật vẫn là điểm mù đã biết (chỉ chốt khi Chung Hy chơi thử).
+- Hình học các khu không đổi ở V5.5 (nhà lồng, sân thượng, cầu nổi, 2 sườn, trong nhà): audit đạt + không có thay đổi code kể từ các render đạt của V5.4/V5.5 (K/L/M/N) — verdict giữ nguyên ĐẠT.
+
+### VERDICT TỪNG KHU
+- Đường vào + trục Tăng Bạt Hổ + Hoa Sữa: ĐẠT (render V5.5 K/L/N + audit; nay thêm mốc minimap — SW-01).
+- Bậc tam cấp: ĐẠT (render V5.5 M).
+- Đài phun nước: ĐẠT SAU SỬA (cấu trúc đúng số đo; tia phun đã sửa dấu — SW-02; tỉ lệ bồn Ø5.8 × cao tổng ~2.7 hơi thấp/bẹt so với ảnh thật vòng xoay nhưng là tỉ lệ đã chốt ở V5.5, không tự ý đổi trong đợt rà lỗi).
+- Khu quần áo: ĐẠT SAU SỬA (giá áo lộ ra quảng trường — SW-03 + collider SW-04).
+- Nhà lồng / sân thượng / cầu nổi / sườn đông–tây / đồi: ĐẠT (không hồi quy).
+
+### CỔNG SAU SỬA (bản cuối)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; chạy trực tiếp trên index-standalone.html 300 SẠCH.
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới. Harness giao thông: 26/26 PASS.
+- Đóng gói standalone: 10.425.925 byte ≤ 10.485.760 (dư 59.835; +1.191 so với V5.5 — 4 sửa đều là code, không GLB mới).
+- Ảnh kiểm chứng đợt này: renders/sw1-M1-fountain-draft.png (tia xòe sau sửa), sw1-M2-fountain-high-draft.png (bằng chứng chóp tia trước sửa), sw1-M3-clothing-draft.png + sw1-M4-clothing-row-draft.png (sau sửa). Script: scripts/render_sweep1_mini.py (+ render_sweep1.py lưu vết đường camera gương thất bại).
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): FPS thật + grade ngày trên web — chờ Chung Hy chơi thử. KHÔNG upload/push.
+
+## SOUND-COLOR-1 (09/11) — ÂM THANH + MÀU SẮC THEO TƯ LIỆU THẬT (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Phương pháp theo lệnh Chung Hy "tự tải về rồi coi trực tiếp": tải audio chợ đêm thật về
+phân tích phổ + đo màu 19 ảnh thật bằng k-means. Toàn văn: research/22-am-thanh-va-mau-that.md.
+- Audio thật: YouTube 4rPBnyriJjY, 13 phút 29s, opus 48kHz, 12,56 MiB → /tmp/sc22/yt1.webm
+  (file tham khảo, KHÔNG nhúng vào game). Lịch sử tải: lần 1 worstaudio/worst kẹt 3,1MB (2 tiến
+  trình cùng ghi 1 file, đã kill); lần 2 video kaVLoOsBbOk lỗi format; lần 3 `-f bestaudio/best`
+  thành công trong 9 giây. Kết luận: dùng bestaudio/best, đừng dùng worstaudio/worst.
+- Phổ thật (cửa sổ 30s): rì rầm 250–800Hz chiếm 47–70% lúc đông (lớp chủ); trầm <250Hz 23–35%;
+  xì xèo 2,5–6kHz chỉ 1–2% lúc đông, vọt 8–13% lúc lặng (lớp phụ); dải giọng rõ 0,8–2,5kHz chỉ
+  2–6% → nhiễu lọc băng tần là cách tái tạo ĐÚNG, không cần giọng nói tổng hợp. RMS dao động
+  −17dB (đông nhất) → −31dB (lặng nhất).
+- Màu thật: 19 ảnh, script scripts/sample_colors_sc22.py (k-means 4 màu + 3 dải).
+### THAY ĐỔI ÂM THANH (sinh thủ tục WebAudio, KHÔNG file nhạc — trần standalone chỉ còn ~60KB)
+- Ambience 5 lớp nhiễu lọc băng tần (murmur 500Hz / trầm 160Hz / xì xèo 4,2kHz / nước 1,1kHz /
+  gió 280Hz), gain theo khu + ngày/đêm (phố ăn 1,0 / bậc 0,6 / đài phun nước 1,0 / đường vào
+  0,35 / vắng-trên-cao gió 1,0; đêm rì rầm ×1,3, ngày ×0,8), LFO 0,07Hz cho rì rầm "thở",
+  LFO 9Hz cho xì xèo lách tách. Xe máy vụt qua: quét sawtooth 70→165→70Hz 1,4s khi xe đường
+  < 22u (cooldown 5s), âm lượng theo khoảng cách.
+- Nút 🔊/🔇 trên HUD (state.muted lưu save chohb3d-v1, mặc định bật, guard save cũ); masterGain
+  chung cho SFX + nhạc sân khấu + ambience; âm thanh chỉ khởi sau tương tác đầu tiên
+  (AudioContext tạo từ SFX như hiện tại). Sửa 1 lỗi logic trong lúc kiểm: khu bậc tam cấp bị
+  phố ăn nuốt do chồng lấn z (đã đổi thứ tự kiểm tra — bậc trước, phố ăn sau).
+### THAY ĐỔI MÀU (chỉ albedo — chuyển được sang web; KHÔNG đụng exposure/đèn/sky)
+- CROWD_SHIRTS: xanh rêu bão hòa 0x6b8f3e → 0x8d9287 xám rêu (đo 23% ảnh 30).
+- AWNS mái bạt: cam sáng 0xe8862e → 0xc06c44 terracotta (đo ảnh 31, lặp #c16b44 ảnh 07);
+  xanh lá sáng 0x3f9e4d → 0x68804f muted. Giữ đỏ nhấn 0xc8372d (khóa ≤5%).
+- Nước đài phun 0x7fb2c9 → 0xa8cfe0 (nhạt theo #d3e9f5 ảnh 44).
+- Áo treo giá: vàng chói 0xe8c832 → 0xd7d2bf kem sáng (đo 25% ảnh 30).
+- ĐÃ ĐÚNG nên không sửa: mặt tiền kem 0xe3d7bd, nhựa<vỉa hè<sân, trời đêm 0x274263, đèn sodium.
+  Đề xuất ghi nhận (không tự áp): nền trời đêm 0x0e1a30 hơi tối hơn dải trên ảnh 40 (#31395d) —
+  chờ thấy trên web thật.
+### CỔNG (bản cuối, sau đúng 1 đợt polish = sửa thứ tự khu)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên
+  index-standalone.html 300 SẠCH; audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới;
+  harness giao thông 26/26 PASS.
+- Kiểm logic ambience riêng bằng AudioContext giả (scripts/test_ambience_sc1.mjs):
+  5 lớp khởi đủ; gain từng khu khớp research/22 (phố ăn đêm mur 0,0715 / bậc đêm siz 0,0162 /
+  đài phun wat 0,0450 / đường vào mur 0,0154 + gió 0,0216); bikePass + setMuted (lưu save)
+  chạy sạch; tick khi actx=null an toàn (harness Node không có AudioContext nên ambience
+  không khởi trong diag — đúng thiết kế).
+- Đóng gói standalone: 10.431.877 byte ≤ 10.485.760 (dư 53.883; +5.952 so với SWEEP-1 —
+  trong ngân sách ≤ ~15KB). Không GLB mới.
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): NGHE thật trên web + FPS thật + grade
+  ngày trên web — chỉ chốt khi Chung Hy chơi thử. KHÔNG upload/push.
+
+## PROPS-OPT-1 (09/11) — TỐI ƯU VẬT PHẨM: NHẸ MÀ ĐẸP (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Mục tiêu: giảm tam giác/draw call mà không làm xấu sạp hero. Đo thật bằng script mới
+scripts/measure_props.mjs (chạy index.html thật trong harness diag: đếm mesh/tri/caster
+theo container + theo từng sạp + hiệu lực hiển thị). Baseline = bản SOUND-COLOR-1.
+### BẢNG TRƯỚC → SAU (đo thật; số tri dao động nhẹ giữa các lần chạy do crowd ngẫu nhiên)
+- Tổng mesh: 20.824 → 18.408 (−2.416, −11,6%). Tổng tam giác: 4.017.064 → 3.947.340 (−69.724, −1,7%).
+- Hiển thị: mesh 17.038 → 14.623 (−2.415, −14,2%); tri 3.104.936 → 3.034.022 (−70.914, −2,3%).
+- Sạp (31 sạp): mesh 5.938 → 3.841; mesh hiển thị 4.599 → 2.044 (−55,6%); tri hiển thị
+  580.524 → 532.644 (−47.880); caster 2.491 → 1.673 (−818).
+- World: tri hiển thị 256.562 → 208.350 (−48.212, nhờ giảm segment). Crowd/GLB gần như
+  không đổi (dao động ngẫu nhiên ±0,5%).
+- PERF=1 (diag_runtime): đêm estCalls 21.1k → 18.645 (−11,6%); ngày 29.6k → 26.303 (−11,1%);
+  casters 8,45k → 7.658; tris 4,03M → 3.945.988; objs 25,6k → 23.140.
+### NHÓM NẶNG NHẤT (baseline) — VÀ CÁCH XỬ LÝ
+- Crowd 2,38M tri hiển thị (~60% tổng): 1 geometry Torso 926 tri (sphere 14×10 trong
+  build_character) × 327 mesh dùng chung = 302.802 tri. KHÔNG rebuild character.glb đợt này
+  (V5.4-D đã chốt không động geometry người — khớp tay/chân động); ghi vòng follow-up riêng:
+  giảm sphere 14×10→10×7, rebuild bằng Blender headless, kiểm mặt render_face.py, ước −100k tri.
+- Sạp: mỗi sạp ~190–232 mesh / ~28–31k tri; hero cao nhất dau 31.344, banhcan 30.912,
+  caphe 29.896. Vật lặp nhiều: cầu nhỏ r<0,15 (885 mesh, trái cây/trứng) + cầu r<0,45
+  (392) + trụ nhỏ (567) + cẩm tú cầu/bóng đèn world (1.012 + 686 cầu).
+### ĐÃ SỬA (chỉ index.html, không GLB mới)
+- Giảm segment theo kích thước (ball()/cyl()): cầu r<0,12 → 8×6 (96 tri, thay 160, −40%);
+  r<0,45 → 9×7 (126 tri, thay 160, −21%); r≥0,45 giữ 10×8. Trụ: r<0,06 → 6 seg; r<0,12 → 8 seg;
+  seg truyền rõ giữ nguyên (nồi, đĩa, cột đã tính tay). Không ảnh hưởng crowd (makePerson clone
+  GLB, không dùng ball()/cyl()).
+- Gộp mesh tĩnh trong từng sạp — mergeGroupStatics()/mergeStallStatics() (import
+  BufferGeometryUtils từ three/addons): 839 nhóm gộp, 2.569 mesh tiết kiệm. Gộp theo
+  (chữ ký thuộc tính + material object), clone geometry + bake ma trận tương đối của nhóm
+  (không sửa geometry gốc dùng chung giữa các clone GLB; không dispose). Loại trừ: tiểu thương
+  + đồ cầm tay, đèn lồng GLB (Lantern*/userData.baseY), ống rót pourStream, mesh có map
+  (biển/thẻ giá), multi-material, mesh ẩn, skinned/morph, thiếu normal/uv. CastShadow của mesh
+  gộp = bất kỳ nguồn nào đổ bóng; receiveShadow = true.
+- 2 lỗi do đo sau gộp phát hiện + sửa (cùng 1 đợt polish của vòng này, ghi rõ để sau soi lại):
+  (1) Bộ phận GLB (SkewerTrays/CheCups/...) là NHÓM ẩn chứa mesh con visible=true — kiểm chỉ
+  o.visible sẽ gộp lọt chúng ra ngoài → hiện sai hàng của sạp khác (lần đo đầu stall visTri
+  TĂNG +47k). Sửa: kiểm cả tổ tiên BÊN TRONG nhóm sạp. (2) 6 sạp nightOnly (xien/che/tron/
+  dauhu/hutieu/chao) merged=0 vì nhóm sạp đang visible=false lúc gộp. Sửa: dừng vòng kiểm ở
+  chính nhóm sạp (visibility của nhóm thì mesh gộp thừa hưởng đúng).
+- Kiểm toàn vẹn sau gộp (scripts/measure_props.mjs → __stallCheck): 31/31 sạp đạt — vendor
+  20–24 mesh, đèn lồng 4, biển/thẻ giá có map ≥2, pourStream còn trong scene-graph (sua/
+  caphe/suatuoi). Không vật nào bị gộp mất.
+- Sửa vật lệch chuẩn: rà palette theo research/22 — KHÔNG phát hiện vật nào còn lệch sau
+  SOUND-COLOR-1 (mái bạt terracotta, áo kem, nước nhạt đã đúng); ghế nhựa xanh dương/đỏ là
+  đúng ghế chợ thật — giữ. Không thêm/bớt vật phẩm nào ngoài biển chỉ đường.
+### BIỂN CHỈ ĐƯỜNG (SW-07, treo từ SWEEP-1)
+- Cột tại (24, 10) góc sân, y = groundH; 2 mặt signMesh 2.4×0.6 (hệ biển hiện có, không GLB):
+  mặt tây 'KHU QUẦN ÁO →' / sub '← ĐÀI PHUN NƯỚC'; mặt đông 'ĐÀI PHUN NƯỚC →' / sub
+  'BẬC TAM CẤP →' (hướng mũi tên đã tính theo hướng nhìn từng mặt). solid(24, 10, 0.3, 0.3).
+- Kiểm chữ vừa khung bằng PIL (DejaVu Sans Bold ≈ Arial): tựa 84px rộng 773/871 ≤ 940, phụ
+  44px 456/386 — không cần thu nhỏ. Audit xác nhận không cắt tuyến AW (cạnh gần nhất ~1,35u).
+### RENDER KIỂM (cảnh nhỏ, theo đúng số đo code + số đoạn MỚI; script scripts/render_props_opt1_mini.py)
+- renders/po1-P1-stall-dau-draft.png: cận sạp dau — 2 giỏ dâu trước quầy, bậc 3 tầng dâu,
+  thùng bơ, 4 ly kem bơ, 3 đèn lồng, dây bóng: hình dạng/số lượng hàng KHÔNG đổi; cầu 8×6/9×7
+  vẫn tròn ở cự ly chơi. ĐẠT.
+- renders/po1-P2-sign-draft.png: biển (24,10) nhìn từ phía tây — chữ 'KHU QUAN AO' /
+  'DAI PHUN NUOC' đọc được, sáng (MeshBasicMaterial trong game), vừa bảng. ĐẠT. Lưu ý: lần
+  render đầu chữ bị ngược do xoay text Blender sai trục + tối do dùng Principled — lỗi của
+  script render, KHÔNG phải game (đã sửa, render lại đạt; mũi tên →/← không hiện trong font
+  mặc định của Blender nhưng có trong Arial của game — PIL đo được).
+### CỔNG (bản cuối)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên
+  index-standalone.html 300 SẠCH; audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới;
+  harness giao thông 26/26 PASS. (VM restart 1 lần giữa đợt — mất /tmp/diag, đã khôi phục
+  gói three r160 bằng npm rồi chạy lại đủ cổng trên bản cuối.)
+- Đóng gói standalone: 10.437.357 byte ≤ 10.485.760 (dư 48.403; +5.480 so với SOUND-COLOR-1 —
+  trong mục tiêu phụ ≤ +10KB; tăng là code JS gộp + biển, không GLB mới).
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): FPS thật + grade ngày trên web —
+  chỉ chốt khi Chung Hy chơi thử. KHÔNG upload/push.
+- Follow-up ghi nhận: crowd Torso 926 tri × 327 (vòng riêng, rebuild character.glb);
+  SW-05 (hiệu năng tổng) coi như ĐÃ XỬ PHẦN SẠP — còn crowd + GLB là phần lớn còn lại.
+
+## SWEEP-2 (09/11) — RÀ LẠI SAU PROPS-OPT-1 + SOUND-COLOR-1 (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Mục tiêu: xác minh 2 vòng vừa rồi không làm hỏng gì trong game thật + thử lấy bộ render full đã kẹt RAM. Phương pháp: chạy lại toàn bộ cổng trên bản cuối + đo lại props + kiểm ambience bằng AudioContext giả + đối chiếu code minimap/biển/tia phun/thứ tự khu + render mini lại sạp dau + biển SW-07.
+
+### ĐÃ KIỂM — ĐẠT, KHÔNG LỖI MỚI
+- Gộp mesh (mục 1): diag 900 frame SẠCH (mergeStallStatics: mergedGroups=839, meshesSaved=2569 — khớp PROPS-OPT-1); measure_props.mjs chạy lại: stallCheck bad=0, 31/31 sạp đạt (vendor 20–25, đèn lồng 4, biển/thẻ có map ≥2, pour=true ở sua/caphe/suatuoi); 6 sạp nightOnly (xien/che/tron/dauhu/hutieu/chao) đều merged=26–29 > 0 — lỗi (2) của PROPS-OPT-1 không tái phát; SkewerTrays/CheCups… không lọt ra ngoài (visTri sạp không tăng bất thường). Tổng đo lại: mesh 18.350 (báo cáo PROPS-OPT-1: 18.408), tri 3.933.988 (3.947.340), tri hiển thị 3.010.442 (3.034.022) — chênh <0,8% do crowd ngẫu nhiên, trong dung sai đã ghi.
+- Biển chỉ đường SW-07 (mục 2): code còn nguyên — cột (24,10) solid 0.3×0.3, 2 mặt 'KHU QUẦN ÁO →'/'← ĐÀI PHUN NƯỚC' và 'ĐÀI PHUN NƯỚC →'/'BẬC TAM CẤP →' đúng hướng nhìn từng mặt; audit 0/0 nên không cắt AW (cạnh gần nhất ~1,35u như đã ghi). Render mini lại trên bản hiện tại: po1-P2-sign-draft.png — chữ đọc được, vừa bảng, sáng. Lưu ý (đã biết từ PROPS-OPT-1, không phải lỗi game): mũi tên →/← không hiện trong font mặc định của Blender nhưng có trong Arial của game (PIL đã đo vừa khung).
+- Âm thanh (mục 3): test_ambience_sc1.mjs chạy lại — TEST-AMB-OK: 5 lớp khởi đủ; khu bậc tam cấp (0,−15,11) đêm siz=0,0162 — KHÔNG còn bị phố ăn nuốt (thứ tự kiểm bậc-trước-phố-ăn còn nguyên dòng 3978); đài phun wat=0,0450; đường vào mur=0,0154 + gió 0,0216; bikePass chạy OK; setMuted(true/false) lưu save (savedCount=1); tick actx=null an toàn. SEED_SAVE 300 frame SẠCH (save chohb3d-v1 cũ + nút tắt tiếng).
+- Minimap (mục 4): mmX=(x+140)/232*156 (phủ −140..92) — chấm spawn x=−126 → mmX≈9,4px, TRONG khung; 3 mốc mới còn nguyên: đài phun (24.5;5.2) xanh, khu quần áo rect (35.5..45.5 × 14..27.5) hồng, Hoa Sữa (−128;19.5) vàng; vạch đường kéo tới −133.
+- Ánh sáng: đối chiếu nhanh applyDayNight — ngày exposure 0.88 / sun 0.95 / hemi 0.55 / fog 0.0058 = chuẩn V5.5, không hồi quy. Tia đài phun: dòng 2408 vẫn là dấu đã sửa (rotation.z=−cos·0.6, rotation.x=+sin·0.6); không render lại vì code không đổi kể từ M1/M2 của SWEEP-1.
+- Render mini lại (bản hiện tại, Blender 5.0.1, 640×480): po1-P1-stall-dau-draft.png — 2 giỏ dâu trước quầy, bậc 3 tầng dâu, thùng bơ, 4 ly kem bơ, 3 đèn lồng, dây bóng: hình dạng/số lượng hàng KHÔNG đổi sau gộp; cầu 8×6/9×7 vẫn tròn ở cự ly chơi. ĐẠT.
+
+### RENDER FULL 896×672 — KHÔNG CHẠY ĐƯỢC (mục 5, ghi rõ lý do, không cố)
+- RAM available lúc bắt đầu đợt 633MB, sau render mini 791MB — xa dưới ngưỡng ≥2,5GB để dựng cảnh full (cần ~2,5–3GB ở khâu dựng cảnh; các dự án khác — Lục Phán, Mạnh Bà, Sen, Shorts — đang chạy chung máy). Góc cận bàn ăn (−21.6,−9.2,3.9) → cụm bàn (−17.4,−5.4) trong scripts/render_v54.py vẫn sẵn; thử lại khi máy trống. Đây là lần thứ 2 liên tiếp bị kẹt RAM (V5.4 cũng vậy).
+
+### DANH SÁCH LỖI MỚI
+- Không có lỗi mới. Không sửa code đợt này (không cần đợt polish — mọi mục đều đạt).
+
+### CỔNG CUỐI (bản cuối, không đổi code so với PROPS-OPT-1)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên index-standalone.html 300 SẠCH.
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới (chỉ còn cảnh báo băng qua làn đã biết). Harness giao thông: 26/26 PASS.
+- Standalone: 10.437.357 byte ≤ 10.485.760 (dư 48.403).
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): FPS thật + grade ngày trên web + nghe thật trên web — chỉ chốt khi Chung Hy chơi thử. Render full 896×672 vẫn treo vì RAM. KHÔNG upload/push.
+- Follow-up còn treo (từ các vòng trước): crowd Torso 926 tri × 327 mesh (~60% tri hiển thị) — vòng riêng rebuild character.glb; tỉ lệ đài phun hơi bẹt so với ảnh thật (đã chốt ở V5.5, không tự đổi).
+
+## CROWD-OPT-1 (09/11) — REBUILD character.glb THẤP POLY: THÂN/TAY (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Bối cảnh: PROPS-OPT-1 ghi crowd Torso 926 tri × 327 mesh (~60% tri hiển thị); V5.4-D từng chốt
+không động geometry người vì sợ vỡ neo khớp tay/chân. Vòng này CHỈ đổi nếu chứng minh an toàn
+(4 tiêu chí dưới) — kết quả: ĐẠT HẾT, ĐÃ ĐỔI (giữ GLB mới).
+### BASELINE (đo thật bằng scripts/dump_character_glb.mjs, three r160 GLTFLoader)
+- character.glb cũ: 457.688 byte, 19 mesh, 12.736 verts, 6.168 tri/nhân vật.
+- Phân bổ tri/nhân vật: Head 2.214 (Skin 784 + HairDark 926 + Blush 504) · Torso 864
+  (hộp bo + bụng cầu 252 + 2 vai cầu 252×2) · ArmL/R 360 mỗi (hộp 108 + tay cầu 252) ·
+  LegL/R 216 mỗi (chân hộp 108 + giày hộp 108) · tmpCollar 288 · HatBeanie 646 ·
+  HatNonLa 320 · HatCap 288 · Scarf 396.
+- Neo: LegL/R origin y=0,40 (pivot hông) · ArmL/R origin y=0,88 (pivot vai) · Head y=1,35 ·
+  Torso y=0,66 · đỉnh đầu y=1,824 (mũ beanie 1,945). Số "Torso 926 tri" ở PROPS-OPT-1 là
+  SAI — đo lại đúng là 864 tri (926 là phần HairDark của Head); số liệu vòng này lấy theo dump.
+### PHƯƠNG ÁN (scripts/build_character_lp.py — copy build_models.py, chỉ build character)
+- CHỈ giảm segment 4 sphere thân/tay: bụng + 2 vai 14×10 → 10×7; tay 14×10 → 8×6.
+- GIỮ NGUYÊN: pivot chân/tay, tỉ lệ đầu (Head 2.214 tri không động), tên node, 4 phom,
+  màu, mũ/khăn, hộp chân/tay (neo tủ đồ AR/ARMS/LEGS gắn theo kích thước hộp), collar.
+- Backup bản cũ: prototype-v2/character-baseline-20261109.glb (ngoài assets/, không bị đóng gói).
+### KẾT QUẢ SO SÁNH (đo thật, không đoán)
+- GLB mới: 405.980 byte (−51.708, −11,3%) · 19 mesh · 11.208 verts · 5.428 tri (−740/người, −12,0%).
+  Torso 864 → 468 (−396); ArmL/R 360 → 188 mỗi (−172 mỗi). Mọi phần khác y hệt số tri cũ.
+- Dump đối chiếu: đủ 11 neo (LegL/R, ArmL/R, Torso, Head, 3 mũ, Scarf, tmpCollar), pivot
+  y hệt; bbox Torso 0,973×0,645×0,434 → 0,960×0,645×0,423 (hẹp 6mm/bên do dây cung mặt
+  cầu 10 đoạn — <1,2% bề rộng, không thấy ở cự ly chơi); Arm 0,166 → 0,170 (tay 8 đoạn,
+  chênh 2mm/bên).
+- Render so sánh cũ/mới cùng góc/đèn/mũ (scripts/render_crowdopt_compare.py, Cycles 24,
+  512×512; co1-old/new-front/torso/side.png): chính diện + cận thân 3/4 + nghiêng — KHÔNG
+  phân biệt được (nhân vật vốn đã faceted kiểu chibi; bụng/vai/tay giảm segment không lộ
+  ngay cả ở cận cảnh). Tiêu chí (a) ĐẠT.
+- Mức scene (scripts/measure_props.mjs, cùng nội dung, crowd 413 người): tổng tri
+  3.933.988 (SWEEP-2) → 3.634.496 (−299.492, −7,6%); tri HIỂN THỊ 3.010.442 → 2.713.730
+  (−296.712, −9,9%) — VƯỢT xa mục tiêu −100k (khớp ước tính 413 người × 740 ≈ 305k).
+  Crowd container: tri 2.096.876 (hiển thị 1.596.192); stallCheck bad=0, 31/31 sạp đạt.
+### CỔNG CUỐI (bản cuối, GLB mới đã thay vào assets/character.glb)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên
+  index-standalone.html 300 SẠCH (SRC_FILE=index-standalone.html — lưu ý: biến GAME_FILE
+  không có tác dụng, lượt đầu chạy nhầm index.html).
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới (chỉ cảnh báo băng qua làn đã biết).
+  Harness giao thông: 26/26 PASS.
+- Standalone: 10.368.413 byte ≤ 10.485.760 (dư 117.347 — NHẸ hơn trước 68.944 nhờ GLB nhỏ).
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): FPS thật + grade ngày trên web +
+  nghe thật trên web — chỉ chốt khi Chung Hy chơi thử. KHÔNG upload/push.
+- Follow-up ghi nhận: Head 2.214 tri/người (tóc 926 + má 504 + da 784) nay là phần nặng
+  nhất của nhân vật (~36%) — nếu làm vòng nữa: giảm segment cầu mặt (mắt/má/miệng) cần soi
+  mặt kỹ vì mặt là điểm nhìn; ước −367k tri hiển thị nếu 10×7 toàn đầu. Tỉ lệ đài phun hơi
+  bẹt so với ảnh thật (đã chốt ở V5.5, không tự đổi).
+
+## HEAD-OPT-1 (09/11) — REBUILD character.glb THẤP POLY: CẦU MẶT (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Bối cảnh: CROWD-OPT-1 xong, Head 2.214 tri/người là phần nặng nhất nhân vật. Tiêu chuẩn
+đổi KHẮT KHE HƠN thân/tay: mặt là điểm nhìn — render so sánh cận mặt 3 góc, khác dù nhẹ
+thì giữ bản cũ. Kết quả: bản 10×7 TOÀN ĐẦU BỊ BÁC ở khâu soi mặt; bản POLISH (chỉ giữ
+mắt/tai ở 14×10) ĐẠT HẾT, ĐÃ ĐỔI.
+### BASELINE (đo thật bằng scripts/dump_character_glb.mjs, three r160)
+- character.glb sau CROWD-OPT-1: 405.980 byte, 19 mesh, 11.208 verts, 5.428 tri/người.
+- Head 2.214 (Skin 784 = đầu 252 + 2 tai 252×2 + mũi ~28 · HairDark 926 = tóc ~170 sau
+  cắt + 2 mắt 252×2 + miệng 252 · Blush 504 = 2 má 252×2). Neo: LegL/R y=0,40 ·
+  ArmL/R y=0,88 · Head y=1,35 · đỉnh đầu 1,824.
+### PHƯƠNG ÁN (scripts/build_character_head_lp.py — copy build_character_lp.py)
+- Lần 1 (10×7 toàn đầu): đầu + tóc + mắt + má + miệng + tai 14×10 → 10×7.
+- Lần 2 POLISH (1 đợt polish duy nhất): mắt + tai TRẢ VỀ 14×10; đầu/tóc/má/miệng giữ
+  10×7. GIỮ NGUYÊN: pivot chân/tay, tỉ lệ đầu, tên node, 4 phom, màu, mũ/khăn, thân/
+  tay/chân đã tối ưu. Backup GLB CROWD-OPT-1: prototype-v2/character-crowdopt1-
+  20261109.glb (ngoài assets/, không bị đóng gói); bản cũ hơn nữa vẫn ở
+  character-baseline-20261109.glb.
+### SO SÁNH RENDER (scripts/render_headopt_compare.py, Cycles 24, 512×512, beanie)
+- Bản 10×7 toàn đầu (renders/ho1-new-*): chính diện ĐẠT (không phân biệt được); 3/4
+  KHÔNG ĐẠT — mắt lộ rõ cạnh facet, viền mắt thành đa giác ở cận cảnh; nghiêng KHÔNG
+  ĐẠT — tai lộ facet rõ. → BÁC bản này theo đúng luật "khác dù nhẹ thì giữ".
+- Bản POLISH (renders/ho1-polish-*): chính diện ĐẠT; 3/4 ĐẠT — mắt tròn lại như cũ;
+  nghiêng ĐẠT — crop phóng 2× vùng tai giống hệt bản cũ (diff số vùng tai 1,51 so với
+  3,14 của bản bị bác; phần còn lại là nhiễu render Cycles 24 mẫu). Tiêu chí (2) ĐẠT.
+### KẾT QUẢ SO SÁNH (đo thật)
+- GLB polish: 361.500 byte (−44.480, −11,0%) · 19 mesh · 9.934 verts · 4.810 tri
+  (−618/người, −11,4%): Head 2.214 → 1.596 (Skin 784→652, HairDark 926→704,
+  Blush 504→240). Mọi phần khác y hệt số tri cũ.
+- Dump đối chiếu: đủ 11 neo, pivot y hệt; bbox Head 0,943×0,924×0,995 →
+  0,943×0,924×0,984 (rộng y hệt nhờ tai giữ nguyên, sâu −1,1% do dây cung tóc 10
+  đoạn — trong dung sai <1,2%). Tiêu chí (3) ĐẠT.
+- Mức scene (scripts/measure_props.mjs, crowd 413 người): tổng tri 3.634.496 →
+  3.372.650 (−261.846, −7,2%); tri HIỂN THỊ 2.713.730 → 2.472.922 (−240.808,
+  −8,9% — bằng ~65% ước tính −367k của bản toàn đầu, đổi lại mặt an toàn tuyệt đối).
+  Crowd container tri 2.096.876 → 1.861.284; stallCheck bad=0, 31/31 sạp đạt.
+### CỔNG CUỐI (bản cuối, GLB polish đã thay vào assets/character.glb)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên
+  index-standalone.html 300 SẠCH (SRC_FILE=index-standalone.html).
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới (chỉ cảnh báo băng qua làn đã biết).
+  Harness giao thông: 26/26 PASS.
+- Standalone: 10.309.105 byte ≤ 10.485.760 (dư 176.655 — NHẸ hơn trước 59.308 nhờ
+  GLB nhỏ lại).
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): FPS thật + grade ngày trên web +
+  nghe thật trên web — chỉ chốt khi Chung Hy chơi thử. KHÔNG upload/push.
+- Follow-up ghi nhận: Head nay 1.596 tri/người (~33% nhân vật); mắt/tai đã giữ 14×10
+  nên không giảm thêm được nếu không động vào mặt — coi như đã chạm trần an toàn cho
+  character.glb. Tỉ lệ đài phun hơi bẹt so với ảnh thật (đã chốt ở V5.5, không tự đổi).
+
+## SWEEP-3 (09/11) — KIỂM CUỐI TRƯỚC KHI GIAO 10:00 (Chung Hy ngủ, làm liên tục; KHÔNG upload/push)
+Mục tiêu: xác minh bản CUỐI sau 2 lần đổi character.glb + gộp mesh + âm thanh + biển
+chỉ đường. Phương pháp: chạy lại TOÀN BỘ cổng trên bản cuối + dump GLB + script kiểm
+mới scripts/check_sweep3.mjs (chạy index.html thật trong harness diag: đếm NPC theo
+phom/mũ/khăn/màu/tông da + mặc thử tủ đồ từng slot và kiểm neo AR/ARMS/LEGS).
+### ĐÃ KIỂM — ĐẠT
+- GLB (scripts/dump_character_glb.mjs, three r160): assets/character.glb = bản polish
+  HEAD-OPT-1 — 19 mesh, 9.934 verts, 4.810 tri/người; đủ 11 neo; pivot LegL/R y=0,40 ·
+  ArmL/R y=0,88 · Head y=1,35 · đỉnh đầu 1,824 — y hệt baseline. Head 1.596 (Skin 652
+  + HairDark 704 + Blush 240); Torso 468; ArmL/R 188 mỗi.
+- NPC (check_sweep3, 382 người wanderers+statics; +31 vendor trong sạp = 413 khớp
+  diag): phom puffer 116 / coat 55 / hoodie 60 / knit+light 151 — đủ 5 phom; màu áo
+  Torso 38 màu distinct; tông da 4 tông (3 recolor #a96f42/#c68a5e/#e8b98f + 1 mặc
+  định GLB #f7dbc5 — makePerson chỉ recolor khi skin khác 0xd9a37e); mũ beanie 141 /
+  nón lá 10 (chỉ vendor) / cap 48 / không mũ 183; khăn hiện 164; cầm ly 105.
+- Tủ đồ 60 món (12 mũ / 8 khăn / 10 áo / 10 tay cầm / 12 phụ kiện / 8 giày):
+  neo LL/LR/AL/AR đủ (dump pivot y hệt); mặc thử M1+K1+A2+T1+G2+P1+P5: mũ beanie
+  hiện, nón lá ẩn, khăn hiện, áo #35507a, tay cầm AR 1/1, găng ARMS 2/2, tất+giày
+  LEGS 2/2; đổi M6: nón lá hiện, beanie ẩn; đổi M8: mũ #2f8f83 + map sọc; tháo hết:
+  mọi node/phụ kiện ẩn. Save cũ SEED_SAVE 300 frame SẠCH.
+- Cổng khác chạy lại: audit_ground_v54 0 lỗi cứng / 0 nhảy lưới (chỉ cảnh báo băng qua
+  làn đã biết); giao thông 26/26 PASS; test_ambience_sc1.mjs TEST-AMB-OK (bậc đêm
+  siz=0,0162 — không bị phố ăn nuốt; đài phun wat=0,0450; setMuted lưu save);
+  measure_props.mjs stallCheck bad=0, 31/31 sạp đạt.
+### LỖI MỚI — SW-08 (TỦ ĐỒ, TRUNG BÌNH–CAO) — ĐÃ SỬA TRONG VÒNG (1 đợt polish duy nhất)
+- Phát hiện: check_sweep3 lần đầu FAIL 2 điểm; probe riêng scripts/probe_wdpaint.mjs
+  (đã xóa sau khi dùng — số liệu ghi tại đây) chứng minh lỗi GAME thật, không phải
+  lỗi script kiểm: `wdMats` chỉ còn `['Scarf']` — makePerson() đã recolor() Shirt/
+  Beanie bằng repMat() (material KHÔNG tên, cache dùng chung) TRƯỚC khi khối tủ đồ
+  traverse theo `o.material.name` → wdPaint('Shirt'/'Beanie') thành no-op.
+  Hậu quả: mặc áo khoác A1–A10 không đổi màu áo người chơi (mặc A2 navy #35507a,
+  thân vẫn đỏ đô #a62b25); mặc mũ len M8 teal+sọc không đổi màu/không có sọc.
+  Nặng nhất: áo/mũ có parts:[] (A3/A4/A7/A8/A10, M1/M8/M9) mua xong KHÔNG THẤY GÌ
+  KHÁC — trả Xu mà không có hiệu ứng nhìn thấy. Khăn (mat Scarf) vẫn đúng vì
+  material Scarf không bị recolor trong makePerson. Lỗi tồn tại từ V4.4, chưa ai
+  bắt vì áo/mũ có parts vẫn hiện phụ kiện nên trông như "đã mặc".
+- Sửa (chỉ index.html, ~15 dòng): bắt vật liệu theo TÊN NODE thay vì tên material —
+  wdCapture('Shirt','Torso') / ('Beanie','HatBeanie') / ('Scarf','Scarf'), clone
+  riêng cho player rồi gán lại cho đúng mesh đó (không mutate material dùng chung
+  với NPC qua _repCache); tmpCollar gắn cùng clone Shirt để cổ áo đổi màu theo.
+  Kiểm lại: probe cho torso #35507a + scarf #2e6b46 sau khi mặc A2/K1; check_sweep3
+  chạy lại ALL CHECKS PASS (fails: []).
+- 2 lỗi ĐO của script kiểm (không phải lỗi game, đã sửa script): (1) đếm tông da
+  theo material.name==='Skin' — recolor đã đổi tên → đếm bằng màu trong NPC_SKINS;
+  (2) đọc màu mũ từ group HatBeanie (group không có material) → đọc từ mesh con
+  đầu tiên trong group.
+### RENDER FULL 896×672 — KHÔNG CHẠY ĐƯỢC, LẦN THỨ 3 LIÊN TIẾP (ghi rõ, không cố)
+- RAM available lúc kiểm 393–457MB — xa dưới ngưỡng ≥2,5GB để dựng cảnh full
+  (các dự án khác đang chạy chung máy). Góc cận bàn ăn trong scripts/render_v54.py
+  vẫn sẵn; thử lại khi máy trống.
+### CỔNG CUỐI (bản cuối, sau sửa SW-08 + đóng gói lại)
+- diag_runtime index.html 900 frame SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên
+  index-standalone.html 300 SẠCH.
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới. Harness giao thông: 26/26 PASS.
+- Standalone (đóng gói lại sau sửa): 10.310.053 byte ≤ 10.485.760 (dư 175.707;
+  +948 so với HEAD-OPT-1 — chỉ code fix SW-08; script standalone chứa marker
+  'SWEEP-3 (SW-08)' đã kiểm bằng grep). GLB raw total 7.418.176 byte.
+- Số đo cuối (measure_props): mesh 18.301 | tri 3.362.494 | hiển thị 14.498 mesh /
+  2.455.108 tri; crowd tri 1.862.452 (vis ~1,37M); stallCheck 31/31.
+### TÓM TẮT V5.4 → BẢN CUỐI (để giao 10:00)
+- V5.4 10.409.634 → V5.5 10.424.734 (đường ×2,5 rộng/dài ×2, Hoa Sữa Tăng Bạt Hổ,
+  bậc tam cấp, đài phun, khu quần áo, hạ chói ngày, góc mở đầu) → SWEEP-1 10.425.925
+  (minimap phủ trục mới, tia phun đảo dấu, giá áo dời, collider giá) →
+  SOUND-COLOR-1 10.431.877 (ambience WebAudio 5 lớp theo khu, màu albedo theo ảnh
+  thật) → PROPS-OPT-1 10.437.357 (gộp 839 nhóm sạp, biển chỉ đường SW-07) →
+  SWEEP-2 10.437.357 (không lỗi mới) → CROWD-OPT-1 10.368.413 (thân/tay −740 tri/
+  người) → HEAD-OPT-1 10.309.105 (đầu −618 tri/người, bản polish) → SWEEP-3
+  10.310.053 (sửa SW-08 tủ đồ). Nhân vật 6.168 → 4.810 tri/người (−22%); tri hiển
+  thị 3.104.936 (V5.4) → 2.455.108 (−21%).
+- CHƯA kiểm chứng được (giới hạn môi trường, như cũ): FPS thật + grade ngày trên
+  web + nghe thật trên web — chỉ chốt khi Chung Hy chơi thử. Render full 896×672
+  vẫn treo vì RAM (lần 3). KHÔNG upload/push — chờ Chung Hy dậy 10:00 bấm thẻ.
+- Follow-up còn treo: khổ thang 22u vs ~15–18m thật + đảo Ø21u (refactor địa hình
+  lõi, đợt riêng, chưa duyệt); tỉ lệ đài phun hơi bẹt (đã chốt V5.5, không tự đổi);
+  character.glb đã chạm trần an toàn (mắt/tai giữ 14×10).
+
+## NPC-SPECIAL-1 (09/11) — NHÂN VẬT ĐẶC BIỆT CÓ THIẾT KẾ RIÊNG (phản hồi Chung Hy 08:53; KHÔNG upload/push)
+### YÊU CẦU
+- NPC phải ĐẶC BIỆT hơn hẳn đám đông: mặt riêng, ĐỒNG PHỤC RIÊNG chỉ của vai đó,
+  đạo cụ theo vai (hát = cầm đàn). Đám đông thường GIỮ NGUYÊN; ngân sách ≤ +60KB.
+### CÁCH GẮN (không sửa GLB — trần an toàn)
+- `paintNode(g, nodeName, hex)`: sơn theo TÊN NODE (bài học SW-08 — tránh recolor
+  theo tên material vì mũ cap dùng material 'CapBlue' không đổi được bằng hatColor).
+- `headProp(g, geo, hex, x, y, z)`: gắn prop vào node Head theo tọa độ mặt local
+  (mắt ±0.16/+0.045/0.42; đầu r=0.45, gốc Head y=1.35). `faceGlasses(g)`: gọng +
+  cầu + 2 gọng tai (đợt polish: gọng tai dời x ±0.315→±0.29 để chạm mép gọng chính).
+- Nhân vật tĩnh đăng ký qua `regSpecial` → addStatic kind 'special', rank=0 (luôn
+  hiện), idle qua `st.spIdle(t, st)`; không solid mới (đúng quy ước NPC tĩnh).
+### DANH SÁCH 12 NHÂN VẬT ĐẶC BIỆT
+1. **Chú Ba coi bói** — bậc tam cấp (5.6, 11.63, −19.6), ngồi ghế trên chiếu nghỉ 1,
+   trong bán kính modal coi bói sẵn có FORTUNE_PT (2.8, −19.2) r=3.4 (modal 20 Xu/quẻ
+   ĐÃ CÓ từ trước — vòng này bổ sung HÌNH HÀI). Áo dài chàm 0x37455e (GEO_COATSKIRT +
+   2 lapel) + quần trắng 0xe8e2d4; râu bạc + ria 0xb8b0a2; kính lão; khăn xếp chàm
+   0x27324e (torus + cầu dẹt). Props: bàn + khăn trải đỏ + 3 thẻ bài + biển 'COI BÓI'.
+   Idle: gật đầu nhẹ + tay gõ bàn.
+2. **Ca sĩ góc hát** — sân khấu quảng trường (31, 17, −52), nhân vật + sân khấu +
+   modal Góc Hát ĐÃ CÓ; vòng này nâng diện mạo: áo denim 0x2f4d6e + quần đen, mũ cap
+   sơn đỏ rượu 0x8c2f39 (paintNode), kính mát, khăn đỏ rượu đồng bộ, thân đàn
+   0x9c3a24. Idle gảy đàn sẵn có; 3 khán giả tĩnh sẵn có quay mặt về sân khấu.
+3. **Chú giữ xe** — cạnh điểm thuê xe (37.6, 9.6): áo dạ quang 0xc8d93c + 2 sọc phản
+   quang bạc 0xd8dde2, mũ cap cam 0xe8862e, cầm vé trắng 0xf5f2e8 tay phải. Idle ngó quanh.
+4. **Cô lao công** — cạnh thùng rác Tăng Bạt Hổ (10.4, 10.8): áo bảo hộ 0x1f6f8b +
+   sọc phản quang, mũ cap cam, găng cam; CHỔI cầm tay (userData.broom: cán + đầu +
+   5 nan xòe). Idle quét qua lại.
+5. **Anh xe ôm** — vỉa hè đầu trục Tăng Bạt Hổ (−120.5, 16.5): áo xanh 0x2e8b47, mũ
+   bảo hiểm xanh 0x35a04f đội sẵn (headProp cầu phủ qua tóc + vành kem), cầm điện
+   thoại. Idle ngó hai đầu đường.
+6–12. **7 tiểu thương sạp hero** (diện mạo CỐ ĐỊNH bằng SPECIAL_VENDOR/dressSpecialVendor
+   thay rollLook random): bánh tráng (tạp dề rêu 0x4a6741 + beanie cam), bánh căn (nón
+   lá + tạp dề nâu 0x5c4633), súp cua (mũ cap kem 0xe8e2d4 sơn theo node + tạp dề đỏ đô
+   0xa62b25), sữa đậu nành Hoa Sữa (nón lá + tạp dề xanh 0x2e6b46), cà phê (beanie đen +
+   tạp dề đỏ rượu 0x8c2f39), đậu (beanie kem + tạp dề vàng 0xd9a62e), Hoa Sữa (beanie kem
+   0xf0ead8 đọc như khăn trùm đầu + tạp dề xanh ngọc 0x2e7d6b).
+### TƯƠNG TÁC
+- Chú Ba: modal coi bói sẵn có (bán kính 3.4 quanh FORTUNE_PT) — nay đã có người ngồi
+  đúng chỗ. Ca sĩ: modal Góc Hát sẵn có. Không thêm hệ thoại mới (đã có sẵn cả hai).
+### KIỂM CHỨNG
+- check_sweep3.mjs MỞ RỘNG (mục 4, bọc `__sw3`): ALL CHECKS PASS — 7 vendor đúng
+  áo/tạp dề/mũ theo từng sạp; 4 special đúng vị trí/rank 0/kind 'special'/đủ props;
+  ca sĩ đúng áo/cap/đàn.
+- Render mini Blender (scripts/render_npc_special_mini.py, 640×480): sp1-chuba /
+  sp1-singer / sp1-sweeper — soi trực tiếp: khăn xếp + kính ôm đúng mắt + râu bạc +
+  bàn thẻ đạt; đàn ôm trước ngực + cổ đàn chéo đạt; chổi chạm đất + sọc phản quang
+  đạt. Màu trong render Blender rửa sáng hơn web (artifact quen thuộc — hex trong
+  game đã xác nhận bằng check_sweep3). Đúng 1 đợt polish (gọng tai kính + khung hình
+  render) — đã sửa + render lại xác nhận.
+- Tổng người sau vòng: 417 (413 + 4 special mới).
+### CỔNG CUỐI
+- diag_runtime index.html 900 SẠCH; SEED_SAVE 300 SẠCH; diag trực tiếp trên
+  index-standalone.html 300 SẠCH.
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới (chỉ cảnh báo băng qua làn đã biết).
+  Harness giao thông: 26/26 PASS.
+- Standalone: 10.320.595 byte (+10.542 so với 10.310.053 trước vòng; ngân sách
+  +60.000; dư trần 10.485.760 là 165.165).
+- CHƯA kiểm chứng được (như cũ): FPS thật + grade ngày trên web + nghe thật — chỉ
+  chốt khi Chung Hy chơi thử. KHÔNG upload/push — chờ lệnh Chung Hy.
+
+## GEOMETRY-2 (09/11) — 6 ĐIỂM CHƠI THỬ TRỰC TIẾP CỦA CHUNG HY 09:04: DƯỚI BẬC / ĐỆM ĐẢO / ĐƯỜNG VÀO / BÙNG BINH ĐẦU CHỢ / ĐÁM ĐÔNG (KHÔNG upload/push)
+### PHƯƠNG PHÁP KIỂM CHỨNG (theo lệnh đợt này)
+- KHÔNG báo cáo bằng con số cho hình học. Render tầm mắt người đi bộ bằng
+  scripts/render_geo2.py (parse trực tiếp index.html lúc chạy) TRƯỚC/SAU cùng
+  khung: renders/geo2-before-*.png / geo2-after-*.png (a spawn, b giữa đường,
+  c dưới bậc, d đệm đảo–bậc, d2 từ tâm đảo [mới], e phố ăn). Verdict dưới đây
+  là theo render đã soi trực tiếp.
+- Ảnh/texture sinh thêm: KHÔNG dùng Google Flow — biển hiệu dựng bằng
+  signMesh chữ canvas như chuẩn cũ, tránh phụ thuộc phiên trình duyệt.
+### ĐIỂM 1 — MỞ RỘNG PHẦN DƯỚI BẬC TAM CẤP
+- Tấm sân chân bậc kéo dài về tây: Box(58, 0.08, 13) tại (9, 0.01, 3) — phủ
+  x −20..38 (trước tới khoảng −8). Bàn sân dời theo: plazaTable (17.4, 8.6)
+  và (18.5, −1.6); người ngồi vô bàn cũ (−17, 5.7) dời về (16.4, 9.4).
+- Cặp sạp chân bậc phía TÂY dời hẳn ra trục đường vào (bánh ướt cuốn →
+  (−87.5, −13.4); nước mía → (−151.15, 23.2)) — chân bậc tây hết bị sạp án.
+- Đảo lùi −6 (điểm 2) cũng giải phóng phía tây sân.
+- VERDICT (render d2 + e): ĐẠT — từ tâm đảo và từ phố ăn đều thấy dải sân mở
+  liên tục giữa đĩa đảo và chân bậc; khung (c) nhìn LÊN bậc không đổi (đúng
+  thiết kế: phần mở rộng nằm dưới bậc, không phải mặt bậc).
+### ĐIỂM 2 — KHOẢNG ĐỆM BÙNG BINH ↔ BẬC
+- Toàn bộ cụm đảo dời −6 theo x: tâm (−24, −6) → (−30, −6); tượng
+  (−28.2, −2.8) → (−34.2, −2.8). Mọi thứ neo theo đảo dời đồng bộ: rb.position
+  + solid + spotlight + glowDisc + biển BÙNG BINH HOA + vành uplight + ringRoad
+  + bệ đá + sitters vành + eatSet/eatCluster/flowerStall + photoPerson + fam +
+  xe đậu quanh đảo + trashBin + stringLights + fog; profile làn xe dịch theo
+  (islandBump/vehBumpE/laneZW), RB_ARC R~11.3–12 quanh tâm mới, slowCapFor
+  vùng cung nam đảo x −50..−12, GUIDE stage 1–2 + achievement 'Vòng xoay Hòa
+  Bình' + POI fallback đều trỏ (−30, −6).
+- VERDICT (render d2): ĐẠT vừa phải như lệnh (không tách xa) — đĩa đảo và
+  chân bậc không còn lấn nhau, giữa hai mốc có dải sân/đường đệm đọc được rõ
+  bằng mắt. Khung (d) cũ (−16, 1) cả TRƯỚC lẫn SAU đều bị sườn địa hình của
+  cảnh render tối thiểu nuốt — không dùng (d) để kết luận, đã thay bằng (d2).
+### ĐIỂM 3 — ĐƯỜNG VÀO RỘNG HƠN RẤT NHIỀU + SẠP LIÊN TỤC 2 BÊN
+- Mặt nhựa: đoạn chính Box(82, 0.07, 41) tại (−93, 7) (z −13.5..27.5); đoạn
+  nối Box(22, 0.05, 45) tại (−41, 5); đoạn phẳng MỚI Box(76, 0.07, 41) tại
+  (−168, 7) phủ x −206..−130. Hành lang groundH kéo tới x ≥ −208, z −21..30.
+- Hàng nam lùi: sạp tương tác z 22.25 → 26 (mặt tiền 23.9); 7 shophouse nam
+  z → 30.5; đèn/hydrangea/vỉa hè nam dời theo (swS z 22.9). Khoảng thoáng
+  giữa 2 mặt sạp đoạn vào: 33.75u → 37.5u.
+- SẠP LIÊN TỤC: 16 sạp trang trí hàng BẮC (z −15.7, x −188..−61.5) + 16 sạp
+  hàng NAM (z 26, x −188..−44) bằng buildDecorStall (thân + mái + cầu hàng +
+  biển canvas 12 tên/6 màu, 2/3 có tiểu thương đứng sau quầy) — chừa cổng
+  −131, sạp Hoa Sữa, khe sạp chân bậc. Thêm 2 sạp TƯƠNG TÁC: hải sản
+  (−100, −15.7, nightOnly) + bánh flan (−95, 26) kèm QUEUES riêng. Khe hàng
+  bắc còn lại lấp bằng sạp chân bậc dời ra (điểm 1).
+- VERDICT: (a) ĐẠT RÕ — ngay từ spawn thấy trục dài, hàng sạp trái (bắc)
+  liên tục sát khung trái, hàng nam + dãy shophouse bên phải; đây là thay
+  đổi đọc rõ nhất đợt. (b) ĐẠT MỘT PHẦN — giữa đường (−80) sạp 2 bên liên
+  tục và bắt đầu ngay tại điểm đứng, nhưng độ RỘNG mặt đường trong khung
+  nhìn dọc trục chưa "kịch tính" như ở (a) (nhìn dọc trục nén bề ngang —
+  giới hạn của góc nhìn, không phải thiếu bề rộng: mặt cắt 41u đã dựng).
+### ĐIỂM 4 — KÉO DÀI VỀ BÙNG BINH ĐẦU CHỢ + SPAWN Ở ĐÓ
+- NEW_RB tại (−196, 2): đĩa cyl R6 h0.5 trên nền dốc entryRampY(−196) = 5.5,
+  vành nhựa R9.2, 8 bụi hoa vòng R4.4, cột + biển 'BÙNG BINH ĐẦU CHỢ',
+  glowDisc, solid R6.2. Nhỏ hơn bùng binh chính (R6 so với R10.5) như brief.
+- MỐC GỢI MỐC (ghi rõ: ảnh trong theme/real-market không thấy rõ mặt tiền
+  2 thương hiệu này — dựng GÓC PHỐ GỢI MỐC theo research/21, không khẳng
+  định là bản sao): shophouse JOLLIBEE — GÀ RÁN (−183, −20, đỏ 0xc8372d /
+  biển #c8102e / chữ vàng) và L'ANGFARM — ĐẶC SẢN ĐÀ LẠT (−183, 31.5, kem /
+  xanh thông) ở hai góc phố cạnh bùng binh đầu chợ.
+- SPAWN: player (−188, 5.5, 5.6), camera (−199.15, 12.05, 5.6) — khung mở
+  đầu nhìn dọc trục DÀI về chợ (render a). Cổng −131 giữ nguyên, thành cổng
+  giữa trục.
+- Cập nhật nhất quán: groundH dốc (hành lang −208); AW +4 nút idx42–45 Ở
+  CUỐI mảng + cạnh [42,39],[43,42],[44,43],[45,44] (xem "phát sinh" dưới);
+  tuyến xe ROAD_E/W kéo −188..86, ROUTE_HILL vòng tây mới ôm NEW_RB
+  ([−186,12.5],[−190,9.2],[−189,4.5],[−182,6.5]…) + điểm giao đảo −30,6.1;
+  parkedRowY đoạn −186..−156; minimap phép chiếu (x+212)/304 + vòng đảo
+  chính (−30,−6) + vòng nhỏ NEW_RB + chấm Jollibee đỏ / L'angfarm xanh;
+  ambience: phố ăn x −200..43, vùng đường vào x −206..−200, xì xèo theo 2
+  hàng sạp mới (|z+15.7|<5 || |z−26|<5); 3 tuyến wanderer mới dọc đoạn kéo
+  dài + vòng NEW_RB.
+- VERDICT (render a): ĐẠT — khung mở đầu có chiều dài trục thật, không còn
+  "cục lủn". LƯU Ý TRUNG THỰC: trong khung (a) bùng binh đầu chợ nằm SAU
+  lưng camera và 2 mốc Jollibee/L'angfarm lệch khỏi khung hình — người chơi
+  spawn cách tâm NEW_RB ~8.5u, quay lại là thấy; chưa có khung render riêng
+  chụp 2 mốc (chỉ kiểm bằng parse + diag).
+### ĐIỂM 5 — ĐÁM ĐÔNG HẾT "BỊ LỖI"
+- PHÁT HIỆN GỐC (audit_crowd_geo2 + đọc code): lỗi routeY — addWanderer map
+  tuyến thành mảng 3 phần tử (pt[2] = undefined với tuyến 2 tọa độ) nên
+  routeY() trả undefined thay vì groundH → **55/59 wanderer có y = NaN vĩnh
+  viễn** (vòng animate lerp từ NaN không hồi được). Trên trình duyệt thật
+  phần lớn người đi bộ VÔ HÌNH — khớp phàn nàn "đám đông bị lỗi, không đọc
+  được ai làm gì" (chỉ còn statics đứng cụm). ĐÃ SỬA GỐC: rt giữ nguyên cặp
+  [x, z], routeY dùng groundH. Bằng chứng: check_sweep3 mở rộng
+  wandererYBad = 0; audit crowd finiteY 62/62.
+- Lực tách người trong vòng wanderer: cặp wanderer < 0.55u đẩy ra
+  (0.55−d)·0.4; wanderer–static cùng cao độ < 0.5u đẩy (0.5−d)·0.35.
+- Browse đọc được: khi vào trạng thái ngắm sạp, wanderer trượt sang điểm
+  đứng front + out·1.0 + side·(±1.05) (ra khỏi trục hàng chờ, vẫn quay mặt
+  vào sạp) — audit: tối đa 2 người cùng 1 điểm ngắm, không còn vụ 3+ người
+  chồng 1 điểm.
+- Sửa 5 cặp tĩnh chồng nhau (audit đo): 4 người ngồi bậc STAIR_SITTERS dời
+  khỏi điểm front hàng chờ sạp bậc/khỏi nhau (d cũ 0.30–0.56); điểm chat
+  [12.8, −4.2] → [12.8, −3.4] (cách người ngồi bàn thềm đông 0.51 → 1.30).
+- AUDIT AFTER (scripts/audit_crowd_geo2.mjs, 1800 frame): cặp tĩnh cùng cao
+  độ KHÔNG phải hàng chờ thiết kế = **0** (trước: 5 cặp thật); wanderer lọt
+  vào statics < 0.45u: 136 → 87 cặp-mẫu (phần còn lại là đi NGANG QUA
+  thoáng qua trên tuyến cắt mặt sạp, không đứng cụm); wanderer–wanderer
+  < 0.5u: 17 → 14 cặp-mẫu. VERDICT: ĐẠT ở mức audit + render (e) (hàng chờ
+  gọn trước mặt sạp, người đi có tuyến) — cảm nhận mật độ giờ đông thật vẫn
+  chờ Chung Hy chơi thử.
+### ĐIỂM 6 — GIỮ NHÂN VẬT ĐẶC BIỆT ĐÚNG VAI
+- Chú Ba coi bói (bậc), ca sĩ (góc hát đồi), chú giữ xe, cô lao công, 7
+  tiểu thương hero: bậc/sân/đồi KHÔNG dời trong đợt này → giữ nguyên vị
+  trí, check_sweep3 xác nhận lại toàn bộ (áo/tạp dề/mũ/props/singer+đàn).
+- Anh xe ôm NEO LẠI: (−120.5, 16.5) → (−181, 17.5) — vỉa hè nam cạnh bùng
+  binh đầu chợ, đúng vai "đầu đường mới". SP_EXP trong check_sweep3 đã cập
+  nhật; ALL CHECKS PASS.
+### PHÁT SINH TRONG ĐỢT (tự bắt + sửa, tính là đợt polish duy nhất của vòng)
+- Lỗi của coordinator: 4 nút AW mới bị chèn GIỮA mảng (trước idx40/41) làm
+  lệch mọi cạnh tham chiếu 40/41 — audit_ground bắt (cạnh xuyên map), đã
+  chuyển xuống cuối mảng + ghi cảnh báo ngay trong comment của mảng.
+- audit_ground bắt tiếp: weave cắt làn [−12,−1.9] cũ sau khi profile làn
+  dời → đổi weave nam (−12.5,−0.9)/(−14.5,−0.2); 5 tuyến wanderer reroute
+  (2292 vòng tây đảo, 2293 đầu trục −52, 2302 cắt dốc 7.9, 2333 điểm lọt
+  đĩa đảo → −44, 2334 điểm dọc làn W → 7.8).
+- Harness T8 bắt lỗi THẬT trong game: điểm pull-over khoai (−33.2, 4.5) bị
+  làn E mới phủ (đỉnh laneZE 5.55 tại x −33, d = 1.03) → dời điểm đỗ vào
+  dải giữa làn W (7.15) và mặt sạp (8.9) tại (−29, 8.4), đường tấp vòng
+  nam đảo ngoài đĩa (min d 11.0); game + harness đã đồng bộ.
+- ROUTE3 "tuyến 3" CHỈ tồn tại như tuyến mẫu trong harness (game không có
+  tuyến này) — đuôi mẫu cũ (28, 4.5) lọt bán kính bồn phun mới (27, 5.2):
+  đã đồng bộ mô hình harness → (32.5, 5.6)/(30.5, 4.2). Không phải lỗi game.
+- Harness T11 chuyển điểm yield node 5 → node 6 (−11.5, 0.2): node 5 không
+  còn cắt làn nào sau khi làn dời theo đảo; node 6 là nút chờ giữa 2 làn
+  (cách mỗi làn 1.7) — cùng khuôn cảnh V5.5. CROSSINGS thêm node 3 (−40,
+  5.6) cắt đỉnh lượn làn W (d 0.24), vùng chậm W x[−50,−12] đã phủ.
+- Đồng bộ harness: AW 46 nút/45 cạnh, STALLS 33 (z nam 26 + hải sản/bánh
+  flan), ISLAND −30, STATUE −34.2, ISLAND_CARS −6x, FORBIDDEN đài phun
+  24.1..29.9, ringPts tâm −30, HILL_LOOP vòng NEW_RB, laneZE/laneZW profile
+  mới, slow zone cung đảo −50..−12.
+### CỔNG CUỐI
+- diag_runtime 900 SẠCH; SEED_SAVE 300 SẠCH; diag trên index-standalone
+  300 SẠCH.
+- audit_ground_v54: **0 lỗi cứng / 0 nhảy lưới** (60 tuyến, 46 nút AW, 33
+  sạp; cảnh báo băng qua làn 25 — bằng đúng bản trước đợt, không tăng).
+- Harness giao thông: **26/26 PASS**. check_sweep3 mở rộng: **ALL PASS**
+  (kể cả wandererYBad = 0 + specials sau neo).
+- Standalone: **10.335.893 byte** (+15.298 so với 10.320.595 trước đợt;
+  ngân sách +80.000; dư trần 10.485.760 là 149.867).
+- CHƯA kiểm chứng được: FPS thật, cảm nhận đám đông giờ đông trên trình
+  duyệt thật, wanderer HIỂN THỊ thật sau sửa routeY (mới chứng minh bằng
+  harness/diag — chốt cuối khi Chung Hy chơi thử). KHÔNG upload/push —
+  gộp giao cùng NPC-SPECIAL-1 khi Chung Hy cầm máy (1 lượt thẻ).
+### CHỜ BLENDER-DEEP (ghi theo steer 09:34 — không vá bằng code ở vòng này)
+- Mặt bậc tam cấp trong cảnh render tối thiểu hiện thành dốc trơn (giới
+  hạn lưới dựng 2.5u) — cần rà MODEL bậc thật từng nấc + lan can ở vòng
+  Blender, đối chiếu ảnh thật.
+- Sườn địa hình tây bậc/đảo: khung (d) (−16, 1) cả trước/sau đều bị sườn
+  nuốt khung — rà mesh sườn (độ dốc, điểm neo) ở vòng Blender.
+- Tỉ lệ đĩa đảo Ø21u và khổ thang 22u so với thật (refactor địa hình lõi
+  đã đề xuất, Chung Hy chưa duyệt) — vòng Blender đo lại trước khi quyết.
+- Đài phun: tỉ lệ hơi bẹt (giữ theo chốt V5.5) + chuyển động tia nước —
+  rà ở BLENDER-DEEP.
+- Chuyển động bánh xe các tuyến xe (model vehicle) — rà ở BLENDER-DEEP.
+
+## BLENDER-DEEP-1 (09/11) — RÀ SOÁT + SỬA TẬN GỐC TRÊN BLENDER TOÀN BỘ GLB (lệnh Chung Hy 09:32; KHÔNG upload/push)
+### PHƯƠNG PHÁP
+- Công cụ mới: scripts/dump_glb_general.mjs (dump mọi GLB: cây node, world bbox,
+  tâm bbox theo node, material+màu; cần symlink node_modules -> /tmp/diag/node_modules
+  như dump_character), scripts/render_glb_check.py (render Cycles từng GLB,
+  góc 34/side/front/top/profile + lọc 1 group), scripts/build_one_glb.py (chạy
+  build_models.py chỉ xuất 1 GLB — nguồn sự thật vẫn là build_models.py).
+- Baseline toàn bộ 14 GLB đã dump + sao lưu nguyên trạng vào
+  glb-backup-blenderdeep-20261109/ (ngoài assets/, không đóng gói).
+- Bài học đo: Box3.setFromObject PHÓNG ĐẠI bbox của mesh đã join + xoay
+  (Zigzag market báo wsize Y 62.13 trong khi đo theo TỪNG ĐỈNH: 1584/1584 đỉnh
+  nằm đúng dải y 4.8..6.8, 0 mặt lệch) — kết luận hình học phải đo theo đỉnh/
+  tâm node, không kết luận từ AABB của mesh xoay.
+### LỖI THẬT DUY NHẤT + ĐÃ SỬA TẬN GỐC: MẶT CHIẾU NGHỈ THANG ĐỒNG PHẲNG
+- Triệu chứng: cả 2 mặt chiếu nghỉ của stairs.glb render Blender ĐEN TUYỀN
+  (renders/blender-deep/stairs-before-34.png + -profile.png), web sẽ z-fight.
+- Đo gốc: Landing1Top mặt trên = 11.330 TRÙNG KHÍT mặt trên khối Landing1
+  = 11.330 (Landing2: 5.670 = 5.670). Pháp tuyến mặt trên hướng lên đúng
+  (normal Y = 1.00) — không phải lật normal, là 2 mặt ĐỒNG PHẲNG đè nhau.
+- Sửa ở build_models.py/build_stairs: khối Landing1 11.33 -> 11.31,
+  Landing2 5.67 -> 5.65 (hạ 0.02); tấm lót GIỮ NGUYÊN — mặt đi vẫn đúng
+  stairH (11.33/5.67). Xuất lại bằng build_one_glb.py (stairs).
+- Kiểm sau sửa: Landing1 top khối 11.310 vs lót 11.330 (tách 0.02);
+  meshes 38 / tris 1032 KHÔNG đổi; stairs.glb 95.104 -> 95.096 byte;
+  render stairs-after-34.png: 2 dải đen BIẾN MẤT, mặt chiếu nghỉ sáng liền
+  mạch với các chuyến thang. Đúng 1 đợt polish (chỉ stairs cần).
+- Xác minh kèm: mặt bậc là BẬC THẬT trong model (30 hộp bậc riêng, cao
+  giảm đều 17.00 -> 0.57 + 2 chiếu nghỉ) — "dốc trơn" ở GEOMETRY-2 chỉ là
+  giới hạn lưới 2.5u của cảnh render TỐI THIỂU, không phải model game.
+  Vách hông thang: chân cắm xuống -1.25 dưới mặt đất (neo chắc), đầu nhô
+  +0.25 như gờ chắn; tay vịn xiên liên tục theo sườn (đầu dưới dừng ở bậc
+  ~2 của chuyến C — trong dung sai). Mặt bên các bậc đồng phẳng từng cặp
+  (chồng 0.06) — phần lớn bị vách hông che trong game, ghi nhận không sửa.
+### CHUYỂN ĐỘNG (mục 1 của lệnh)
+- Bánh xe vehicle.glb: ĐẠT, không sửa. Đo cả 6 bánh (WheelF/R, WheelFL/FR/
+  RL/RR): tâm bbox thế giới TRÙNG KHÍT origin node (vd WheelF wpos =
+  wctr = (0, 0.33, 0.78)); geometry đĩa nằm trong mặt YZ, trục dọc X —
+  code quay rotation.x là quay đúng tâm trục, không lệch/không đảo.
+  Đáy bánh chạm đất 0.005. Helper wheel() trong build đã bake trục X +
+  origin tại tâm từ đầu — không có "vá" nào trong code phải gánh.
+- Đài phun: KHÔNG nằm trong GLB nào — dựng bằng code (index.html khối
+  V5.5). Đã rà code: 6 tia trụ nghiêng phun RA NGOÀI (đầu tia r 0.745 <
+  bồn r 2.45) đúng bản sửa SWEEP-1; bồn Ø5.4-5.8/cột/bát giữ tỉ lệ theo
+  chốt V5.5 (hơi bẹt — quyết định đã khóa, không đổi ở vòng này).
+- Phần nhún/đung đưa khác: không GLB nào có khớp/phần khớp nối ngoài
+  bánh xe — NPC nhún/đàn/chổi đều là code gắn prop (NPC-SPECIAL-1), model
+  tĩnh là đúng thiết kế.
+### TỪNG GLB — ĐÃ KIỂM (đạt, không sửa trừ stairs)
+- character.glb: ĐẠT — 11/11 neo, LegL/R pivot y = 0.40, Head đỉnh 1.824,
+  4.810 tri/người (khớp baseline HEAD-OPT-1). Chỉ kiểm, giữ khóa
+  CROWD-OPT/HEAD-OPT (tỉ lệ + poly không đổi).
+- stall.glb: ĐẠT — render front: mái tôn sóng + biển mặt trước (z 0.94,
+  hướng người chơi) + 2 đèn lồng + quầy 1.10 + hàng đúng mặt quầy (1.31)
+  + giỏ 2 bên + ô StripeA/B neo (2.35, 0.95). Nhóm hàng SkewerTrays/
+  CheCups/YaourtTower/BowlStack/CornGrill neo gọn quanh group (đo dump);
+  BowlStack có 2 chi tiết baked lệch trái theo thiết kế quầy (hũ/chồng
+  đặt sẵn trên mặt quầy) — không phải lỗi neo.
+- market.glb: ĐẠT — dump: Floor0 + Floor1/Floor2 khoét giếng phía đông
+  (Floor1E/E001/E002 chừa miệng giếng ~5x5.6), 2 tầng + sân thượng +
+  skylight; biển CHỢ ĐÀ LẠT 2 mặt đọc đúng chiều (render back + 34);
+  tháp thang máy kính ElevGlass; zigzag 2 mặt đã chứng minh theo đỉnh.
+- roundabout.glb: ĐẠT — render 34: họa tiết 8 quạt hoa/cỏ + vành hoa cầu
+  đọc rõ, cụm tượng 3 người (robe thuôn, tay giơ) + thông đá đỉnh, tổng
+  cao cụm 9.60 đúng thiết kế V5.1, bệ 3 bậc chamfer, ghế sector vành đảo.
+  Đo lại cho quyết định refactor (CHƯA duyệt, không đổi): đĩa Base mặt
+  trên Ø21 (r 10.5), chân Ø22 (r 11.0), CurbRing Ø22.3.
+- bridge.glb + pier.glb: ĐẠT — deck origin tâm (game bám groundH theo
+  deck — đã chốt V4.4), parapet + mái kính vòm + đèn nóc thẳng hàng;
+  pier: gốc asset ở chân (2 mesh con offset trong group), game scale từ
+  group root nên neo đúng; cap dày theo tỉ lệ scale là thiết kế hiện
+  hành. Ghi chú dung sai: đầu RoofPost có thể chạm mép kính ~0.1 — không
+  thấy ở render profile, không sửa.
+- theater.glb: ĐẠT — render 34: tháp đồng hồ (mặt + kim + vòng Gold),
+  oculus, mái ngói, khối rạp cân đối.
+- cafe.glb / shop.glb / hotels.glb / lamp.glb / pine.glb: ĐẠT — render 34
+  từng GLB: cafe (biển lớn + mái hiên + bàn ghế góc), shop (ban công +
+  lan can + mái hiên), hotels (4 group, biển nóc 4 kiểu, biến thể mái
+  MetalDark là THIẾT KẾ — không phải lỗi đen mặt), lamp (tay torus vòng
+  R0.55, Drop treo đúng mép vòng x 0.95 — thiết kế đèn vòng), pine (4
+  tầng tán đều). Toàn bộ 14 GLB: 0 mesh thiếu normals.
+- Màu/vật liệu: bảng MATS trong build khớp palette khóa (nền ấm bão hòa
+  thấp, hàng hóa bão hòa cao Goods/Skewer/Flower, đèn LanternGlow
+  #ff9a3d-họ, SignLetters đỏ) + research/22 (terracotta, kem) — không
+  vật liệu nào lệch tông cần sửa.
+- Sườn địa hình tây bậc/đảo (treo từ GEOMETRY-2): là ĐỊA HÌNH CODE,
+  không có GLB địa hình; phần model liên quan (vách hông stairs.glb) đã
+  kiểm ở trên. Khổ thang đo lại: rộng 22 / cao 17 / 3 chuyến — giữ
+  nguyên chờ Chung Hy duyệt refactor lõi (không tự đổi).
+### CỔNG CUỐI (bản sau sửa stairs)
+- diag_runtime index.html 900 SẠCH; SEED_SAVE 300 SẠCH; đóng gói lại +
+  diag trực tiếp trên index-standalone.html 300 SẠCH.
+- audit_ground_v54: 0 lỗi cứng / 0 nhảy lưới (60 tuyến, 46 nút AW, 33 sạp).
+- Harness giao thông: 26/26 PASS. check_sweep3 mở rộng: ALL CHECKS PASS
+  (wandererYBad = 0, specials + tủ đồ nguyên vẹn).
+- Standalone: 10.335.881 byte (trước vòng 10.335.893; -12 byte; dư trần
+  10.485.760 là 149.879). GLB raw total 7.418.168 byte.
+- CHƯA kiểm chứng được (như cũ): FPS thật + grade ngày + nghe thật trên
+  web, cảm nhận đông đúc giờ đông — chờ Chung Hy chơi thử. Render full
+  cảnh game vẫn phụ thuộc RAM máy (vòng này kiểm ở cấp GLB bằng render
+  riêng lẻ renders/blender-deep/*-before/after). KHÔNG upload/push.
+
+## BLENDER-DEEP-2 (09/11) — BỔ SUNG THẬT THEO CHÊ "CHƯA ĐỦ, CÒN THIẾU" (KHÔNG upload/push)
+### PLAN (ghi TRƯỚC khi làm — verdict điền sau, theo render tầm mắt trước/sau)
+- Công cụ kiểm: scripts/render_bd2.py (bản sao render_geo2.py, port groundH MỚI +
+  parse z hàng decor từ chính index.html + khối Jollibee/L'angfarm + đài phun theo
+  số đo code). Khung: a spawn, b giữa trục (-80), b2 trục kéo dài (-140), j cận
+  Jollibee, l cận L'angfarm, f cận đài phun, d2 từ tâm đảo nhìn bậc. Xuất
+  renders/bd2-before-*.png / bd2-after-*.png.
+- MỤC 1 ĐƯỜNG VÀO RỘNG DỌC TOÀN TRỤC: hàng BẮC (sạp tương tác dauhu/banhmi/
+  hutieu/traicay/chao/haisan + 16 sạp decor) z -15.7 -> -19.7; hàng NAM (banhtrang/
+  banhuot/suatuoi/banhflan + 16 decor) z 26 -> 30. Khoảng trống 2 mặt sạp
+  37.5u -> 45.5u (+21%) ĐỀU khắp trục -196..-30 (trước GEOMETRY-2 chỉ rộng ở
+  khung spawn). Nhựa 41 -> 49u (z -17.5..31.5) cả 3 đoạn seg/seg2/seg3; vỉa hè
+  bắc -12.5 -> -17.0, nam 22.9 -> 26.4; đèn đường theo vỉa mới; thềm bắc/nam nới
+  theo; groundH sửa 4 quy tắc (thềm bắc tới -21.5, vỉa bắc -18.4..-15.6 x -208..-59,
+  hành lang -25..34 + dải +0.11 mới, thềm nam tới 33.5, nền nhà z>32). Dãy nhà
+  phố lùi theo: nam 30.5 -> 35.5 (7 nhà), bắc -24..-25 -> -28.5 (7 nhà) — lưng
+  sạp không đè nhà. Đoạn sát mặt tiền (hàng sạp z=11) GIỮ NGUYÊN: đó là dãy quay
+  mặt vào sân chợ, lưng chạm cột nhà lồng — giới hạn cứng đã ghi nhận, không
+  thuộc trục đường vào. Đồng bộ: harness STALLS, ambience (dải xì xèo + vùng
+  phố ăn), render_bd2.
+- MỤC 2 JOLLIBEE + L'ANGFARM DỰNG THẬT (thay 2 shophouse gợi mốc): builder
+  brandShop() bằng code geometry + biển canvas (KHÔNG GLB mới -> 0 byte asset).
+  Jollibee (-183,-20, mặt hướng đường): tường đỏ #c8102e, biển 'JOLLIBEE' trắng
+  trên nền đỏ + biển phụ 'GÀ RÁN GIÒN • KHOAI TÂY CHIÊN', mái hiên sọc đỏ/trắng,
+  dải vàng #ffc72c, cửa kính + cửa ra vào, bảng menu đứng, 2 bàn ngoài trời.
+  L'angfarm (-183,31.5): tường kem, biển "L'ANGFARM" nền xanh lá #2e5b2e + phụ
+  'ĐẶC SẢN ĐÀ LẠT • TRÀ • MỨT • HOA KHÔ', mái hiên xanh, kệ gỗ trưng lọ mứt đủ
+  màu + giỏ hoa trước cửa, cửa kính. Đối chiếu ảnh thật: theme/real-market
+  KHÔNG có ảnh 2 mặt tiền này (đã kiểm ở GEOMETRY-2) -> dựng theo nhận diện
+  thương hiệu phổ biến, ghi rõ là không phải bản sao ảnh thật.
+- MỤC 3 ĐỆM ĐẢO <-> BẬC + SÂN DƯỚI BẬC: đảo GIỮ -30 (GEOMETRY-2 vừa dời đồng
+  bộ làn xe/AW/harness; dời nữa phá harness + làn). Tăng tách bạch thị giác:
+  hàng 5 chậu cẩm tú cầu x -13 (z -14..10) làm dải xanh phân cách vành đường
+  đảo <-> sân bậc; vạch zebra qua đường trên vành đảo tại x -13.5; tấm sân đổi
+  tông sáng hơn (0x978a78 -> 0xa79a84) + dải viền sẫm ở mép tây sân; biển nhỏ
+  'BẬC TAM CẤP ->' ở góc sân tây. Sân chân bậc giữ nguyên phần mở rộng GEOMETRY-2.
+- MỤC 4 ĐÀI PHUN BỚT BẸT: cột giữa 1.5 -> 2.3 (bát chính lên y 2.62, miệng
+  r 0.95), thêm bát tầng 2 (y 3.15) + chóp cầu; tia nghiêng dài 1.15 -> 1.5 ở
+  y 2.95 (đầu tia r ~0.84 < bồn 2.45 — vẫn rơi trong bồn); thêm tia đứng giữa
+  cao 1.2. Tổng cao ~2.8 -> ~4.2. Bồn/đế giữ nguyên (FORBIDDEN harness không đổi).
+- MỤC 5 DANH TÍNH ĐÀ LẠT DỌC ĐƯỜNG VÀO: biển tên đường 'Đ. NGUYỄN THỊ MINH
+  KHAI' tại (-160,-17.6) + (-70,27.2) (bổ sung biển Tăng Bạt Hổ sẵn có ở cổng);
+  thông pine() dọc sườn bắc (-150/-120/-90/-70, z ~-22) + 2 cây phía nam
+  (-150,34.5)/(-105,35); chậu cẩm tú cầu ở 4 góc vỉa đoạn kéo dài. Không đụng
+  sửa đám đông GEOMETRY-2 (routeY + lực tách giữ nguyên).
+- RÀNG BUỘC: standalone <= 10.485.760 (hiện 10.335.881, dư 149.879 — vòng này
+  KHÔNG thêm GLB, chỉ code text, dự kiến +<15KB); save chohb3d-v1 không đụng;
+  cổng bắt buộc: diag 900 + SEED_SAVE 300 + standalone 300 + audit_ground +
+  traffic 26/26 + check_sweep3 ALL PASS.
+### BỔ SUNG MỤC 12–17 (lệnh 14:11–14:12 ngày 09/11 — ghi plan trước khi làm, cùng vòng)
+- MỤC 12 HÀNG HÓA THEO HÀNG THẬT (research/24): thêm 11 sạp tương tác (dau2/dau3/dau4
+  dâu tây, mut, hong, tra2, hoa2, luuniem2, dosi, len3, dacsanlon) — STALL_DEFS
+  33 -> 44 (số 33 là ĐO THỰC từ code, các brief cũ ghi 31 đã lệch). 6 sạp đường
+  vào THAY ĐÚNG VỊ TRÍ 6 sạp decor (gỡ khỏi DECOR_N_XS/DECOR_S_XS) nên không
+  chồng hình; mỗi sạp có hàng mô hình riêng (tháp hộp dâu, dây hồng treo, giỏ
+  hoa) + biển canvas + menu mua bán thật.
+- MỤC 13 KHU PHẢI BẬC: dãy aokhoac/aolen nới thêm len3 (40;27,5) + cột 2 sạp
+  đối diện luuniem2/dosi (45;17,5/22,5) tạo lối đi chợ; TIỆM LỚN "ĐẶC SẢN –
+  LƯU NIỆM" vào được bên trong: mặt tiền x=49 (kính + cửa 2u + biển lớn + biển
+  GIÁ RẺ), sâu tới 59,5, z 14,2–25,8; trong tiệm 3 dãy kệ + đảo kệ giữa, quầy
+  tính tiền = sạp dacsanlon mua bán như sạp thường, chủ tiệm SPECIAL_VENDOR
+  (tạp dề đỏ đô + mũ đỏ); tiệm thuộc nhóm đặc sản: mở tới 22:00 (bọc hallTick).
+- MỤC 14 QUẦN ÁO NHÌN RÕ: biển lớn "QUẦN ÁO – ĐỒ LEN" (7,2u) bắc qua dãy ở
+  x=36,85 hướng về bậc/đài phun + 2 giá treo NGOÀI mặt sạp + 2 ma-nơ-canh mặc
+  len; sửa tên sạp aokhoac. Kiểm bằng render g (từ chân bậc) + h (từ đài phun).
+- MỤC 15–17 BA CHẾ ĐỘ CHƠI (Couple/Gia đình/Theo đoàn): màn chọn 4 thẻ lúc mở
+  game (chỉ lần đầu, state.modeSeen) + nút 🎭 Chế độ trên HUD để đổi bất cứ lúc
+  nào; save thêm mode/modeProg/modeTitles (migration mặc định solo, KHÔNG phá
+  save cũ — SEED_SAVE đạt); bạn đồng hành dùng makePerson (character.glb đã tối
+  ưu) đi theo bằng tick riêng móc vào tickWater; đoàn xe là sự kiện riêng làn
+  z=14, KHÔNG vào hệ traffic (harness vẫn 26/26); tủ đồ +3 món mở khóa bằng
+  chế độ (AO-DOI / NON-DOAN / AO-DOAN, WARDROBE_DEFS 60 -> 63, check_sweep3 đã
+  cập nhật census tương ứng).
+- MỤC 18 (lệnh 14:54 — học NGUYÊN TẮC từ reel tham khảo, không sao chép
+  pixel/asset): 18A biển dọc có nghề + cửa cuốn mặt tiền phố 2 trạng thái theo
+  giờ + bốt giữ xe + dây điện nối dài; 18B tương phản đêm (khu đóng tối + cuốn
+  xám, điểm mở có vũng sáng) + phố phụ thưa người sau 22:00; 18C loa chợ ở cổng
+  (falloff như mục 8 + thông báo chữ) + bước chân theo 4 mặt đường + côn trùng
+  đêm khuya. Kiểm bằng test_bd2 mục 18 + diag.
+- Sửa kèm phát hiện nhờ test: toast() bỏ vòng while->if khi dọn toast cũ
+  (while phụ thuộc remove() gỡ node khỏi children — ở môi trường DOM mà
+  remove() không gỡ thật sẽ lặp vô hạn; bản if bỏ tối đa 1 toast cũ/lần thêm,
+  hành vi trên trình duyệt thật không đổi vì toast tự hết hạn sau 3,2s).
+
+### VERDICT (điền sau khi làm + soi render)
+- MỤC 1 ĐƯỜNG VÀO RỘNG: **ĐẠT** — khoảng trống 2 mặt sạp 37,5u -> 45,5u đều
+  dọc trục (đo từ tọa độ sạp trong code: hàng bắc -19,7 / hàng nam 30); nhựa
+  49u; render bd2-after-b.png + bd2-after-b2.png (đối bd2-before-b/b2): trục
+  thoáng đều từ -196 tới mặt tiền, không còn đoạn thắt. Hàng z=11 sát mặt tiền
+  giữ nguyên (giới hạn cứng lưng chạm cột nhà lồng — không thuộc trục đường vào).
+- MỤC 2 JOLLIBEE + L'ANGFARM: **ĐẠT** — render bd2-after-j.png / bd2-after-l.png:
+  khối + màu nhận diện đúng (đỏ + dải biển trắng cho Jollibee; kem + dải biển
+  xanh lá cho L'angfarm) trong cảnh mini; bản game thật có biển canvas đọc được
+  chữ JOLLIBEE / L'ANGFARM + mascot ong + kệ hàng (cảnh mini không vẽ chữ
+  canvas — ghi rõ giới hạn). Theo nhận diện thương hiệu phổ biến — ảnh mặt tiền
+  RIÊNG của 2 chi nhánh Đà Lạt chưa đủ tư liệu (research/23).
+- MỤC 3 ĐỆM ĐẢO ↔ BẬC: **ĐẠT MỘT PHẦN** — đảo GIỮ -30 (dời nữa phá làn
+  xe/AW/harness 26/26); thay bằng tách bạch thị giác: vạch zebra + 4 chậu cẩm
+  tú cầu + biển "BẬC TAM CẤP →" + sân dưới bậc đổi tông sáng hơn; render
+  bd2-after-d2.png. Cảm giác khoảng cách thật: chốt khi chơi thử web.
+- MỤC 4 ĐÀI PHUN BỚT BẸT: **ĐẠT** — cột 1,5 -> 2,3, thêm bát tầng 2 + chóp,
+  tổng cao ~2,8 -> ~4,2 (đo từ code); tia nghiêng dài 1,5 đặt r 0,5 ở y 2,95:
+  đầu tia r ~0,92 < bồn 2,45 nên nước vẫn rơi trong bồn; render bd2-after-f.png
+  đối bd2-before-f.png: cột + bát cao hơn rõ, hết bẹt (góc máy cảnh mini hẹp,
+  đài phun nằm ở góc tường deck — ghi rõ).
+- MỤC 5 DANH TÍNH ĐÀ LẠT: **ĐẠT** — 3 biển tên đường (Nguyễn Thị Minh Khai ×2,
+  Tăng Bạt Hổ), 6 cây thông + 4 chậu cẩm tú cầu dọc đường vào, đèn đường theo
+  vỉa mới; render bd2-after-a/b/b2.
+- MỤC 6 RESEARCH/23: **ĐẠT** — research/23-kien-truc-tung-cong-trinh.md: 13 mục
+  (12 công trình + chợ đêm Âm Phủ), mỗi mục đủ tư liệu/đặc điểm khóa/đối chiếu
+  model/đã sửa/chưa đủ tư liệu; ghi thẳng "chưa đủ tư liệu" ở 9 chỗ (mặt tiền
+  riêng Jollibee + L'angfarm Đà Lạt, rạp Hòa Bình, đài phun thật, phố Tăng Bạt
+  Hổ toàn tuyến, từng khách sạn, từng quán cà phê, biển Hoa Sữa, một phần nhà
+  lồng + vòng xoay).
+- MỤC 7 NƯỚC CHẢY: **ĐẠT VỀ CƠ CHẾ — cảm giác chốt khi chơi thử web** —
+  test_bd2 đo thay đổi theo frame trên index + standalone giữa tickWater(0) và
+  tickWater(1,3): mặt bồn Δy = 0,0161, Δopacity = 0,0091; tia phun Δscale.y =
+  0,0321; vòng gợn Δscale = 0,707 — nước chuyển động thật trong runtime.
+  Render Blender tĩnh không thấy chuyển động.
+- MỤC 8 ÂM THANH KHOẢNG CÁCH: **ĐẠT VỀ SỐ ĐO — nghe thật chốt khi chơi thử
+  web** — test_bd2 đo ambSpatial() ở 3 khoảng cách: ban nhạc góc hát gain
+  1,00 -> 0,40 -> 0,01 và lowpass 9.000Hz -> 2.674Hz -> 510Hz khi đi xa dần
+  (khoảng cách đo 2,8u -> 44,6u -> 70,7u); gần rõ ấm, xa nhỏ + lờ mờ nhưng còn
+  nghe nhờ sàn gain 0,06 ở stageBus; đài phun tương tự (gain 1/2.300Hz ở gần
+  -> 0/700Hz ở 127u). Nguồn điểm stage/fountain/food/hall đều có gain+lowpass
+  riêng cập nhật trong tick.
+- MỤC 9 COI BÓI 3 KIỆU: **ĐẠT** — test_bd2: mỗi kiểu chạy 40 lượt cho 40 kết
+  quả phân biệt (yêu cầu ≥ ~10); bài chứa tên lá thuộc CARD_DECK, mặt chứa
+  luận Trán, tay chứa Sinh Đạo; drawFortune trừ đúng 20 Xu, fortuneCount +1;
+  UI chọn kiểu + nghi thức 0,9s bỏ qua được; giữ giá 20 Xu + questFlags.fortune
+  + state.fortuneCount như cũ. Coi bói ĐÔI của Couple dùng chung hệ này (việc
+  'boi' tích khi fortuneCount tăng trong chế độ Couple).
+- MỤC 10 CHU KỲ NGÀY/ĐÊM: **ĐẠT** — test_bd2 mô phỏng 4 mốc: 12:00 nhà lồng
+  mở, cửa cuốn ẩn; 18:45 cửa cuốn lưng chừng (y = 1,91, giữa 2,50 -> 1,32);
+  20:00 quầy thường đóng + tiểu thương rời + tắt tương tác (nearestStall bỏ
+  qua s.closed, openMenu chặn), đặc sản + tiệm lớn còn mở, sạp ngoài trời
+  không đóng; 23:00 đặc sản + tiệm lớn đóng nốt. Chuyển cảnh mượt theo p trong
+  [18:30 -> 19:00] + toast "Nhà lồng đóng cửa — chợ đêm Âm Phủ mở". Nguồn giờ
+  thật ghi ở research/23 (nhà lồng + chợ đêm). Người chơi spawn 19:00 không bị
+  khóa tiến trình: mọi mua bán thiết yếu có sạp ngoài trời tương ứng.
+- MỤC 11 SƯƠNG ĐÀ LẠT: **ĐẠT VỀ CƠ CHẾ — cảm giác chốt khi chơi thử web** —
+  fog sẵn của scene được animate theo đồng hồ game: fogHourBonus cộng dày
+  5–9h (đỉnh ~7h) và sau 21:00, ban ngày tan; đèn có quầng ấm qua halo sẵn có.
+  Mật độ cộng tối đa ~0,016 (không che gameplay ở khoảng chơi thường).
+- MỤC 12 HÀNG HÓA: **ĐẠT** — 44 sạp tương tác (audit_ground đếm 44, lỗi cứng
+  0); dâu tây đủ 4 quầy ở mặt tiền (dau4 12;11 + dau cũ) + đường vào (dau2
+  bắc, dau3 nam); mứt/sấy, hồng treo gió, trà atiso/cà phê, hoa tươi, lưu niệm
+  ngoài trời, đồ si đều có quầy riêng + biển đọc được + mua bán được. Đối
+  chiếu + phần còn thiếu ghi thẳng ở research/24 (rượu cần/thịt rừng chủ đích
+  không làm; vài món ngách chưa có).
+- MỤC 13 KHU PHẢI BẬC + TIỆM LỚN: **ĐẠT** — mật độ khu phải tăng rõ (5 sạp
+  quần áo/lưu niệm/đồ si + tiệm lớn); tiệm vào được qua cửa 2u (collider chừa
+  đúng cửa), mua bán tại quầy tính tiền trong tiệm, đóng 22:00 đã kiểm ở mục
+  10; render bd2-after-i.png (cận mặt tiền: dải biển xanh, kính, cửa giữa, 2
+  sạp bên) + bd2-after-k.png (xiên trên cao: cả khu phải + đài phun + bậc).
+  Nội thất tiệm trong render mini chỉ là khối đơn giản hóa — bản game thật có
+  kệ + hàng đầy đủ bằng code (đã qua diag + test vị trí).
+- MỤC 14 QUẦN ÁO NHÌN RÕ: **ĐẠT VỀ BỐ CỤC + NỘI DUNG, render mini đạt một
+  phần** — biển QUẦN ÁO – ĐỒ LEN 7,2u đặt ở x=36,85 (điểm tây nhất, gần sân
+  đài phun nhất), giá treo ngoài + ma-nơ-canh ở x≈37, dãy sạp quay mặt -x về
+  sân đài phun: tất cả có thật trong code và qua diag/test. Render tầm mắt từ
+  bậc (bd2-after-g) và từ đài phun (bd2-after-h) trong CẢNH MINI bị khối deck/
+  nhà lồng đơn giản hóa chắn tầm (đã thử 3 vị trí camera) — cảnh mini không
+  dựng được góc nhìn này trung thực; bằng chứng hình ảnh đạt được là
+  bd2-after-i (mặt tiền tiệm + 2 sạp bên) và bd2-after-k (xiên trên cao thấy
+  cả dãy + tiệm + đài phun). Chữ biển là canvas trong game thật, cảnh mini
+  chỉ vẽ khối màu. Đọc rõ thật ở tầm mắt: chốt khi Chung Hy chơi thử web
+  (camera người chơi thật là góc ba tư trên cao, khác camera tĩnh của mini).
+- MỤC 15 CỬA VÀO CHẾ ĐỘ: **ĐẠT** — 4 thẻ chọn lúc mở game lần đầu + nút 🎭;
+  đổi chế độ dọn bạn đồng hành cũ, giữ Xu/túi/hộ chiếu (test_bd2 kiểm save).
+- MỤC 16A COUPLE: **ĐẠT VỀ CƠ CHẾ — cảm giác chốt khi chơi thử web** —
+  test_bd2: spawn đúng 1 người thương đi CẠNH (offset ngang 1,15u), sau khi
+  người chơi dịch 30u + 6s mô phỏng thì lệch còn 1,16u; mua dâu tích việc ngay;
+  đủ 6 việc (ảnh bùng binh/coi bói đôi/nghe hát 5s/Hoa Sữa/áo đôi) qua cùng hệ
+  móc mua hàng + vùng đứng đã kiểm từng móc. Thưởng 150 Xu + danh hiệu gắn
+  Hộ chiếu (passSub) + áo đôi vào tủ đồ + người thương đổi áo cùng màu.
+- MỤC 16B GIA ĐÌNH: **ĐẠT VỀ CƠ CHẾ — cảm giác chốt khi chơi thử web** —
+  spawn 4 thành viên (Bà đi chậm maxSp 5,6; Bé 0,7 scale + bóng bay, thỉnh
+  thoảng chạy trước theo chu kỳ 9s); sau dịch chuyển 40u + 7s, thành viên
+  chậm nhất lệch 2,75u; wish của Bà tích khi mua đúng "Trà atiso túi lọc";
+  panel có ✓ từng người + thanh Ấm no; thưởng 200 Xu + danh hiệu.
+- MỤC 16C THEO ĐOÀN: **ĐẠT VỀ CƠ CHẾ — cảm giác chốt khi chơi thử web** —
+  đoàn xe 2 xe chạy làn riêng vào điểm tập kết rồi đoàn xuống xe (phase
+  drive -> walk trong test); 10 đoàn viên áo/nón đoàn + hướng dẫn viên cầm cờ
+  = đoàn 12 người cùng người chơi; đứng vòng điểm tập kết 5s -> check-in
+  (cp 0 -> 1 đã kiểm); quá xa > 30u quá 10s có nhắc "Về đoàn nào!" + cờ nhấp
+  nháy; đủ 6 điểm thưởng 250 Xu + NON-DOAN/AO-DOAN vào tủ đồ. Traffic harness
+  vẫn 26/26 sau khi thêm đoàn xe.
+- MỤC 17 HIỂN THỊ: **ĐẠT** — huy hiệu chế độ cạnh nút 🎭 trên HUD; panel việc
+  cập nhật tức thì khi tích việc (renderModePanel gọi ngay ở modeTaskDone) +
+  thanh % animation CSS; tiến độ lưu theo từng chế độ (test save/load đạt);
+  hoàn thành có modal tổng kết + pháo tim (Couple).
+- MỤC 18A ĐƯỜNG XÁ CỤ THỂ (học từ reel): **ĐẠT** — 6 biển DỌC có nghề đọc
+  được dọc phố (NHÀ THUỐC, HỚT TÓC, GIỮ XE ở dãy bắc; TẠP HÓA, SỬA XE, QUÁN
+  NƯỚC ở dãy nam) + bốt giữ xe tại (-118;24,5) có biển "GIỮ XE — 5K/LƯỢT" +
+  đèn chốt (colonialLamp, tự sáng về đêm) + 14 cửa cuốn mặt tiền phố có 2
+  trạng thái theo giờ (test_bd2: ban ngày 0/14 hạ, ban đêm 11/14 hạ — chừa
+  3 mặt tiền mở kiểu tạp hóa khuya) + dây điện nối dài: 3 cột mới (-160/-132/
+  -104) + 3 nhịp dây võng về cột cũ -72 (trước đây dây chỉ có đoạn -72..-44).
+  Vỉa hè liền mạch + sạp tràn lề đã có từ mục 1/GEOMETRY-2.
+- MỤC 18B KHÔNG KHÍ ĐÊM: **ĐẠT MỘT PHẦN — cảm giác chốt khi chơi thử web** —
+  tương phản sáng/tối dựng bằng: cửa cuốn xám + đèn quầy tắt ở khu đóng (mục
+  10/18A) đối lập vũng sáng ấm ở điểm mở (halo sạp chợ đêm, uplight đài phun,
+  đèn bốt giữ xe, nội thất tiệm lớn); sau 22:00 phố PHỤ thưa người thêm (bọc
+  updateCrowdDensity: NPC tĩnh + lang thang rank < 0,35 ở vùng phụ z>34 /
+  z<-26 / x<-150 bị ẩn; trục chợ đêm giữ nguyên mật độ). Cảnh render mini
+  không có chế độ đèn đêm trung thực nên không đính render đêm — kiểm bằng
+  trạng thái code + test; tương phản thật chốt khi chơi thử web.
+- MỤC 18C ÂM THANH (loa + bước chân): **ĐẠT VỀ SỐ ĐO — nghe thật chốt khi
+  chơi thử web** — LOA CHỢ ở cổng chào (-131): test_bd2 đo loaGainAt ở 3
+  khoảng cách: 0,89 tại cổng -> 0,60 ở 71u -> 0,04 ở ~197u (sàn nhỏ để "vang
+  khắp phố"); bandpass 2.563Hz -> 537Hz (xa thì lờ mờ). Thông báo 5 mẫu kiểu
+  chợ hiện chữ khi đủ gần; "giọng loa" mô phỏng bằng sawtooth đổi cao độ qua
+  bandpass + delay vang — KHÔNG phải giọng người thật, ghi rõ. BƯỚC CHÂN đổi
+  mẫu theo mặt đường (test: surfaceAt cho 4 mặt phân biệt nhựa/gạch/thang/
+  sàn nhà lồng; tần số bước 240/950/520/680Hz, gõ mỗi ~2,1u đường đi). Đêm
+  khuya có côn trùng rất nhỏ (gain 0,012) + gió sẵn có của ambience.
+  Ghi nguyên tắc: học THIẾT KẾ của reel (đường cụ thể, tương phản đêm, loa
+  phường + bước chân), không sao chép asset hay phong cách pixel.
+- CỔNG KIỂM CHỨNG TOÀN VÒNG: diag_runtime 900 frame SẠCH; SEED_SAVE 300 SẠCH;
+  diag standalone 300 SẠCH; test_bd2 ALL PASS trên cả index.html lẫn
+  index-standalone.html; test_ambience_sc1 TEST-AMB-OK; audit_ground_v54 lỗi
+  cứng 0 (44 sạp); v52_traffic_harness 26/26; check_sweep3 ALL PASS.
+- DUNG LƯỢNG: index.html 516.379 byte; standalone 10.407.915 byte — dưới trần
+  10.485.760, còn dư 77.845 byte. Toàn vòng thêm 0 GLB mới (chỉ code + canvas).
+- ĐIỂM MÙ CÒN LẠI (chỉ chốt khi Chung Hy chơi thử trên web): FPS thật với
+  +14 NPC chế độ, grade ngày trên web, nghe thật (âm khoảng cách + loa +
+  bước chân), cảm giác nước chảy + sương + tương phản đêm, cảm giác vui/đẹp
+  của 3 chế độ chơi, đọc rõ biển quần áo ở tầm mắt thật.
+- KHÔNG upload / KHÔNG push GitHub — chờ lệnh "gửi đi" ở chat chính.
+
+## REALISM-1 (09/11) — TĂNG ĐỘ CHÂN THẬT THỊ GIÁC (lệnh Chung Hy sau khi xem render BD2: "cũng tạm tạm thôi chứ chưa nhìn chân thật lắm"; KHÔNG upload/push)
+### PLAN (ghi TRƯỚC khi làm — verdict điền sau, theo đối chiếu cùng góc bằng mắt)
+- PHẠM VI KHÓA: chỉ tăng chân thật ở VẬT LIỆU / ÁNH SÁNG / MẬT ĐỘ CHI TIẾT /
+  TỈ LỆ trong phong cách chibi diorama đã khóa (đầu to, camera ~45°, UI
+  nâu/vàng, ảnh chuẩn theme/CHOT-phong-cach-cho-dem.png). KHÔNG đổi bán
+  thực/photoreal, không đụng 18 mục BD2 (gameplay/chu kỳ/âm thanh giữ nguyên).
+- PHƯƠNG PHÁP ĐỐI CHIẾU: harness scripts/render_real1.py (bản sao
+  render_bd2.py — parse index.html hiện tại nên bố cục luôn mới) + 4 camera
+  khớp ảnh thật; ghép PIL trái = ảnh thật, phải = render thành
+  renders/real1-cmp-{before,after}-<goc>.png. GIỚI HẠN GHI RÕ: cảnh mini
+  Blender dùng vật liệu phẳng mô phỏng, KHÔNG vẽ texture canvas/chữ của web
+  → đối chiếu chấm được BỐ CỤC / TỈ LỆ / MẬT ĐỘ / SILHOUETTE; phần texture
+  canvas + ánh sáng web kiểm bằng rà code + test đo (số material được gán
+  map, thông số renderer) và ghi "chốt khi chơi thử web" như các vòng trước.
+- 4 GÓC ĐỐI CHIẾU:
+  R1 MẶT TIỀN + BÙNG BINH (ảnh thật 01, ngày): cam (-38, 2.0, -14) ->
+  đích (0, 5, 12), lens 24 (khớp research/17).
+  R2 ĐƯỜNG VÀO NTMK (ảnh thật 43 đêm từ trên cao + 06): cam trên cao
+  (-100, groundH+12, 5.6) -> (-30, 1.5, 5): 2 hàng sạp + nhà phố + dây điện.
+  R3 BẬC TAM CẤP NHÌN XUỐNG (ảnh thật 10 đêm + 40): cam (0, 18.8, -27)
+  -> (-30, 1.5, -6): thang + đảo + phông khách sạn đối diện.
+  R4 CHỢ ĐÊM TẦM MẮT (ảnh thật 43/34): cam (-47, groundH+1.7, 6)
+  -> (-38, 1.2, -13) (khung e của BD2): mặt sạp, bạt, đèn, rác đường phố.
+- RÀ CODE TRƯỚC KHI SOI (nghi phạm đã khoanh, chờ ảnh đối chiếu xác nhận):
+  (a) mặt đất PHẲNG không texture: nhựa 3 đoạn seg/seg2/seg3 + road plane +
+  vành đảo (MeshStandardMaterial màu trơn 0x453f3a/0x4a4038), vỉa hè hộp
+  0x84796a trơn, plaza 0x978a78 trơn, sườn dốc 0x5f8547 mảng xanh trơn lớn,
+  nóc đồi 0x9e9078 trơn. (b) renderer đã có PCFSoft + ACES + exposure ngày
+  0.88/đêm 1.22; sun shadow 2048 trên span ±95 (tâm 0) → đoạn cổng/spawn
+  x<-95 NGOÀI vùng bóng; cửa sổ shophouse có winMats emissive nhưng cần
+  kiểm mức ngẫu nhiên từng nhà về đêm. (c) shophouse chưa có máy lạnh/bồn
+  nước/ăng-ten/ban công; dây điện mới chạy dọc cột, chưa có nhịp NGANG qua
+  đường như ảnh 43; thiếu chồng ghế nhựa + thùng xốp/sọt ở lưng sạp; xe máy
+  đậu cụm sát lề còn ít. (d) thông pine() đã xoay/scale theo hash nhưng
+  chung 1 vật liệu tán; sườn dốc thiếu bụi/chậu ở chân. (e) đám đông: da 4
+  tông + áo sọc canvas đã có cho TIỂU THƯƠNG (npcStripeShirt), khách đi
+  đường vẫn áo trơn; tóc nằm trong GLB (kiểm tên material trước khi hứa).
+- THỨ TỰ LÀM: B1 render before 4 góc + ghép đối chiếu + DANH SÁCH LỆCH
+  cụ thể (điền dưới plan này). B2 patch scripts/patch_real1.py sửa theo
+  lệch theo các đòn (a)-(e) của brief, ưu tiên canvas texture runtime
+  (0 byte asset) + geometry tái dùng/gộp. B3 render after đúng 4 góc +
+  ghép mới + verdict TỪNG GÓC thẳng thắn (đạt / đạt một phần + còn lệch gì).
+- RÀNG BUỘC CỨNG: standalone <= 10.485.760 (hiện 10.407.915, CHỈ DƯ
+  77.845 byte) — mọi thêm vào tính byte, cấm asset nhị phân mới, vượt thì
+  tối ưu bù trong vòng; save chohb3d-v1 không phá; cổng bắt buộc: diag 900
+  + SEED_SAVE 300 + standalone 300 + audit_ground + traffic 26/26 +
+  check_sweep3 ALL PASS + test_bd2 ALL PASS; Blender --threads 2, 1 render
+  nặng tại một thời điểm (RAM ~7,9GB, available ~3,2GB lúc mở vòng).
+### DANH SÁCH LỆCH (BƯỚC 1 — soi renders/real1-cmp-before-r1..r4.png, toàn văn ở renders/real1-deviations.md; đã phân loại LỆCH THẬT của bản web vs GIẢ ẢNH của harness mini)
+- L1 MẶT ĐẤT PHẲNG ĐƠN TÔNG [THẬT — đòn (a)]: nhựa/vỉa/sân/sườn là mảng
+  màu trơn chiếm 45–50% khung ở r2/r4 (đo PIL: 4 tông phẳng trội chiếm
+  63–75% pixel render, thật 54–61%); web đúng vậy: rampMat/road/plaza/
+  vỉa hè/sườn KHÔNG texture (rà code). Ảnh thật: nhựa xám đen có vá + vệt
+  bánh xe + bóng cây loang; vỉa lát gạch có khe; sân lát đá từng tấm.
+- L2 SƯỜN DỐC FACET XANH TRƠN [THẬT một phần — đòn (a)+(d)]: mặt tam giác
+  phẳng 8–10% khung ở r1/r3/r4; hình học sườn là lõi địa hình (không sửa
+  hình), nhưng web sườn cũng là plane xanh trơn 0x5f8547 → cần nhiễu màu
+  + bụi/chậu chân sườn phá mảng.
+- L3 RÁC ĐƯỜNG PHỐ VẮNG [THẬT — đòn (c)]: 4 render đếm 0 dây ngang, 0
+  máy lạnh/bồn nước/ăng-ten, 0 chồng ghế/thùng xốp, xe đậu chỉ 2 chiếc ở
+  đảo; rà code web khớp: dây mới chạy DỌC phố (z=-8.6), shophouse không
+  phụ kiện, chân sạp chỉ có giỏ dâu/chậu. Ảnh thật góc nào cũng ≥3 nhóm:
+  dây ≥10 sợi ngang khung (43), máy lạnh + ban công (43), giỏ nhựa đỏ +
+  đòn gánh (33), xe tải/bán tải/xe máy ép sát chân chợ (01).
+- L4 ĐÊM THIẾU "SỐNG" Ở CỬA SỔ [THẬT — đòn (b)]: mini là ngày phẳng
+  (giả ảnh), nhưng rà code web: applyDayNight set MỌI winMats
+  emissiveIntensity = 1.9 ĐỀU NHAU → cửa sổ nhà phố sáng đồng loạt giả;
+  hotelWinMats đã có hệ số đêm riêng từng ô (mẫu đúng để theo).
+- L5 NGƯỜI THIẾU BIẾN THIÊN TÓC + ÁO [THẬT một phần — đòn (e)]: capsule
+  pastel là giả ảnh harness (web là người GLB đủ mặt/tóc/nón); phần thật:
+  material tóc 'HairDark' MỘT màu cho toàn bộ NPC, áo sọc canvas mới có
+  ở tiểu thương, khách đi đường áo trơn; ảnh thật áo caro/sọc + mũ len
+  nhiều màu là lớp đọc rõ nhất ở r3.
+- L6 KHUNG R1 SAI ĐIỂM ĐỨNG [GIẢ ẢNH harness]: cam (-38,2,-14) nằm
+  TRONG sườn tây của cảnh mini nên facade/tượng không lọt khung; ở web
+  điểm tương ứng cũng là sườn — SỬA CAMERA cho lượt after: đứng trên đĩa
+  đảo (-36, 2.8, -2) -> (2, 6.5, 13); before-r1 sẽ render lại cùng lượt
+  after bằng camera mới và ghi rõ (harness không vẽ texture/clutter của
+  patch nên before vẫn đúng cho bố cục). R4 cũng chỉnh: cam (-70,
+  groundH+1.7, 7) -> (-35, 2, 4) dọc trục thay vì đâm vào sườn.
+- KHÔNG PHẢI LỆCH WEB (ghi để khỏi sửa nhầm): bậc thang đọc như dốc ở
+  r3 = lưới groundH của mini (web là 30 hộp bậc thật, BLENDER-DEEP-1 đã
+  đo); facade hộp trơn ở mini = không nạp GLB (web market.glb đủ zigzag/
+  lam/pano/chữ — research/23); mật độ người trong khung của mini thấp
+  hơn web (mini đặt 198 người theo phân bố riêng).
+### VERDICT (điền ở BƯỚC 3)
+- (chờ render after)
+
+### ⏸️ CHECKPOINT GITHUB 18:2x 09/11/2026 — TẠM DỪNG THEO LỆNH MAIN CHAT (Chung Hy chốt đẩy Chợ lên GitHub ĐẦY ĐỦ)
+- Trạng thái file tại checkpoint: NHẤT QUÁN. Bước 2 (patch_real1.py, 14/14 thay thế) đã áp xong + đã đóng gói standalone; index.html/index-standalone.html không đổi từ 11:05. Bước 3 đang dở ở khâu render (worker render đã bị đóng theo lệnh dừng): đã có renders/real1-after-r1/r2/r3.png (11:16–11:18, kiểm PIL verify OK, không file nào cụt) + real1-beforefix-r1/r4.png; CHƯA có after-r4, CHƯA ghép real1-cmp-after-*.png, CHƯA có renders/real1-after-measure.md, VERDICT trên chưa điền. Chạy tiếp từ đúng điểm này khi có lệnh "ĐÃ ĐẨY XONG, CHẠY TIẾP".
+- Cổng chạy lại TƯƠI tại trạng thái checkpoint (log /tmp/checkpoint_gates.log):
+  - diag_runtime 900: PASS (INIT OK, 900 frame sạch, exit 0)
+  - SEED_SAVE 300 (save cũ chohb3d-v1): PASS (exit 0)
+  - standalone diag 300 (SRC_FILE=index-standalone.html): PASS (exit 0)
+  - audit_ground_v54: exit 1 — lỗi cứng 0, nhảy lưới 54 quanh vách đồi bắc (TỒN TẠI TỪ TRƯỚC vòng REALISM-1, đã tự kiểm chứng patch_real1.py chỉ gọi groundH chứ không sửa định nghĩa groundH; tiêu chí khóa mọi vòng là lỗi cứng = 0 → giữ nguyên trạng, không sửa lan tại checkpoint)
+  - traffic v52_traffic_harness: 26/26 PASS
+  - check_sweep3: ALL CHECKS PASS
+  - test_bd2: ALL CHECKS PASS (18 mục BD2 không vỡ)
+  - test_real1: PASS (texMeshes 27, facadeTex 208, cửa sổ đêm 7 mức sáng/tỉ lệ tắt 0,238, máy lạnh 9 + bồn nước/ăng-ten 7, rác chân sạp 13+11, xe máy đậu 9, tóc 5 màu, áo có map 12/40)
+- Số byte standalone cuối tại checkpoint: **10.419.383 byte** (trần 10.485.760 — dư 66.377 byte).
+- Sau ghi chú này: NGỪNG MỌI THAO TÁC GHI FILE cho tới khi tuyến chính báo "ĐÃ ĐẨY XONG, CHẠY TIẾP". Khi REALISM-1 hoàn thành (render after đủ 4 góc + ghép đối chiếu + VERDICT) sẽ đẩy bổ sung ngay trong cùng phiên.

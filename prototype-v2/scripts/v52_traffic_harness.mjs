@@ -8,8 +8,10 @@
    Cách dùng:  node scripts/v52_traffic_harness.mjs [--verbose]
    Thoát mã 0 = mọi kiểm tra đạt; 1 = có kiểm tra hỏng.
 
-   SNAPSHOT DỮ LIỆU: CẬP NHẬT V5.4 (09/11) — trích lại từ index.html bản
-   V5.4: groundH có thềm bắc + vỉa hè bám dốc; laneZE đỉnh 5.55 (hệ số
+   SNAPSHOT DỮ LIỆU: CẬP NHẬT V5.5 (09/11) — trích lại từ index.html bản
+   V5.5: groundH hành lang kéo dài + thềm 2 bên, entryRampY nắp 5.5, AW 42
+   nút, 31 sạp, ROUTE_HILL +vòng tây, FORBIDDEN +đài phun nước, pull-over
+   #2 chuyển banhtrang -> khoai. (V5.4: groundH có thềm bắc + vỉa hè bám dốc; laneZE đỉnh 5.55 (hệ số
    7.05), laneZW gốc 1.9 đỉnh 7.15; AW_NODES sau rà soát tuyến người;
    STALL_DEFS 28 sạp (thêm hàng bắc z=-6.7, dãy nam lùi z=11.0); RENT_PT
    đã dời (35.5,8.5); xe đậu vành đảo chỉ còn 2 chiếc cung tây-bắc;
@@ -55,10 +57,13 @@ function groundH(x,z){
   if(x >= 14 && x <= 21 && z >= 7 && z <= 12) return 12.6;
   if(x >= 21 && x <= 33 && z >= 7 && z <= 12.2) return 12.6;
   if(x >= -34 && x <= 34 && z >= 12 && z <= 28) return 0.5;
-  if(x >= -58 && x <= -35 && z >= -11 && z <= -2) return x < -52 ? Math.min(2.0, (-52 - x) * 0.07) + 0.11 : 0;
-  if(x >= -82.5 && x <= -59 && z >= -10.6 && z <= -7.8) return Math.min(2.0, (-52 - x) * 0.07) + 0.11;
+  if(x >= -58 && x <= -35 && z >= -16.5 && z <= -2) return x < -52 ? entryRampY(x) + 0.11 : 0; // V5.5
+  if(x >= -131 && x <= -59 && z >= -13.9 && z <= -11.1) return entryRampY(x) + 0.11; // V5.5
   if(x >= -82.5 && x <= -51.5 && z >= 10.5 && z <= 13.9) return entryRampY(x) + 0.11;
-  if(x < -52 && z >= -9 && z <= 13.5) return Math.min(2.0, (-52 - x) * 0.07);
+  if(x >= -133 && x < -58 && z >= -17.5 && z <= 24){ const r = entryRampY(x); return (z < -14.5 || (z > 13.5 && z <= 20.2)) ? r + 0.11 : r; } // V5.5
+  if(x >= -133 && x < -52 && z > 24) return entryRampY(x); // V5.5
+  if(x >= -84 && x <= -34 && z > 13.5 && z <= 24) return entryRampY(x) + 0.05; // V5.5
+  if(x < -52 && z >= -17.5 && z <= 24) return entryRampY(x); // V5.5
   if(z <= -30) return 17;
   if(z >= -2) return 0;
   if(x >= -11 && x <= 11) return stairH(z);
@@ -74,7 +79,7 @@ function groundH(x,z){
   return 17 * ((-2 - z) / 28);
 }
 // --- chép nguyên văn từ index.html: entryRampY + islandBump ---
-function entryRampY(x){ return x < -52 ? Math.min(2.0, (-52 - x) * 0.07) : 0; }
+function entryRampY(x){ return x < -52 ? Math.min(5.5, (-52 - x) * 0.07) : 0; } // V5.5: nap 5.5 (cong -131)
 function islandBump(x){
   const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   return s(-46, -30) * (1 - s(-18, -2));
@@ -83,7 +88,7 @@ function islandBump(x){
 // hẹp vehBumpE + 2 hàm làn laneZE/laneZW (làn tây cũng đổi: gốc 4.1, biên 4.5) ---
 function vehBumpE(x){
   const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return s(-38, -27) * (1 - s(-21, -10));
+  return s(-44, -33) * (1 - s(-27, -16));
 }
 function laneZE(x){ return -1.5 + 7.05 * vehBumpE(x); }   // V5.4: làn đông, đỉnh 5.55 (cách tâm đảo 11.55)
 function roadY(x, z){ // chép nguyên văn từ index.html: cao độ mặt ĐƯỜNG cho xe (dưới cầu nổi = 0 dù groundH trả cao độ deck)
@@ -93,7 +98,7 @@ function roadY(x, z){ // chép nguyên văn từ index.html: cao độ mặt Đ�
 }
 function laneZW(x){ // V5.4: gốc 1.9, đỉnh 7.15 (cách tâm đảo 13.15) — thay islandBump cũ (gốc 4.1 + 4.5)
   const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return 1.9 + 5.25 * s(-40, -30) * (1 - s(-19, -11));
+  return 1.9 + 5.25 * s(-46, -36) * (1 - s(-25, -17));
 }
 
 // --- AW_NODES + AW_EDGES: chép nguyên văn (đồ thị tự-đi của người chơi) ---
@@ -105,31 +110,36 @@ const AW_NODES = [
   [3,-11],[6.2,-9.6],
   [1,-20],[2.8,-19.6],
   [-8,-40],[-17,-44],
+  [-90,5.6],[-104,5.6],[-118,5.6],[-128,4],
+  [36.2,20],[42.5,6.2],
+  [-142,5.6],[-156,5.6],[-170,5.6],[-184,5.6], // GEOMETRY-2: idx42-45 truc toi bung binh dau cho
 ];
 const AW_EDGES = [];
 for(let i = 0; i < 15; i++) AW_EDGES.push([i, i + 1]);
-AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35]);
+AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44]); // GEOMETRY-2: +trục kéo dài đầu chợ
 
 // --- LOOP người đi bộ lang thang: chép nguyên văn ---
 const LOOP = [[-2,3],[-2,-29],[3,-38],[10,-45],[16,-38],[17.5,-28],[17.5,-8],[17.5,7],[24,9.8],[30.3,10.8],[30.3,19.4],[30.3,26.6],[24,25.55],[10,22],[0,24.5],[-13,21.9],[-20,21.9],[-24,25.55],[-31.5,23.5],[-31.5,16.8],[-14,17],[-2,15.5],[0,15.9],[0,8]];
 
 // --- STALL_DEFS rút gọn (id, x, z, rotY) — chép từ bảng def trong code ---
 const STALLS = [
-  ['banhtrang',-36,11.0,Math.PI],['khoai',-31,11.0,Math.PI],['banhcan',-26,11.0,Math.PI],
+  ['banhtrang',-36,30,Math.PI],['khoai',-31,11.0,Math.PI],['banhcan',-26,11.0,Math.PI], // V5.5: banhtrang doi vao day nam doan vao z=22.25
   ['supcua',-21,11.0,Math.PI],['sua',22,11.0,Math.PI],['caphe',27,11.0,Math.PI],['yaourt',32,11.0,Math.PI],
   ['len1',-24,15,0],['len2',-16,23.5,Math.PI],['rau',16,15,0],['dau',24,23.5,Math.PI],
   ['khoainuong',6.2,-21.6,Math.PI/2],['suadau',6.2,-10.4,Math.PI/2],['hoa',37.5,11.0,Math.PI],
   ['dacsan',-20,20,Math.PI],['tra',20,20,0],['dongho',-6,-47,0],['luuniem',-31,-47,0],
   ['xien',-16.5,11.0,Math.PI],['che',6,11.0,Math.PI],['tron',43,11.0,Math.PI],
-  ['banhuot',-56,11.0,Math.PI],['suatuoi',-49.5,11.0,Math.PI],
-  ['banhmi',-56,-6.7,0],['hutieu',-51,-6.7,0],['traicay',-46,-6.7,0],['dauhu',-41,-6.7,0],['chao',-37,-6.7,0],
+  ['banhuot',-56,30,Math.PI],['suatuoi',-49.5,30,Math.PI], // GEOMETRY-2: z=26 (day nam lui sau mo rong duong)
+  ['banhmi',-56,-19.7,0],['hutieu',-51,-19.7,0],['traicay',-46,-19.7,0],['dauhu',-41,-19.7,0],['chao',-37,-19.7,0], // V5.5: hang bac z=-15.7
+  ['haisan',-100,-19.7,0],['banhflan',-95,30,Math.PI], // GEOMETRY-2: 2 sap tuong tac moi tren doan keo dai
+  ['hoasua',-128,19.5,Math.PI],['aokhoac',40,17.5,-Math.PI/2],['aolen',40,22.5,-Math.PI/2], // V5.5: Hoa Sua Tang Bat Ho + khu quan ao
 ].map(([id,x,z,rotY]) => ({ id, x, z, rotY,
   // mặt khách của sạp: tâm + hướng nhìn * 2.2 (khớp thông lệ buildStall/pourStream)
   fx: x + Math.sin(rotY) * 2.2, fz: z + Math.cos(rotY) * 2.2 }));
 
 // --- Hằng số thế giới đo từ code ---
-const ISLAND = { x:-24, z:-6, R:10.5 };            // cloneAsset('roundabout') tại (-24,0,-6); solid(-24,-6,10.4,10.4)
-const STATUE = { x:-28.2, z:-2.8, R:4.4 };         // bệ đá 8.8x8.8 tại (-28.2,-2.8)
+const ISLAND = { x:-30, z:-6, R:10.5 };            // GEOMETRY-2: đảo dời -6x — rb.position (-30,0,-6); solid(-30,-6,10.4,10.4)
+const STATUE = { x:-34.2, z:-2.8, R:4.4 };         // GEOMETRY-2: bệ đá 8.8x8.8 tại (-34.2,-2.8) (theo đảo)
 const RENT_PT_NOW = { x:35.5, z:8.5 };             // V5.4: RENT_PT đang cài (đã dời khỏi thang trong nhà — R-01 đã sửa)
 const RENT_PT_OLD = { x:31.5, z:13.8 };            // điểm cũ: groundH 11.39 (trên thang trong nhà) — giữ để đối chiếu T0a
 const RENT_PT_NEW = { x:35.5, z:8.5 };             // = điểm đang cài
@@ -140,7 +150,7 @@ const ISLAND_PARKED = [[196, 15.6], [225, 13.8]].map(([deg, rr]) => {
   return { deg, x: ISLAND.x + Math.cos(a) * rr, z: ISLAND.z + Math.sin(a) * rr };
 });
 const GRID_NORTH = { z:14.55, hz:0.7 };            // hàng quầy lưới bắc sảnh sau V5.4 (thân z 13.85..15.25)
-const ISLAND_CARS = [[-40.2,-8],[-40.8,-3],[-40.2,2.5]].map(([x,z]) => ({ x, z }));
+const ISLAND_CARS = [[-46.2,-8],[-46.8,-3],[-46.2,2.5]] // GEOMETRY-2: -6x theo đảo.map(([x,z]) => ({ x, z }));
 // Vùng cấm xe (suy từ các nhánh groundH + collider). LƯU Ý: deck cầu nổi
 // x[14.5,20.5] z[-30,9] KHÔNG nằm ở đây — cầu VƯỢT QUA đường (deck ở cao
 // 12.7-17.1, xe chạy DƯỚI cầu ở cao độ đường): kiểm riêng ở T1c theo chiều
@@ -151,6 +161,7 @@ const FORBIDDEN = [
   { name:'sân thượng F2',  minX:14,   maxX:33,   minZ:7,   maxZ:12.2 },
   { name:'thang trong nhà',minX:29,   maxX:33,   minZ:12,  maxZ:26.8 },
   { name:'sảnh nhà lồng',  minX:-34,  maxX:34,   minZ:12,  maxZ:28 },
+  { name:'đài phun nước',  minX:24.1, maxX:29.9,  minZ:2.3,  maxZ:8.1 }, // GEOMETRY-2: bồn R2.9 tại (27,5.2) — solid game (2.9,2.9)
   // LƯU Ý: hộp collider đảo solid(-24,-6,10.4,10.4) KHÔNG đưa vào đây —
   // đó là collider chặn NGƯỜI CHƠI (vuông, góc thừa ra ngoài đĩa đảo tròn
   // R10.5); xe không dùng collider này. Vật cản thật của đảo = đĩa R10.5
@@ -213,27 +224,27 @@ function ringPts(r, rSouth, bulgeR){
     if(th >= 250 && th <= 290) rr = rSouth;
     if(bulgeR && th === 210) rr = bulgeR;
     if(bulgeR && th >= 320) rr = 15.2;
-    pts.push({ x: -24 + rr * Math.cos(a), z: -6 - rr * Math.sin(a) });
+    pts.push({ x: -30 + rr * Math.cos(a), z: -6 - rr * Math.sin(a) }); // GEOMETRY-2: tâm đảo -30
   }
   return pts;
 }
 const RING_OUT = polyline(ringPts(14.2, 12.9, 16.2));
 const RING_IN  = polyline(ringPts(12.7, 12.3, 0));
-const HILL_LOOP = polyline([[54,12.9],[20,12.9],[-16,12.9],[-45.5,12.9],[-45.5,0.9],[-40,1.1],[-34,3.6],[-31,5.6],[-24,6.1],[-17,3.4],[-13.5,2.6],[-9,0.2],[2,0.2],[16,0.2],[30,0.2],[54,0.2]].map(([x, z]) => ({ x, z })));
+const HILL_LOOP = polyline([[54,12.9],[20,12.9],[-16,12.9],[-45.5,12.9],[-70,13.5],[-100,13.8],[-126,14.2],[-160,13.9],[-186,12.5],[-190,9.2],[-189,4.5],[-182,6.5],[-160,7.0],[-126,7.2],[-100,7.0],[-70,6.8],[-45.5,0.9],[-40,1.1],[-34,3.6],[-31,5.6],[-30,6.1],[-17,3.4],[-13.5,2.6],[-9,0.2],[2,0.2],[16,0.2],[30,0.2],[54,0.2]].map(([x, z]) => ({ x, z }))); // GEOMETRY-2: vòng tây ôm bùng binh đầu chợ NEW_RB (-196,2) + điểm giao đảo -30
 
 /* TUYẾN 3 — VÒNG CHÂN ĐỒI / KHU ĐÔNG (spur 1 chiều): rời trục chính ở
    (28,-1.5), vòng qua bãi xe đông + điểm thuê xe đề xuất, nhập lại làn W
    ở (28,4.5). Toàn tuyến groundH = 0. */
 const ROUTE3 = polyline([
   {x:28,z:-1.5},{x:36,z:-1.3},{x:43,z:-0.5},{x:46.5,z:2.5},{x:46.5,z:6.5},
-  {x:45,z:7.6},{x:41,z:7.3},{x:37,z:7.2},{x:34,z:8.3},{x:31,z:5.2},{x:28,z:4.5},
+  {x:45,z:7.6},{x:41,z:7.3},{x:37,z:7.2},{x:34,z:8.3},{x:32.5,z:5.6},{x:30.5,z:4.2}, // GEOMETRY-2: đuôi tuyến mẫu né bồn phun đã dời (27,5.2) — điểm cũ (28,4.5) lọt bán kính bồn 2.9
 ]);
 
 /* Điểm tấp lề (pull-over): xe dừng SÁT tuyến/vỉa hè, không cắt làn đối diện.
    recipient = vị trí khách đứng chờ (bán kính giao hàng 3.6 như tiền lệ rent). */
 const PULL_OVERS = [
   { id:'PO-sua', route:'E', at:{x:19.6, z:4.4},  impl:true, note:'ĐÃ CÀI trong code: xe làn E tấp lề chờ trước sạp sữa (park [19.6,4.4]) — người đi bộ từ điểm đỗ vào mặt sạp' },
-  { id:'PO-banhtrang', route:'E', at:{x:-33.2,z:4.5}, impl:true, note:'ĐÃ CÀI trong code: park [-33.2,4.5] trước sạp bánh tráng' },
+  { id:'PO-khoai', route:'E', at:{x:-29,z:8.4}, impl:true, note:'ĐÃ CÀI trong code: park [-29,8.4]; GEOMETRY-2: điểm cũ (-33.2,4.5) bị làn E mới phủ (đỉnh 5.55 tại x -33) — dời vào dải đỗ giữa làn W (7.15) và mặt sạp (8.9), ngoài đĩa đảo (d 14.4)' },
   { id:'T1-E2', route:'E', at:{x:-52,  z:-1.5}, note:'đầu đường vào phía tây (điểm dừng thiết kế trên làn E)' },
   { id:'T1-W3', route:'W', at:{x:-56,  z:4.25}, note:'vai nam trước sạp bánh ướt đầu đường vào', offLane:true },
   { id:'T-FOOT',route:'E', at:{x:8,    z:0.2},  note:'chân bậc thang — gửi xe đi bộ lên thang', offLane:true },
@@ -243,15 +254,16 @@ const PULL_OVERS = [
 /* Vạch sang đường (crossing): AW node nằm trong hành lang làn — xe BẮT BUỘC
    nhường khi có người trong bán kính 2.6 (logic yield ở dưới). */
 const CROSSINGS = [
-  { node:5,  at:{x:-18.5,z:5.8}, why:'điểm qua đường V5.4 tại x -18.5: cách làn E 1.2, làn W 1.35 — người qua đường đứng chờ tại đây, xe 2 làn phải nhường' },
+  { node:5,  at:{x:-18.5,z:5.8}, why:'GEOMETRY-2: làn đã dời theo đảo -30 — nút nay trên sân nam đảo, cách làn W 3.4 (vùng chậm W x[-50,-12] phủ); không còn là điểm giữa 2 làn như V5.4' },
   { node:8,  at:{x:0, z:1},  why:'nút trục đi bộ trước mặt tiền: nằm trong hành lang làn W (d = 0.9) — xe phải nhường' },
-  { node:4,  at:{x:-35,z:4.6}, why:'nút trục tây nằm trên cung lượn làn W ở tây đảo (d = 0.08) — người đi dọc/ngang tại đây, xe phải nhường' },
+  { node:4,  at:{x:-35,z:4.6}, why:'GEOMETRY-2: nút trục tây nằm TRÊN đỉnh làn E (laneZE(-35) = 4.62, d ~ 0) + cách làn W 2.55 — xe 2 làn phải nhường (yield kiểm ở T11)' },
+  { node:3,  at:{x:-40,z:5.6}, why:'GEOMETRY-2: trục z 5.6 cắt đỉnh lượn làn W (laneZW(-40) = 5.3, d = 0.24) — vùng chậm W x[-50,-12] phủ + yield theo bán kính' },
 ];
 /* Vùng chậm (slow zone): suy từ AW node/cạnh trong hành lang 3.6 của làn —
    harness tự kiểm vùng chậm đã khai bao phủ đủ mọi điểm bắt buộc. */
 const SLOW_ZONES = [
-  { route:'E', x0:-44, x1:-6,  cap:3.0, why:'cung nam đảo: AW node 4/5/6 + cạnh 3-4/4-5/5-6/6-7 giao làn' },
-  { route:'W', x0:-44, x1:-6,  cap:3.0, why:'cung nam đảo (làn về)' },
+  { route:'E', x0:-50, x1:-12, cap:3.0, why:'GEOMETRY-2: cung nam đảo (tâm -30): AW node 4/5/6 + cạnh giao làn' },
+  { route:'W', x0:-50, x1:-12, cap:3.0, why:'GEOMETRY-2: cung nam đảo (làn về)' },
   { route:'E', x0:-5,  x1:5,   cap:3.5, why:'AW node 8 trước mặt tiền + cạnh 8-19 cắt làn W' },
   { route:'W', x0:-5,  x1:5,   cap:3.5, why:'AW node 8 + cạnh 8-19' },
   { route:'E', x0:-58, x1:-46, cap:3.5, why:'AW node 2 đầu đường vào' },
@@ -344,7 +356,7 @@ check('T0a','R-01 ĐÃ SỬA: RENT_PT đang cài (35.5,8.5) ở mặt đất; đ
 check('T0b','groundH tại RENT_PT (35.5,8.5) = 0',
   groundH(RENT_PT_NEW.x, RENT_PT_NEW.z) === 0, `groundH = ${groundH(RENT_PT_NEW.x, RENT_PT_NEW.z)}`);
 check('T0c','AW_NODES/EDGES/LOOP đủ số lượng chép nguyên văn',
-  AW_NODES.length === 36 && AW_EDGES.length === 35 && LOOP.length === 24,
+  AW_NODES.length === 46 && AW_EDGES.length === 45 && LOOP.length === 24,
   `nodes=${AW_NODES.length} edges=${AW_EDGES.length} loop=${LOOP.length}`);
 
 // T1 — tuyến không vào vùng cấm + không xuyên đảo/tượng
@@ -430,7 +442,7 @@ for(const [nm, pl, yFn] of [['làn E', LANE_E, entryRampY], ['làn W', LANE_W, e
   }
   const unexpected = overlaps.filter(o => !KNOWN_OVERLAP.some(k => o.startsWith(k)));
   const missing = KNOWN_OVERLAP.filter(k => !overlaps.some(o => o.startsWith(k)));
-  check('T5','thân sạp (28 sạp, 2 dãy 2 bên): overlap cứng = rỗng theo xấp xỉ tròn (R-03 đã sửa); graze còn lại trong vùng chậm',
+  check('T5','thân sạp (31 sạp): overlap cứng = rỗng theo xấp xỉ tròn (R-03 đã sửa); graze còn lại trong vùng chậm',
     unexpected.length === 0 && missing.length === 0,
     `overlaps=[${overlaps.join(', ')}] grazes=[${grazes.join(', ')}]${unexpected.length ? ' | PHÁT SINH: ' + unexpected.join(', ') : ''}${missing.length ? ' | THIẾU KHỚP: ' + missing.join(', ') : ''}`);
 }
@@ -515,8 +527,8 @@ for(const [nm, pl, yFn] of [['làn E', LANE_E, entryRampY], ['làn W', LANE_W, e
   const stall = id => STALLS.find(s => s.id === id);
   const po = id => PULL_OVERS.find(p => p.id === id);
   const MISSIONS = [
-    { id:'M1', from:'sua',     fromPO:'PO-sua', pickLeg:'walk', walkMax:6, to:{x:-30.5,z:6.4},  toPO:'PO-banhtrang', name:'Sữa đậu nành nóng -> khách chờ ở dải giữa gần điểm đỗ bánh tráng (mẫu tấp lề đã cài: người đi bộ điểm đỗ <-> mặt sạp)' },
-    { id:'M2', from:'banhuot', fromPO:'T1-W3', pickLeg:'walk', walkMax:6, to:{x:41,  z:9.6},  toPO:'T3-1',  name:'Bánh ướt lòng gà -> khách ở bãi xe đông' },
+    { id:'M1', from:'sua',     fromPO:'PO-sua', pickLeg:'walk', walkMax:6, to:{x:-30.5,z:6.4},  toPO:'PO-khoai', name:'Sữa đậu nành nóng -> khách chờ ở dải giữa gần điểm đỗ khoai (mẫu tấp lề đã cài: người đi bộ điểm đỗ <-> mặt sạp)' },
+    { id:'M2', from:'tron',    fromPO:'T3-1',  pickLeg:'walk', walkMax:6, to:{x:41,  z:9.6},  toPO:'T3-1',  name:'V5.5: Bánh tráng trộn (mặt 8.9 cạnh bãi xe) -> khách ở bãi xe đông; banhuot đã dời z=22.25 thành sạp đi bộ, không còn mẫu giao xe' },
     { id:'M3', from:'suadau',  fromPO:'T-FOOT',pickLeg:'walk', walkMax:12, needStairs:true, to:{x:-54, z:2.2},  toPO:'T1-W3', name:'Sữa đậu nành trên thang (đi bộ lên lấy) -> khách đầu đường vào tây' },
   ];
   const bad = [];
@@ -563,10 +575,10 @@ for(const [nm, pl, yFn] of [['làn E', LANE_E, entryRampY], ['làn W', LANE_W, e
   check('T10','giãn cách mô phỏng 600s: khoảng cách xe-trước tối thiểu >= 2.0 (kể cả khi có xe tấp lề dừng 6s)',
     g1 >= 2.0 && g2 >= 2.0, `minGap làn E=${g1.toFixed(2)}, làn W (có dừng)=${g2.toFixed(2)}; trần xe ${MAX_ACTIVE} (hiện code: 7)`);
 }
-// T11 — yield tại điểm qua đường node 5 (-18.5,5.8): xe dừng hẳn,
+// T11 — yield tại nút chờ giữa 2 làn node 6 (-11.5,0.2): xe làn E dừng hẳn,
 // không lấn 0.7 quanh người
 {
-  const node5 = { x: AW_NODES[5][0], z: AW_NODES[5][1] };
+  const node5 = { x: AW_NODES[6][0], z: AW_NODES[6][1] }; // GEOMETRY-2: điểm yield chuyển node 5 -> node 6 (-11.5,0.2): nút chờ giữa 2 làn ở thung lũng đông đảo (cách làn E 1.7, làn W 1.7 — cùng khuôn cảnh node 5 của V5.5; bản node 4 nằm giữa tâm làn E nên mô hình vùng 0.7 không áp được)
   const sProj = projectS(LANE_E, node5);
   let veh = { s: sProj - 30, speed: 8 };
   let stoppedAt = null, violated = false;
@@ -579,7 +591,7 @@ for(const [nm, pl, yFn] of [['làn E', LANE_E, entryRampY], ['làn W', LANE_W, e
     veh.s += veh.speed * 0.05;
     if(want === 0 && veh.speed < 0.05){ stoppedAt = veh.s; break; }
   }
-  check('T11','yield node 5 (-18.5,5.8): xe về 0 trước vạch, không lấn vùng 0.7 quanh người',
+  check('T11','yield node 6 (-11.5,0.2): xe về 0 trước vạch, không lấn vùng 0.7 quanh người',
     stoppedAt !== null && !violated && (sProj - stoppedAt) > 1.0,
     `dừng tại s=${stoppedAt ? stoppedAt.toFixed(1) : '—'} (vạch ở s=${sProj.toFixed(1)}), xâm phạm=${violated}`);
 }
@@ -646,14 +658,18 @@ for(const [nm, pl, yFn] of [['làn E', LANE_E, entryRampY], ['làn W', LANE_W, e
 // thân từ 13.85). Assert: chân bắc đúng z 12.9, clearance 2 phía >= 0.5,
 // groundH dọc chân bắc chỉ 0 (ngoài sảnh) / 0.5 (sàn sảnh).
 {
-  const north = samplesOf(HILL_LOOP).filter(p => p.z > 12);
+  const north = samplesOf(HILL_LOOP).filter(p => p.z > 12 && p.x >= -45.5); // V5.5: chỉ đoạn hành lang sảnh (đoạn vòng tây x<-45.5 kiểm riêng dưới đây)
   const clrSouth = 12.9 - (11.0 + 1.0) - VEH_HALF;                    // lưng dãy sạp nam (thân z 10..12)
   const clrNorth = (GRID_NORTH.z - GRID_NORTH.hz) - 12.9 - VEH_HALF; // lưng quầy lưới bắc sảnh (từ 13.85)
   let badG = null;
   for(const p of north){ const g = groundH(p.x, p.z); if(g !== 0 && g !== 0.5) badG = `@(${p.x},${p.z}) groundH=${g}`; }
-  check('T15','R-10 ĐÃ SỬA: chân bắc ROUTE_HILL z=12.9 = hành lang thật (clearance nam/nam-lưng-quầy >= 0.5, groundH 0/0.5)',
-    north.length >= 4 && north.every(p => Math.abs(p.z - 12.9) < 0.01) && clrSouth >= 0.5 && clrNorth >= 0.5 && !badG,
-    `${north.length} đỉnh chân bắc tại z=12.9; clearance lưng sạp nam = ${clrSouth.toFixed(2)}, lưng quầy lưới = ${clrNorth.toFixed(2)} (hàng xe đậu 11.75 đã bỏ ở V5.2)${badG ? ' | ' + badG : ''}`);
+  // V5.5: vòng tây (điểm z>12, x<-45.5) chạy trên mặt dốc đường kéo dài — groundH phải bám entryRampY (sai lệch <= 0.11 của dải lề)
+  const west = samplesOf(HILL_LOOP).filter(p => p.z > 12 && p.x < -45.5);
+  let badW = null;
+  for(const p of west){ const g = groundH(p.x, p.z); if(Math.abs(g - entryRampY(p.x)) > 0.115) badW = `@(${p.x},${p.z}) groundH=${g.toFixed(2)} entryRampY=${entryRampY(p.x).toFixed(2)}`; } // dung sai 0.115: dai le +0.11 dung thiet ke (float lam tron 0.11000000000000032)
+  check('T15','R-10 ĐÃ SỬA: chân bắc ROUTE_HILL z=12.9 = hành lang thật (clearance >= 0.5, groundH 0/0.5) + V5.5 vòng tây bám dốc entryRampY',
+    north.length >= 4 && north.every(p => Math.abs(p.z - 12.9) < 0.01) && clrSouth >= 0.5 && clrNorth >= 0.5 && !badG && west.length >= 3 && !badW,
+    `${north.length} đỉnh chân bắc tại z=12.9; clearance lưng sạp nam = ${clrSouth.toFixed(2)}, lưng quầy lưới = ${clrNorth.toFixed(2)} (hàng xe đậu 11.75 đã bỏ ở V5.2); vòng tây ${west.length} đỉnh${badG ? ' | ' + badG : ''}${badW ? ' | VÒNG TÂY: ' + badW : ''}`);
 }
 // T16 — ROUTE_HILL x ROUTE_RING_IN: hành lang chung ở vành apron nam đảo
 // là CHỦ ĐÍCH (điểm HILL (-24,6.1) nằm trên vành R11.9-12) và code ĐÃ CÓ

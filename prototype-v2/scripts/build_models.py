@@ -1015,12 +1015,17 @@ def build_stairs():
     # chuyến A: y +14..+6.75 (world -30..-22.75), 17 -> 11.33
     flight(14, 7.25, 10, 17, 11.33)
     # chiếu nghỉ 1: y +6.75..+2.75 (world -22.75..-18.75), h 11.33
-    box("Landing1", (W + 2, 4, 11.33), (0, 4.75, 11.33 / 2), stone2, 0.0)
+    # BLENDER-DEEP-1: khối chiếu nghỉ hạ 0.02 (11.33 -> 11.31) — mặt trên khối
+    # cũ TRÙNG KHÍT mặt trên tấm lót Landing1Top (cùng 11.33) gây 2 mặt đồng
+    # phẳng: render Blender đen tuyền, web z-fight. Tấm lót giữ nguyên (mặt
+    # đi vẫn đúng stairH), khối thấp hơn 0.02 -> hết đồng phẳng.
+    box("Landing1", (W + 2, 4, 11.31), (0, 4.75, 11.31 / 2), stone2, 0.0)
     box("Landing1Top", (W, 4, 0.35), (0, 4.75, 11.33 - 0.175), MATS["CanvasOld"], 0.01)
     # chuyến B: y +2.75..-3.75 (world -18.75..-12.25), 11.33 -> 5.67
     flight(2.75, 6.5, 10, 11.33, 5.67)
     # chiếu nghỉ 2: y -3.75..-7.75 (world -12.25..-8.25), h 5.67
-    box("Landing2", (W + 2, 4, 5.67), (0, -5.75, 5.67 / 2), stone2, 0.0)
+    # BLENDER-DEEP-1: hạ khối 0.02 như chiếu nghỉ 1 (tránh đồng phẳng với Landing2Top).
+    box("Landing2", (W + 2, 4, 5.65), (0, -5.75, 5.65 / 2), stone2, 0.0)
     box("Landing2Top", (W, 4, 0.35), (0, -5.75, 5.67 - 0.175), MATS["CanvasOld"], 0.01)
     # chuyến C: y -7.75..-14 (world -8.25..-2), 5.67 -> 0
     flight(-7.75, 6.25, 10, 5.67, 0)
