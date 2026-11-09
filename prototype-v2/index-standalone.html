@@ -2080,9 +2080,9 @@ function buildStall(def){
     else if(o.name === 'YaourtTower') o.visible = def.id === 'yaourt';
     else if(o.name === 'BowlStack') o.visible = def.id === 'dauhu' || def.id === 'banhuot' || def.id === 'suadau';
     else if(o.name === 'CornGrill') o.visible = def.id === 'khoai' || def.id === 'khoainuong';
-    else if(o.name === 'Umbrella') o.visible = !!def.umb;
+    else if(o.name === 'Umbrella') o.visible = !!def.umb && def.roof !== 'none';
     else if(o.name === 'TinRoof') o.visible = def.roof === 'tin';
-    else if(o.name === 'Awning' || o.name === 'Awning2') o.visible = def.roof !== 'tin';
+    else if(o.name === 'Awning' || o.name === 'Awning2') o.visible = def.roof !== 'tin' && def.roof !== 'none'; // V6: Hoa Sữa thật không có mái
   });
   const lanterns = []; let lanternMat = null;
   g.traverse(o => {
@@ -2363,7 +2363,7 @@ const STALL_DEFS = [
   { id:'chao', name:'CHÁO & SÚP ĐÊM', district:F, x:-37, z:-19.7, rotY:0, smoke:true, nightOnly:true, shirt:0x96683f, menu:[
     { name:'Cháo gà nóng', price:25, buff:'warm', sec:55, type:'food', desc:'Cháo nhừ, gà xé, hành gừng' },
     { name:'Súp cua', price:20, buff:'warm', sec:50, type:'food', desc:'Cua, bắp, trứng cút — ăn khuya ấm bụng' } ] },
-  { id:'hoasua', name:'SỮA ĐẬU NÀNH HOA SỮA', district:D, x:-128, z:19.5, rotY:Math.PI, smoke:true, steam:true, special:true, shirt:0xe8c87e, menu:[
+  { id:'hoasua', name:'SỮA ĐẬU NÀNH HOA SỮA', district:D, x:-128, z:19.5, rotY:Math.PI, roof:'none', smoke:true, steam:true, special:true, shirt:0xe8c87e, menu:[
     { name:'Sữa đậu nành nóng (nành đường)', price:10, buff:'warm', sec:60, type:'drink', desc:'Hoa Sữa 3F Tăng Bạt Hổ (số 64 cũ) — nồi sữa nấu tay mỗi ngày, ly 7–10k, uống ngay vỉa hè không mái che' },
     { name:'Nành bò', price:12, buff:'warm', sec:60, type:'drink', desc:'Sữa đậu nành pha sữa bò — món gọi nhiều nhất cùng nành đường' },
     { name:'Nành phụng', price:12, buff:'warm', sec:60, type:'drink', desc:'Sữa đậu nành pha sữa đậu phộng, bùi bùi' },
@@ -4259,6 +4259,26 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
     box(1.0, 0.04, 0.7, 0xcfc7b8, 9.5, y + 0.55, z - 0.5, worldGroup, false);
     twinkles.push({ mat: (()=>{ const l = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshBasicMaterial({ color:0xffc46b })); l.position.set(-9.2, y + 2.4, z); worldGroup.add(l); return l.material; })(), ph: i });
   });
+}
+// V6 chặng ②-⑤: biển cầu thang, Hồng Trà (ki-ốt 30–32), Hoa Sữa (vỉa hè, không mái, ghế nhựa tràn ra lề)
+{
+  const tex = (t, w, h, bg, fg, sub) => signMesh(t, w, h, bg, fg, sub);
+  // biển chân cầu thang (nguồn: KTS Ngô Viết Thụ thiết kế — research/25)
+  const ss = tex('CẦU THANG LỚN — KHU HÒA BÌNH', 5.2, 0.9, '#3b2a22', '#ffd98a', 'KTS Ngô Viết Thụ — "Góc Hong Kong" nhìn từ trên chợ');
+  ss.position.set(-12.2, 1.9, -1.4); worldGroup.add(ss); box(0.1, 1.9, 0.1, 0x2b2b2b, -14.6, 0.95, -1.45, worldGroup, false); box(0.1, 1.9, 0.1, 0x2b2b2b, -9.8, 0.95, -1.45, worldGroup, false);
+  // Hồng Trà Hòa Bình — biển ki-ốt trên đồi
+  const hk = tex('KI-ỐT 30–32', 2.2, 0.55, '#6b2a22', '#fff0c8', 'Khu Hòa Bình · 9:00–23:00');
+  hk.position.set(6.0, 17 + 3.5, -35.2); worldGroup.add(hk);
+  // Hoa Sữa — 3F Tăng Bạt Hổ, ngồi ngay mép vỉa hè, không mái
+  const hy = groundH(-128, 19.5);
+  const hs = tex('3F TĂNG BẠT HỔ', 2.2, 0.5, '#e8d9b0', '#7a2e22', null);
+  hs.position.set(-128, hy + 3.3, 19.3); hs.rotation.y = Math.PI; worldGroup.add(hs);
+  const sc = [0xd9362b, 0x2d6cb0, 0x2e9e5b];
+  for(let i = 0; i < 6; i++){
+    const x = -131 + (i % 3) * 1.4 + (i > 2 ? 0.5 : 0), z = 17.4 - Math.floor(i / 3) * 1.1;
+    box(0.36, 0.32, 0.36, sc[i % 3], x, groundH(x, z) + 0.17, z, worldGroup, false);
+  }
+  box(0.9, 0.5, 0.9, 0xcfc7b8, -129.8, groundH(-129.8, 16.1) + 0.28, 16.1, worldGroup, false);
 }
 {
   const dg = new THREE.Mesh(new THREE.CircleGeometry(11.5, 26), fogPlanes[0].m.material.clone());
