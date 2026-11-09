@@ -131,7 +131,7 @@ code += `
 
     // ---------- mục 12-14: HÀNG HÓA + TIỆM + QUẦN ÁO ----------
     out.info.stallCount = STALL_DEFS.length;
-    if (STALL_DEFS.length !== 44) fail('goods: STALL_DEFS phai = 44 (33 cu do thuc + 11 moi), thay ' + STALL_DEFS.length);
+    if (STALL_DEFS.length !== 45) fail('goods: STALL_DEFS phai = 45 (33 cu do thuc + 12 moi), thay ' + STALL_DEFS.length);
     const dauIds = STALL_DEFS.filter(d => ['dau', 'dau2', 'dau3', 'dau4'].includes(d.id)).length;
     if (dauIds !== 4) fail('goods: phai co 4 quay dau, thay ' + dauIds);
     for (const id of ['mut', 'hong', 'tra2', 'hoa2', 'luuniem2', 'dosi', 'len3', 'dacsanlon'])

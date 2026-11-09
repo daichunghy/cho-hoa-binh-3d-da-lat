@@ -52,7 +52,7 @@ const code = [
   extractFn('entryRampY'), extractFn('islandBump'),
   extractFn('vehBumpE'), extractFn('laneZE'), extractFn('laneZW'),
   extractConst('AW_NODES'),
-  'const AW_EDGES=[]; for(let i=0;i<15;i++) AW_EDGES.push([i,i+1]); AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44]); // GEOMETRY-2: snapshot khop index.html (+ chuoi truc toi bung binh dau cho 42-45)',
+  'const AW_EDGES=[]; for(let i=0;i<15;i++) AW_EDGES.push([i,i+1]); AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46]); // GEOMETRY-2: snapshot khop index.html (+ chuoi truc toi bung binh dau cho 42-47)',
   extractConst('RB_ARC'),
   'const RB = RB_ARC.concat(RB_ARC.slice(0,-1).reverse());',
   extractConst('LOOP'),
@@ -118,17 +118,17 @@ const ISLAND = { x: -30, z: -6, R: 10.5 }; // GEOMETRY-2: tâm đảo mới
 
 // ---------- A) quét lưới nhảy cao độ ----------
 const inStairs = (x, z) => x >= -11.5 && x <= 11.5 && z >= -30.5 && z <= -1.5;         // bậc quantize 0.567 — thiết kế
-const inBands = (x, z) => ((x >= -20.6 && x <= -10.4) || (x >= 10.4 && x <= 15.6)) && z >= -30.5 && z <= -1.5; // tường thềm đứng (kè đá 2 bên thang) — thiết kế
-const inIsleCut = (x, z) => x >= -53.6 && x <= -51.4 && z >= -28 && z <= -11.5;            // GEOMETRY-2: vách cắt thềm đảo phía tây theo tâm mới (mép x -52, khớp seg sườn thị giác -52..-26)
-const inIsleCutE = (x, z) => x >= -27.6 && x <= -25.4 && z >= -28 && z <= -1.5;           // GEOMETRY-2: mép đông thềm đảo (x -26) — bậc thềm thiết kế như mép tây cũ
-const inShelfWall = (x, z) => x >= -58.5 && x <= -44.5 && z >= -12.5 && z <= -10.4;        // V5.4: tường chắn đất thềm bắc tại z -11.2 (có mesh tường 5.5 chắn) — thiết kế
+const inBands = (x, z) => ((x >= -15.6 && x <= -10.4) || (x >= 10.4 && x <= 15.6)) && z >= -30.5 && z <= -1.5; // tường thềm đứng (kè đá 2 bên thang) — thiết kế
+const inIsleCut = (x, z) => x >= -53.6 && x <= -51.4 && z >= -28 && z <= -11.5;            // GEOMETRY-2: vách cắt thềm đảo phía tây theo tâm mới (mép x -52)
+const inIsleCutE = (x, z) => x >= -15.6 && x <= -13.4 && z >= -28 && z <= -1.5;           // mép đông thềm đảo nối liền sát thềm tây (-14.5)
+const inShelfWall = (x, z) => x >= -58.5 && x <= -44.5 && z >= -12.5 && z <= -10.4;        // V5.4: tường chắn đất thềm bắc — thiết kế
 const inInner = (x, z) => x >= 28.4 && x <= 33.6 && z >= 11.4 && z <= 27.4;              // thang trong nhà quantize — thiết kế
 const inDeckEdge = (x, z) => x >= 13.9 && x <= 21.1 && z >= -30.5 && z <= 12.6;          // mép deck/hành lang — phân tầng đứng
-const inRampCut = (x, z) => x <= -51 && ((z >= -11.2 && z <= -8.4) || (z >= 12.9 && z <= 14.6)); // V5.4: mép cắt/đắp của đường dốc vào (vách đứng có thật ngoài đời: đường cắt vào sườn + bờ đắp) — không phải lối đi
-const inCorrWall = (x, z) => (x >= 12.8 && x <= 14.6 && z >= 6 && z <= 13.4) || (x >= 32.8 && x <= 34.6 && z >= 6 && z <= 13.4) || (z >= 5.8 && z <= 7.6 && x >= 13 && x <= 34) || (z >= 11.6 && z <= 13.4 && x >= 13 && x <= 34); // vách khối hành lang tầng 2 (đặc, vào bằng cầu/thang) — thiết kế
+const inRampCut = (x, z) => x <= -51 && ((z >= -11.2 && z <= -8.4) || (z >= 12.9 && z <= 14.6)); // V5.4: mép cắt/đắp của đường dốc vào
+const inCorrWall = (x, z) => (x >= 12.8 && x <= 14.6 && z >= 6 && z <= 13.4) || (x >= 32.8 && x <= 34.6 && z >= 6 && z <= 13.4) || (z >= 5.8 && z <= 7.6 && x >= 13 && x <= 34) || (z >= 11.6 && z <= 13.4 && x >= 13 && x <= 34); // vách khối hành lang tầng 2 — thiết kế
 const inStairWall = (x, z) => x >= 27.8 && x <= 29.6 && z >= 12 && z <= 27.5;               // vách tây thang trong nhà — thiết kế
-const inCorrNorth55 = (x, z) => x >= -86.5 && x <= -51.5 && z >= -22.6 && z <= -20.4;       // GEOMETRY-2: mép cắt bắc của hành lang kéo dài theo line thềm mới z -21 — dưới là lề đất _sh, trên là bờ sườn + dãy nhà bắc; không tuyến nào qua
-const inTerrNorth55 = (x, z) => x >= -57.5 && x <= -46.5 && z >= -18.6 && z <= -15.5;       // V5.5: mép thềm bắc mới — có tường chắn 2 bậc (đỉnh 5.3/9.6 ≈ mặt sườn 9.1-9.4) chắn mặt cắt
+const inCorrNorth55 = (x, z) => x >= -86.5 && x <= -51.5 && z >= -26.5 && z <= -24.0;       // BLENDER-DEEP-2: mép cắt bắc của hành lang kéo dài theo line thềm mới z -25
+const inTerrNorth55 = (x, z) => x >= -57.5 && x <= -34.5 && z >= -22.6 && z <= -17.5;       // BLENDER-DEEP-2 + V6: mép thềm bắc (z -21.5, x -52..-35) — có tường chắn 2 bậc chắn mặt cắt
 let gridBad = [];
 for (let x = -86; x <= 86; x += 1) for (let z = -70; z <= 30; z += 1) {
   if (inStairs(x, z) || inBands(x, z) || inInner(x, z) || inDeckEdge(x, z) || inRampCut(x, z) || inIsleCut(x, z) || inIsleCutE(x, z) || inShelfWall(x, z) || inCorrWall(x, z) || inStairWall(x, z) || inCorrNorth55(x, z) || inTerrNorth55(x, z)) continue;

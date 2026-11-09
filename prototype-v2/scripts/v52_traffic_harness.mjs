@@ -57,22 +57,23 @@ function groundH(x,z){
   if(x >= 14 && x <= 21 && z >= 7 && z <= 12) return 12.6;
   if(x >= 21 && x <= 33 && z >= 7 && z <= 12.2) return 12.6;
   if(x >= -34 && x <= 34 && z >= 12 && z <= 28) return 0.5;
-  if(x >= -58 && x <= -35 && z >= -16.5 && z <= -2) return x < -52 ? entryRampY(x) + 0.11 : 0; // V5.5
-  if(x >= -131 && x <= -59 && z >= -13.9 && z <= -11.1) return entryRampY(x) + 0.11; // V5.5
-  if(x >= -82.5 && x <= -51.5 && z >= 10.5 && z <= 13.9) return entryRampY(x) + 0.11;
-  if(x >= -133 && x < -58 && z >= -17.5 && z <= 24){ const r = entryRampY(x); return (z < -14.5 || (z > 13.5 && z <= 20.2)) ? r + 0.11 : r; } // V5.5
-  if(x >= -133 && x < -52 && z > 24) return entryRampY(x); // V5.5
-  if(x >= -84 && x <= -34 && z > 13.5 && z <= 24) return entryRampY(x) + 0.05; // V5.5
-  if(x < -52 && z >= -17.5 && z <= 24) return entryRampY(x); // V5.5
+  if(x >= 47 && x <= 56 && z >= 14.5 && z <= 25.5) return 0;
+  if(x >= -58 && x <= -35 && z >= -21.5 && z <= -2) return x < -52 ? entryRampY(x) + 0.11 : 0;
+  if(x >= -196 && x <= -59 && z >= -18.4 && z <= -15.6) return entryRampY(x) + 0.11;
+  if(x >= -196 && x <= -35 && z >= 25.05 && z <= 27.75) return entryRampY(x) + 0.11;
+  if(x >= -198 && x < -58 && z >= -25 && z <= 34){ const r = entryRampY(x); return (z < -15.5 || (z > 24.5 && z <= 32)) ? r + 0.11 : r; }
+  if(x >= -198 && x < -52 && z > 34) return entryRampY(x);
+  if(x >= -84 && x <= -34 && z > 24.5 && z <= 34) return entryRampY(x) + 0.05;
+  if(x < -52 && z >= -25 && z <= 34) return entryRampY(x);
   if(z <= -30) return 17;
   if(z >= -2) return 0;
   if(x >= -11 && x <= 11) return stairH(z);
-  if((x >= -19 && x < -11) || (x > 11 && x < 14.5)){
+  if((x >= -14.5 && x < -11) || (x > 11 && x < 14.5)){
     if(z > -8.25) return 2.8;
     if(z > -18.75) return 8.5;
     return 14.2;
   }
-  if(x >= -45 && x < -19 && z < -2 && z > -30){
+  if(x >= -52 && x < -14.5 && z < -2 && z > -30){
     if(z >= -16) return 0;
     return 17 * ((-16 - z) / 14);
   }
@@ -82,7 +83,7 @@ function groundH(x,z){
 function entryRampY(x){ return x < -52 ? Math.min(5.5, (-52 - x) * 0.07) : 0; } // V5.5: nap 5.5 (cong -131)
 function islandBump(x){
   const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return s(-46, -30) * (1 - s(-18, -2));
+  return s(-52, -36) * (1 - s(-24, -8));
 }
 // --- chép nguyên văn từ index.html BẢN ĐANG CÀI V5.2: profile làn đông
 // hẹp vehBumpE + 2 hàm làn laneZE/laneZW (làn tây cũng đổi: gốc 4.1, biên 4.5) ---
@@ -112,11 +113,11 @@ const AW_NODES = [
   [-8,-40],[-17,-44],
   [-90,5.6],[-104,5.6],[-118,5.6],[-128,4],
   [36.2,20],[42.5,6.2],
-  [-142,5.6],[-156,5.6],[-170,5.6],[-184,5.6], // GEOMETRY-2: idx42-45 truc toi bung binh dau cho
+  [-142,5.6],[-156,5.6],[-170,5.6],[-184,5.6],[-196,8.8],[-204,5.6],
 ];
 const AW_EDGES = [];
 for(let i = 0; i < 15; i++) AW_EDGES.push([i, i + 1]);
-AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44]); // GEOMETRY-2: +trục kéo dài đầu chợ
+AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46]); // GEOMETRY-2: +trục kéo dài đầu chợ
 
 // --- LOOP người đi bộ lang thang: chép nguyên văn ---
 const LOOP = [[-2,3],[-2,-29],[3,-38],[10,-45],[16,-38],[17.5,-28],[17.5,-8],[17.5,7],[24,9.8],[30.3,10.8],[30.3,19.4],[30.3,26.6],[24,25.55],[10,22],[0,24.5],[-13,21.9],[-20,21.9],[-24,25.55],[-31.5,23.5],[-31.5,16.8],[-14,17],[-2,15.5],[0,15.9],[0,8]];
@@ -356,7 +357,7 @@ check('T0a','R-01 ĐÃ SỬA: RENT_PT đang cài (35.5,8.5) ở mặt đất; đ
 check('T0b','groundH tại RENT_PT (35.5,8.5) = 0',
   groundH(RENT_PT_NEW.x, RENT_PT_NEW.z) === 0, `groundH = ${groundH(RENT_PT_NEW.x, RENT_PT_NEW.z)}`);
 check('T0c','AW_NODES/EDGES/LOOP đủ số lượng chép nguyên văn',
-  AW_NODES.length === 46 && AW_EDGES.length === 45 && LOOP.length === 24,
+  AW_NODES.length === 48 && AW_EDGES.length === 47 && LOOP.length === 24,
   `nodes=${AW_NODES.length} edges=${AW_EDGES.length} loop=${LOOP.length}`);
 
 // T1 — tuyến không vào vùng cấm + không xuyên đảo/tượng
