@@ -3,6 +3,8 @@
 > Tài liệu giao việc cho Muse AI. Đọc hết mục 0–2 trước khi sửa bất cứ thứ gì.
 > Code: `prototype-v2/index.html` (một file, ~5000 dòng, three.js r160). Model: `prototype-v2/assets/*.glb`, sinh bởi `prototype-v2/scripts/build_models.py` (Blender).
 
+> **Cập nhật 09/11:** đã thu thập web — đọc `research/25-thu-thap-web-hoa-sua-hong-tra-cau-thang.md` trước khi dựng. Chợ Âm Phủ thật = sạp ăn khuya dọc **cầu thang từ khu Hòa Bình xuống chợ**.
+
 ## 0. Nguyên nhân các lần trước thất bại (đọc kỹ)
 
 | # | Vấn đề | Hệ quả | Quy tắc mới |
@@ -52,6 +54,7 @@ Mỗi khu làm xong + qua cổng kiểm mới sang khu sau. Mỗi khu gồm 3 ph
 - **Đối chiếu**: tỉ lệ rạp so với bùng binh; số cửa; màu mặt tiền theo ảnh thật.
 
 ### ④ Sữa đậu nành Tăng Bạt Hổ (quán Hoa Sữa — `id:'hoasua'`, x −128, z 19.5)
+> Dữ kiện thật: 3F Tăng Bạt Hổ (64 cũ), ngã ba, ~50 m từ chợ, ~20 m từ khu Hòa Bình, **không mái che**, khách ngồi tràn ra lề/ngã ba, ly 7–10k, bánh 6k; menu nành đường/nành bò/nành phụng/nành xanh/mè đen/bắp (đã cập nhật trong code).
 - **Cảnh**: nồi sữa nhôm rất to bốc hơi, tủ kính bánh tiêu/ sừng trâu, ly thuỷ tinh, ghế nhựa thấp ngồi sát vỉa hè, biển quán đỏ chữ trắng; người ngồi uống tay ôm ly (có sẵn nhóm ngồi).
 - **Chơi**: gọi món → NPC múc sữa (animation rót) → hơi nước → **buff ấm** (đã có). Thêm: "ăn bánh chấm sữa" tăng buff.
 - **Đối chiếu**: đối chiếu số bàn ghế, kích thước nồi so với người bán (≈ ngang thắt lưng).
@@ -59,7 +62,8 @@ Mỗi khu làm xong + qua cổng kiểm mới sang khu sau. Mỗi khu gồm 3 ph
 ### ⑤ Hồng trà Hòa Bình (`id:'hongtra'`, đã thêm ở bản này — x 17, z 11)
 - **Cảnh**: quầy nhỏ, bình đun trà lớn bốc hơi, dãy ly nhựa/ly thuỷ tinh, thùng trà đen, bảng menu viết tay "Hồng trà nóng 12K / Hồng trà sữa 15K / Hồng trà đào 18K".
 - **Chơi**: 3 món (đã có trong code); thêm hoạt cảnh pha trà ~3 giây, biển menu bấm xem được.
-- ⚠️ **Cần người dùng xác nhận**: địa chỉ/diện mạo thật của quán "Hồng trà Hòa Bình" (ảnh mặt tiền) — hiện chỉ là mẫu quầy trà chung vì chưa có ảnh tham khảo. Gửi ảnh để Muse dựng đúng.
+- **Dữ kiện thật (xem `research/25-thu-thap-web-hoa-sua-hong-tra-cau-thang.md`)**: quán thật là **ki-ốt 30–32 Khu Hòa Bình**, 9:00–23:00, món signature hồng trà + trà sữa hạnh nhân chôm chôm. ⇒ **Dời quầy `hongtra` khỏi hàng sạp chợ (x17,z11) vào dãy ki-ốt khu Hòa Bình** (quảng trường trên đồi).
+- ⚠️ Giá và mặt tiền thật **chưa xác minh** — xin người dùng ảnh menu/mặt tiền, không bịa.
 
 ## 4. Biến game thành "chơi được" (không chỉ đi xem)
 
