@@ -1659,6 +1659,21 @@ player.position.set(-188, 5.5, 5.6); // GEOMETRY-2: spawn tại BÙNG BINH ĐẦ
 worldGroup.add(player);
 const playerState = { x:-188, z:5.6, y:5.5, face:Math.PI / 2 }; // GEOMETRY-2: y = entryRampY(-188) = 5.5 (đã chạm nắp); mặt hướng đông dọc trục
 camera.position.set(-199.15, 12.05, 5.6); // GEOMETRY-2: camera đúng khung hình đầu tiên ngay từ frame 0 (công thức animate: camPitch 0.38, dist 12) — hết cảnh lerp từ gốc tọa độ
+{
+  const _qs = new URLSearchParams(location.search);
+  const _at = _qs.get('at');
+  if(_at){
+    const a = _at.split(',').map(Number);
+    playerState.x = a[0]; playerState.z = a[1]; playerState.face = a[2] || 0; playerState.y = groundH(a[0], a[1]);
+    player.position.set(playerState.x, playerState.y, playerState.z); player.rotation.y = playerState.face;
+    camera.position.set(playerState.x - Math.sin(playerState.face) * 11.15, playerState.y + 6.55, playerState.z - Math.cos(playerState.face) * 11.15);
+  }
+  if(_qs.get('qa') === '1'){
+    const st = document.createElement('style');
+    st.textContent = '#modeModal, .modalBg, #loadScreen { display:none !important; }';
+    document.head.appendChild(st);
+  }
+}
 
 const DIST = {
   food:      { name:'Ẩm thực nóng',     awn:0x9c4034 },
@@ -1977,11 +1992,11 @@ function makePriceCard(price){
     new THREE.MeshStandardMaterial({ map:t, roughness:0.9, side:THREE.DoubleSide }));
 }
 // V4.9 MỤC 7: 6 sạp mẫu làm thật kỹ (bố cục tầng + hàng tràn + bộ đồ nghề riêng)
-const HERO_STALLS = new Set(['sua', 'banhtrang', 'banhcan', 'caphe', 'supcua', 'dau']);
+const HERO_STALLS = new Set(['sua', 'banhtrang', 'banhcan', 'caphe', 'supcua', 'dau', 'hoasua', 'hongtra']);
 function designHeroStall(g, def){
   const steel = new THREE.MeshStandardMaterial({ color:0xb9c0c4, roughness:0.35, metalness:0.7 });
   const clay = 0x6a4630, wood = 0x8a6a42;
-  if(def.id === 'sua'){ // SỮA ĐẬU NÀNH — sạp của ảnh chốt: kệ 2 tầng + nồi lớn + tháp ly
+  if(def.id === 'sua' || def.id === 'hoasua'){ // SỮA ĐẬU NÀNH — kệ 2 tầng + nồi lớn + tháp ly (Hoa Sữa thêm tủ kính bánh ngọt 6k)
     for(const sy of [1.44, 1.74]) box(0.95, 0.05, 0.3, wood, -1.08, sy, -0.3, g, false);
     for(const px of [-1.5, -0.66]) box(0.05, 0.62, 0.26, wood, px, 1.42, -0.3, g, false);
     for(let i = 0; i < 3; i++){ cyl(0.07, 0.07, 0.17, 0xd8b13c, -1.32 + i * 0.26, 1.55, -0.3, g, 8); cyl(0.07, 0.07, 0.17, 0xf0ead8, -1.32 + i * 0.26, 1.85, -0.3, g, 8); }
@@ -1990,6 +2005,29 @@ function designHeroStall(g, def){
     const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.07, 14), steel);
     lid.position.set(-0.3, 1.54, 0.02); lid.rotation.z = 0.16; g.add(lid);
     for(let i = 0; i < 4; i++) cyl(0.055, 0.042, 0.07, 0xf0ead8, 0.42, 1.20 + i * 0.055, 0.3, g, 8); // tháp ly sứ thứ hai
+    if(def.id === 'hoasua'){ // Tủ kính bánh su kem / sừng trâu / tiêu đồng giá 6k + nồi đậu phộng/đậu xanh phụ
+      const pot2 = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.24, 0.36, 12), steel);
+      pot2.position.set(0.28, 1.27, -0.05); g.add(pot2);
+      const gls = new THREE.MeshStandardMaterial({ color:0xe8f4f8, roughness:0.12, metalness:0.1, transparent:true, opacity:0.42 });
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.56, 0.44), gls);
+      cab.position.set(1.12, 1.38, 0.32); g.add(cab);
+      box(0.90, 0.04, 0.46, wood, 1.12, 1.11, 0.32, g, false);
+      box(0.84, 0.03, 0.40, wood, 1.12, 1.38, 0.32, g, false);
+      for(let r = 0; r < 2; r++) for(let i = 0; i < 4; i++)
+        ball(0.065, r ? 0xd99b4e : 0xf2d28b, 0.82 + i * 0.20, 1.18 + r * 0.25, 0.32, g, 0.65);
+    }
+  }
+  if(def.id === 'hongtra'){ // Ki-ốt 30–32 Hồng Trà Hòa Bình: 2 bình ủ hồng trà inox + khay topping hạnh nhân chôm chôm + chồng ly
+    for(const tx of [-0.55, 0.05]){
+      const urn = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.48, 14), steel);
+      urn.position.set(tx, 1.34, 0.05); g.add(urn);
+      cyl(0.23, 0.23, 0.05, 0x7a2e22, tx, 1.60, 0.05, g, 12);
+    }
+    for(let i = 0; i < 3; i++){
+      cyl(0.09, 0.08, 0.14, 0xf5ebd6, 0.65 + i * 0.24, 1.18, 0.34, g, 10);
+      ball(0.07, [0xf2e2c4, 0xd88c5a, 0xc84b31][i], 0.65 + i * 0.24, 1.26, 0.34, g, 0.55);
+    }
+    for(let i = 0; i < 5; i++) cyl(0.055, 0.042, 0.08, 0xd94838, -1.18, 1.16 + i * 0.055, 0.36, g, 8);
   }
   if(def.id === 'banhtrang'){ // vỉ + chồng bánh sống + khay bánh chín tràn mép + xiên que
     for(let i = 0; i < 6; i++) cyl(0.17, 0.17, 0.02, 0xe8c88a, 1.18, 1.13 + i * 0.022, 0.32, g, 14);
@@ -2050,6 +2088,7 @@ function addSteamSprites(x, y, z){
     steamSprites.push({ sp, x, y, z, ph: i / 3 });
   }
 }
+
 function buildStall(def){
   const g = cloneAsset('stall');
   // V4.7: sạp mặt tiền đông (sữa/cà phê/yaourt, x 21..33 z 7..12.2) đứng DƯỚI hành lang sân thượng —
@@ -2112,7 +2151,7 @@ function buildStall(def){
     const th = def.rotY || 0, lx = def.smoke ? -0.9 : 0.95, lz = def.smoke ? 0.15 : -0.42;
     addSteamBig(def.x + lx*Math.cos(th) + lz*Math.sin(th), baseY + 1.8, def.z - lx*Math.sin(th) + lz*Math.cos(th), 3.4);
   }
-  if(['sua','supcua','banhcan','banhtrang','suadau','che','dauhu','banhuot'].includes(def.id)){ // V4.9 MỤC 7: hơi sprite tại điểm nấu
+  if(['sua','supcua','banhcan','banhtrang','suadau','che','dauhu','banhuot','hoasua','hongtra'].includes(def.id)){ // V4.9 MỤC 7: hơi sprite tại điểm nấu
     const th = def.rotY || 0, lx = def.smoke ? -0.9 : 0.95, lz = def.smoke ? 0.15 : -0.42;
     addSteamSprites(def.x + lx*Math.cos(th) + lz*Math.sin(th), baseY + 1.75, def.z - lx*Math.sin(th) + lz*Math.cos(th));
   }
@@ -4239,6 +4278,17 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
       box(0.4, 0.4, 0.4, 0x2d6cb0, 2.4, 0.2, side * 0.9, g, false); // ghế nhựa
     }
   }
+  // dãy nhà phố 4–5 tầng khép hẻm đoạn kéo dài (x -140..-170) + quầng sáng mặt nhựa ướt đêm Đà Lạt
+  shophouse(-140, 35.5, 7.2, 4, 0xe8dcc4, 'TIỆM VÀNG KIM PHÁT', '#8a1e18', 0xc8372d);
+  shophouse(-155, 35.5, 7.5, 5, 0xdcc7a8, 'NHÀ THUỐC ĐÀ LẠT', '#1f6b3a', 0x2e6da4);
+  shophouse(-169, 35.5, 7.0, 4, 0xe4d2b0, 'ĐẶC SẢN DÂU & MỨT', '#5d2f24', 0x9c4034);
+  shophouse(-142, -28.5, 7.2, 5, 0xe0d0b4, 'KHÁCH SẠN MINH KHAI', '#3a2e24', 0x74566b, Math.PI);
+  shophouse(-156, -28.5, 7.0, 4, 0xd8c8ae, 'TIỆM ĐỒ LEN CÔ BA', '#7a2e22', 0xb03a30, Math.PI);
+  shophouse(-169, -28.5, 6.8, 5, 0xe8dcc4, 'PHỞ ĐÊM ĐÀ LẠT', '#4c3428', 0x51624a, Math.PI);
+  for(let x = -188; x <= -76; x += 16){
+    glowDisc(x, -9.5, 3.6, entryRampY(x));
+    glowDisc(x + 6, 17.5, 3.6, entryRampY(x + 6));
+  }
 }
 // V6 chặng ②: cầu thang lớn — lan can sắt hai mép, ghế nhựa/bàn nhỏ trên chiếu nghỉ (quán ăn đêm "Chợ Âm Phủ" dọc thang)
 {
@@ -4260,18 +4310,28 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
     twinkles.push({ mat: (()=>{ const l = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshBasicMaterial({ color:0xffc46b })); l.position.set(-9.2, y + 2.4, z); worldGroup.add(l); return l.material; })(), ph: i });
   });
 }
-// V6 chặng ②-⑤: biển cầu thang, Hồng Trà (ki-ốt 30–32), Hoa Sữa (vỉa hè, không mái, ghế nhựa tràn ra lề)
+// V6 chặng ②-⑤: biển cầu thang, Góc Hong Kong trên đỉnh thang, dãy Ki-ốt 28–34 Hồng Trà Hòa Bình, Hoa Sữa (3F Tăng Bạt Hổ)
 {
   const tex = (t, w, h, bg, fg, sub) => signMesh(t, w, h, bg, fg, sub);
   // biển chân cầu thang (nguồn: KTS Ngô Viết Thụ thiết kế — research/25)
-  const ss = tex('CẦU THANG LỚN — KHU HÒA BÌNH', 5.2, 0.9, '#3b2a22', '#ffd98a', 'KTS Ngô Viết Thụ — "Góc Hong Kong" nhìn từ trên chợ');
+  const ss = tex('CẦU THANG LỚN — KHU HÒA BÌNH', 5.2, 0.9, '#3b2a22', '#ffd98a', 'KTS Ngô Viết Thụ — nối Khu Hòa Bình xuống Chợ Đà Lạt');
   ss.position.set(-12.2, 1.9, -1.4); worldGroup.add(ss); box(0.1, 1.9, 0.1, 0x2b2b2b, -14.6, 0.95, -1.45, worldGroup, false); box(0.1, 1.9, 0.1, 0x2b2b2b, -9.8, 0.95, -1.45, worldGroup, false);
-  // Hồng Trà Hòa Bình — biển ki-ốt trên đồi
-  const hk = tex('KI-ỐT 30–32', 2.2, 0.55, '#6b2a22', '#fff0c8', 'Khu Hòa Bình · 9:00–23:00');
-  hk.position.set(6.0, 17 + 3.5, -35.2); worldGroup.add(hk);
-  // Hoa Sữa — 3F Tăng Bạt Hổ, ngồi ngay mép vỉa hè, không mái
+  // mốc check-in "GÓC HONG KONG" ở đầu lan can cầu thang nhìn xuống nhà lồng chợ
+  const hkSpot = tex('📸 GÓC HONG KONG — CHỢ ĐÀ LẠT', 3.4, 0.65, '#7a221c', '#ffe9b0', 'Điểm chụp hình nhìn xuống cầu thang & nhà lồng');
+  hkSpot.position.set(-11.8, 17 + 1.55, -30.35); worldGroup.add(hkSpot);
+  // Hồng Trà Hòa Bình — biển ki-ốt 30–32 trên đồi + 2 ki-ốt liền kề (28–29 và 33–34) tạo thành dãy phố ki-ốt Khu Hòa Bình
+  const hk = tex('KI-ỐT 30–32 · HỒNG TRÀ HÒA BÌNH', 3.4, 0.65, '#6b2a22', '#fff0c8', 'Khu Hòa Bình · Mở cửa 9:00–23:00');
+  hk.position.set(6.0, 17 + 3.55, -34.5); worldGroup.add(hk);
+  for(const [kx, kz, lbl, col] of [[1.4, -35.5, 'KI-ỐT 28–29 · BÁNH NGỌT', 0x8c4a2e], [9.4, -35.2, 'KI-ỐT 33–34 · QUÀ LƯU NIỆM', 0x3b6048]]){
+    box(2.4, 2.0, 2.1, 0x74522f, kx, 18.0, kz, worldGroup);
+    box(2.7, 0.12, 2.4, col, kx, 19.1, kz, worldGroup);
+    box(1.7, 0.9, 0.1, 0x2e2620, kx, 18.15, kz + 1.06, worldGroup, false);
+    const ks = tex(lbl, 2.4, 0.52, '#3a2e24', '#ffd98a');
+    ks.position.set(kx, 19.52, kz + 1.1); worldGroup.add(ks);
+  }
+  // Hoa Sữa — 3F Tăng Bạt Hổ (số 64 cũ), ngồi ngay mép vỉa hè, không mái
   const hy = groundH(-128, 19.5);
-  const hs = tex('3F TĂNG BẠT HỔ', 2.2, 0.5, '#e8d9b0', '#7a2e22', null);
+  const hs = tex('3F TĂNG BẠT HỔ (64 CŨ)', 2.8, 0.55, '#e8d9b0', '#7a2e22', 'Quán Hoa Sữa · Nấu tay mỗi đêm');
   hs.position.set(-128, hy + 3.3, 19.3); hs.rotation.y = Math.PI; worldGroup.add(hs);
   const sc = [0xd9362b, 0x2d6cb0, 0x2e9e5b];
   for(let i = 0; i < 6; i++){
@@ -6667,7 +6727,7 @@ for(const s of stalls) npcZoneOf(s.x, s.z);
   console.log('[V4.7] Số người theo khu:', window.NPC_STATS); }
 
 const keys = {};
-let camYaw = -Math.PI / 2, camPitch = 0.38; // V5.5-POLISH: pitch 0.8 (V5.4) -> 0.55 -> 0.38 (~22°): render doi chieu cho thay o 0.55 mat nhua chiem ~70% khung, vista nen thanh dai mong phia tren; 0.38 ha camera xuong 11.73, khung mo dau doc truc thanh 'buu thiep' (cong nang cao o mep tren, tuong + mat tien cho cuoi duong)
+let camYaw = new URLSearchParams(location.search).get('at') ? -playerState.face : -Math.PI / 2, camPitch = 0.38; // V5.5-POLISH: pitch 0.8 (V5.4) -> 0.55 -> 0.38 (~22°): render doi chieu cho thay o 0.55 mat nhua chiem ~70% khung, vista nen thanh dai mong phia tren; 0.38 ha camera xuong 11.73, khung mo dau doc truc thanh 'buu thiep' (cong nang cao o mep tren, tuong + mat tien cho cuoi duong)
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(e.code === 'KeyE'){ autoWalk.active = false; interact(); } // V4.7: thao tác khác hủy tự đi
@@ -7494,19 +7554,19 @@ updateCrowdDensity();
       }
     }
   }
-  // ---------- REALISM-1: dây điện NGANG qua đường (2 cột nam mới + nhịp tại x -101/-61) ----------
+  // ---------- REALISM-1 + V6: dây điện NGANG qua đường (cột nam + bó dây chằng chịt mỗi ~14m dọc phố chợ đêm) ----------
   {
-    for(const cx of [-101, -61]){
+    for(const cx of [-165, -149, -135, -118, -101, -86, -73, -61]){
       const gy = groundH(cx, 25.8);
       cyl(0.09, 0.12, 7.6, 0x4a4640, cx, gy + 3.8, 25.8, worldGroup, 8); // cột nam như cột bắc, KHÔNG solid()
       box(1.7, 0.09, 0.09, 0x4a4640, cx, gy + 7.05, 25.8, worldGroup, false);
-      for(const off of [-0.55, 0.55]){
+      for(const off of [-0.65, -0.15, 0.45]){
         const yN = entryRampY(cx) + 7.05, yS = gy + 7.05;
         const curve = new THREE.QuadraticBezierCurve3(
           new THREE.Vector3(cx + off, yN, -8.6),
-          new THREE.Vector3(cx + off, Math.min(yN, yS) - 1.1, (-8.6 + 25.8) / 2),
+          new THREE.Vector3(cx + off, Math.min(yN, yS) - (0.95 + Math.abs(off) * 0.4), (-8.6 + 25.8) / 2),
           new THREE.Vector3(cx + off, yS, 25.8));
-        worldGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.025, 5), mat(0x1c1a18)));
+        worldGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 16, 0.024, 5), mat(0x1c1a18)));
       }
     }
   }
