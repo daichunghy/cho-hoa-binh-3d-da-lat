@@ -131,7 +131,7 @@ code += `
 
     // ---------- mục 12-14: HÀNG HÓA + TIỆM + QUẦN ÁO ----------
     out.info.stallCount = STALL_DEFS.length;
-    if (STALL_DEFS.length !== 45) fail('goods: STALL_DEFS phai = 45 (33 cu do thuc + 12 moi), thay ' + STALL_DEFS.length);
+    if (STALL_DEFS.length !== 45) fail('goods: STALL_DEFS phai = 45 (44 cua BD2 + 1 sap V6 Antigravity, id phan biet du — V7-IMPROVE-1 doi chuan), thay ' + STALL_DEFS.length);
     const dauIds = STALL_DEFS.filter(d => ['dau', 'dau2', 'dau3', 'dau4'].includes(d.id)).length;
     if (dauIds !== 4) fail('goods: phai co 4 quay dau, thay ' + dauIds);
     for (const id of ['mut', 'hong', 'tra2', 'hoa2', 'luuniem2', 'dosi', 'len3', 'dacsanlon'])
@@ -150,7 +150,7 @@ code += `
       if (!(lgN > lgM && lgM > lgF)) fail('loa: gain khong giam dan theo khoang cach: ' + [lgN, lgM, lgF].join('/'));
       if (!(lgF > 0 && lgF < 0.1)) fail('loa: o xa phai con nghe rat nho (floor > 0), thay ' + lgF);
       if (!(S.loaFreqAt(-131, 2) > S.loaFreqAt(60, -52))) fail('loa: tan so loc phai thap dan khi xa (mo tieng)');
-      const sf1 = S.surfaceAt(-100, 5), sf2 = S.surfaceAt(-100, -17), sf3 = S.surfaceAt(0, -15), sf4 = S.surfaceAt(0, 20);
+      const sf1 = S.surfaceAt(-100, 5), sf2 = S.surfaceAt(-100, -17), sf3 = S.surfaceAt(-56, -15), sf4 = S.surfaceAt(0, 20); // LAYOUT-FIX-1: diem mau 'thang' theo tam thang moi -56
       out.info.surfaces = { road: sf1, sidewalk: sf2, stairs: sf3, hall: sf4 };
       if (new Set([sf1, sf2, sf3, sf4]).size !== 4) fail('buoc chan: 4 mat duong phai khac nhau, thay ' + [sf1, sf2, sf3, sf4].join('/'));
       const sc0 = S.stepCount(); S.playStep('nhua');

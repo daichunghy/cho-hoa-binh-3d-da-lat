@@ -90,7 +90,7 @@ def mats_init():
     M("StripeA",    (0.18,0.43,0.64), 0.95)                       # bạt sọc xanh dương
     M("StripeB",    (0.96,0.96,0.94), 0.95)                       # bạt sọc trắng
     M("WhiteConc",  (0.90,0.89,0.85), 0.95)                       # bê tông sơn trắng (cầu thang ngoài trời)
-    M("StatueStone",(0.64,0.63,0.60), 0.88)                       # V5.1: đá xám LẠNH sáng hơn — tượng rọi sáng nổi trên nền đêm (research/18)
+    M("StatueStone",(0.37,0.42,0.44), 0.88)                       # SWEEP-NIGHT-1 (10/11): ĐO từ ảnh thật 01 bằng PIL — thân tượng median sRGB #858e91, mặt sáng #a1adb1 -> albedo tuyến tính ~(0.37,0.42,0.44) xám xanh SẪM như đá thật; bản V5.1 (0.64,0.63,0.60) render trắng sáng quá tay (verdict V8). Đêm vẫn nổi nhờ STATUE_FX spotlight + emissive riêng ở web.
     M("BenchWhite", (0.90,0.89,0.86), 0.95)
     M("StatueWhite",(0.93,0.92,0.88), 0.9)                        # tượng trang trí trắng sân thượng
     M("VehDark",    (0.12,0.12,0.13), 0.6, 0.3)
@@ -532,6 +532,152 @@ def build_stall():
 #  Origin: tâm footprint, mặt đất z=0. Rộng X 70, sâu Y 16, cao ~19.5 + bảng hiệu 21.6
 #  Gồm cả sân thượng tầng 2 (khối x +14..+21, lùi về -Y local của three = +Y blender xa)
 # ============================================================
+# ============================================================
+#  V9-FACADE-CURVE (10/11): uốn dải mặt tiền nhà lồng thành CUNG VÒNG
+#  như chợ Đà Lạt thật (ảnh real-market/01). Số đo (ghi V4-CHECKLIST V9):
+#  bề rộng dải mặt tiền 67 (x -33.5..33.5); sagitta S = 4.0 (ước lượng từ
+#  ảnh 01: mullion đều ~25px suốt mặt trước -> cung chính thoai thoải, độ
+#  lùi hai đầu so với tâm ~4±1u); R = (a^2+S^2)/(2S) = 142.28, a = 33.5.
+#  Neo: d(0)=0 -> tâm mặt tiền GIỮ NGUYÊN blender y cũ (= three z=12,
+#  marketFrontZ trong index.html không đổi); hai đầu lùi d(x) theo cung.
+#  CHỈ uốn dải mặt tiền (bbox tâm y > 4.2); sàn/nội thất/giếng thang/
+#  terrace cầu nổi giữ nguyên tuyệt đối (loại theo tên Floor*/Well*/
+#  Terrace*). Vật hẹp (cột, mullion) -> tịnh tiến + yaw theo tiếp tuyến;
+#  đảo hộp dài của băng mặt tiền -> dựng lại thành lăng trụ cong 5 trạm;
+#  mảnh ghép nhỏ -> dịch đỉnh theo tọa độ thế giới; chữ nổi ở tâm cung
+#  nên giữ nguyên (không convert).
+# ============================================================
+V9_A = 33.5
+V9_S = 4.0
+V9_R = (V9_A * V9_A + V9_S * V9_S) / (2.0 * V9_S)
+
+def _v9_d(x):
+    ax = abs(x)
+    if ax <= V9_A:
+        return V9_R - math.sqrt(V9_R * V9_R - ax * ax)
+    return V9_S + (ax - V9_A) * (V9_A / math.sqrt(V9_R * V9_R - V9_A * V9_A))
+
+def _v9_curve_facade():
+    bent = moved = rebuilt = 0
+    v_before = v_after = 0
+    for ob in list(bpy.context.scene.objects):
+        nm = ob.name
+        if nm.startswith(("Floor", "Well")) or nm in ("Terrace", "TerraceRail"):
+            continue
+        if ob.type == 'CURVE':
+            # Chữ nổi nằm ở TÂM cung (|x|<=8, độ lùi <=0.22) -> giữ nguyên,
+            # không convert (convert chữ tốn ~+9KB GLB, đã đo ở V9).
+            continue
+        if ob.type != 'MESH':
+            continue
+        mw = ob.matrix_world
+        cs = [mw @ Vector(c) for c in ob.bound_box]
+        cx = (min(c.x for c in cs) + max(c.x for c in cs)) / 2.0
+        cy = (min(c.y for c in cs) + max(c.y for c in cs)) / 2.0
+        sx = max(c.x for c in cs) - min(c.x for c in cs)
+        if cy <= 4.2:
+            continue
+        if sx <= 1.3:
+            # vật hẹp: tịnh tiến lùi + yaw theo tiếp tuyến cung tại cx
+            ob.location.y -= _v9_d(cx)
+            if nm.startswith(("Column", "ColBase", "ColCap", "Mullion")):
+                ob.rotation_euler.z = -math.asin(max(-1.0, min(1.0, cx / V9_R)))
+            moved += 1
+            continue
+        # Vật rộng: xử theo từng ĐẢO hình học (island):
+        # - Đảo hộp đơn dài >12, sâu <=0.7, cao <=3.6, <=160 đỉnh, mesh 1
+        #   vật liệu: DỰNG LẠI thành lăng trụ cong 5 trạm theo cung (bỏ
+        #   bevel 0.01-0.03, vô hình ở tỉ lệ diorama) — giữ neo tâm cung
+        #   mà còn RẺ đỉnh hơn hộp bevel gốc. Lý do: ngân sách V9, GLB
+        #   chỉ được +24.2KB (standalone base64 x4/3, trần 10.485.760);
+        #   chia nhỏ cạnh bevel tốn ~111-142B/đỉnh xuất (đã đo V9).
+        # - Đảo còn lại (mảnh ghép <=12): dịch đỉnh theo cung, đảo tự
+        #   nghiêng theo tiếp tuyến, +0 đỉnh.
+        me = ob.data
+        v_before += len(me.vertices)
+        mw_inv = mw.inverted()
+        single_mat = len(me.materials) <= 1
+        bm = bmesh.new(); bm.from_mesh(me)
+        adj = {}
+        for e in bm.edges:
+            a, b = e.verts[0], e.verts[1]
+            adj.setdefault(a, []).append(b); adj.setdefault(b, []).append(a)
+        seen = set(); islands = []
+        for v0 in list(bm.verts):
+            if v0 in seen: continue
+            stack = [v0]; comp = []; seen.add(v0)
+            while stack:
+                v = stack.pop(); comp.append(v)
+                for u in adj.get(v, []):
+                    if u not in seen:
+                        seen.add(u); stack.append(u)
+            islands.append(comp)
+        uv_layer = bm.loops.layers.uv.active
+        for comp in islands:
+            ws = [mw @ v.co for v in comp]
+            ix0 = min(p.x for p in ws); ix1 = max(p.x for p in ws)
+            iy0 = min(p.y for p in ws); iy1 = max(p.y for p in ws)
+            iz0 = min(p.z for p in ws); iz1 = max(p.z for p in ws)
+            if (single_mat and (ix1 - ix0) > 12.0 and (iy1 - iy0) <= 0.7
+                    and (iz1 - iz0) <= 3.6 and len(comp) <= 160):
+                bmesh.ops.delete(bm, geom=list(comp), context='VERTS')
+                N = 5; ring = []
+                for k in range(N + 1):
+                    x = ix0 + (ix1 - ix0) * k / N
+                    dy = _v9_d(x)
+                    ring.append([bm.verts.new(mw_inv @ Vector((x, yy, zz)))
+                                 for yy, zz in ((iy0 - dy, iz0), (iy1 - dy, iz0),
+                                                (iy1 - dy, iz1), (iy0 - dy, iz1))])
+                newf = []
+                for k in range(N):
+                    A0, B0, C0, D0 = ring[k]; A1, B1, C1, D1 = ring[k + 1]
+                    newf += [bm.faces.new((B0, C0, C1, B1)),   # mặt trước +y
+                             bm.faces.new((A0, A1, D1, D0)),   # mặt sau
+                             bm.faces.new((C0, D0, D1, C1)),   # mặt trên
+                             bm.faces.new((A0, B0, B1, A1))]   # mặt dưới
+                newf += [bm.faces.new((ring[0][0], ring[0][3], ring[0][2], ring[0][1])),
+                         bm.faces.new((ring[N][0], ring[N][1], ring[N][2], ring[N][3]))]
+                vol = 0.0
+                for f in newf:
+                    vs = [v.co for v in f.verts]
+                    for t in range(1, len(vs) - 1):
+                        vol += vs[0].dot(vs[t].cross(vs[t + 1])) / 6.0
+                if vol < 0:
+                    bmesh.ops.reverse_faces(bm, faces=newf)
+                if uv_layer:
+                    for f in newf:
+                        for loop in f.loops:
+                            w = mw @ loop.vert.co
+                            loop[uv_layer].uv = (w.x / 3.2, w.z / 3.2)
+                rebuilt += 1
+            else:
+                if (ix1 - ix0) > 12.0:
+                    print(f"[V9][WARN] {nm}: đảo rộng {ix1 - ix0:.1f} KHÔNG dựng lại "
+                          f"(sâu {iy1 - iy0:.2f} cao {iz1 - iz0:.2f} đỉnh {len(comp)} "
+                          f"single_mat={single_mat}) -> dịch đỉnh (neo có thể lệch)")
+                for v in comp:
+                    w = mw @ v.co
+                    w.y -= _v9_d(w.x)
+                    v.co = mw_inv @ w
+        bm.to_mesh(me); bm.free()
+        bm2 = bmesh.new(); bm2.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm2, faces=list(bm2.faces))
+        bm2.to_mesh(me); bm2.free()
+        v_after += len(me.vertices)
+        bent += 1
+    print(f"[V9] curve facade R={V9_R:.2f} S={V9_S} a={V9_A}: bent={bent} moved={moved} "
+          f"rebuilt={rebuilt} verts {v_before}->{v_after} (+{v_after - v_before})")
+    # kiểm chứng neo: mặt trước LetterWall tại tâm (|x|<2) vs đầu (|x|>32)
+    lw = bpy.context.scene.objects.get("LetterWall")
+    if lw:
+        mw = lw.matrix_world
+        pts = [(abs((mw @ v.co).x), (mw @ v.co).y) for v in lw.data.vertices]
+        xmin = min(p[0] for p in pts)
+        yc = max(p[1] for p in pts if p[0] < xmin + 1.5)
+        ye = max(p[1] for p in pts if p[0] > 32)
+        print(f"[V9] LetterWall front y: tam(|x|<{xmin + 1.5:.1f})={yc:.3f} dau={ye:.3f} "
+              f"(lệch {yc - ye:.3f} ~ S={V9_S})")
+
 def build_market():
     clear_scene()
     wall, trim, conc, concD = MATS["WallCream"], MATS["TrimBrown"], MATS["Concrete"], MATS["ConcreteDk"]
@@ -745,6 +891,7 @@ def build_market():
     # --- sân thượng tầng 2 (GIỮ NGUYÊN vị trí/kích thước — neo cầu nổi của web) ---
     box("Terrace", (7, 5, 12.6), (17.5, 10.5, 6.3), M("TerraceMat", (0.76, 0.70, 0.60), 0.95), 0.03)
     box("TerraceRail", (7, 0.18, 0.9), (17.5, 13.1, 13.05), MATS["WoodDark"], 0.01)
+    _v9_curve_facade()
     export("market")
 
 # ============================================================

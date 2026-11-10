@@ -52,7 +52,7 @@ const code = [
   extractFn('entryRampY'), extractFn('islandBump'),
   extractFn('vehBumpE'), extractFn('laneZE'), extractFn('laneZW'),
   extractConst('AW_NODES'),
-  'const AW_EDGES=[]; for(let i=0;i<15;i++) AW_EDGES.push([i,i+1]); AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46]); // GEOMETRY-2: snapshot khop index.html (+ chuoi truc toi bung binh dau cho 42-47)',
+  'const AW_EDGES=[]; for(let i=0;i<15;i++){ if(i===7) continue; AW_EDGES.push([i,i+1]); } AW_EDGES.push([7,16],[16,17],[17,18],[7,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46],[8,48],[48,2]); // GEOMETRY-2 + LAYOUT-FIX-1: snapshot khop index.html (+ chuoi truc toi bung binh dau cho 42-47; + canh noi chan thang tay qua nut dem 48)',
   extractConst('RB_ARC'),
   'const RB = RB_ARC.concat(RB_ARC.slice(0,-1).reverse());',
   extractConst('LOOP'),
@@ -117,8 +117,8 @@ const effG = (x, z, elevated) => (!elevated && inFootprint(x, z)) ? 0 : groundH(
 const ISLAND = { x: -30, z: -6, R: 10.5 }; // GEOMETRY-2: tâm đảo mới
 
 // ---------- A) quét lưới nhảy cao độ ----------
-const inStairs = (x, z) => x >= -11.5 && x <= 11.5 && z >= -30.5 && z <= -1.5;         // bậc quantize 0.567 — thiết kế
-const inBands = (x, z) => ((x >= -15.6 && x <= -10.4) || (x >= 10.4 && x <= 15.6)) && z >= -30.5 && z <= -1.5; // tường thềm đứng (kè đá 2 bên thang) — thiết kế
+const inStairs = (x, z) => x >= -67.5 && x <= -44.5 && z >= -30.5 && z <= -1.5;         // bậc quantize 0.567 — thiết kế (LAYOUT-FIX-1: thang tam -56)
+const inBands = (x, z) => ((x >= -71.6 && x <= -66.4) || (x >= -46.6 && x <= -40.4)) && z >= -30.5 && z <= -1.5; // tường thềm đứng 2 bên thang — thiết kế (LAYOUT-FIX-1: them dong thu hep -45..-43.5 nen dai dong mo rong toi -46.6 de bao o seam canh sap dau hu)
 const inIsleCut = (x, z) => x >= -53.6 && x <= -51.4 && z >= -28 && z <= -11.5;            // GEOMETRY-2: vách cắt thềm đảo phía tây theo tâm mới (mép x -52)
 const inIsleCutE = (x, z) => x >= -15.6 && x <= -13.4 && z >= -28 && z <= -1.5;           // mép đông thềm đảo nối liền sát thềm tây (-14.5)
 const inShelfWall = (x, z) => x >= -58.5 && x <= -44.5 && z >= -12.5 && z <= -10.4;        // V5.4: tường chắn đất thềm bắc — thiết kế

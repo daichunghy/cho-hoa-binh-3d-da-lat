@@ -67,9 +67,13 @@ function groundH(x,z){
   if(x < -52 && z >= -25 && z <= 34) return entryRampY(x);
   if(z <= -30) return 17;
   if(z >= -2) return 0;
-  if(x >= -11 && x <= 11) return stairH(z);
-  if((x >= -14.5 && x < -11) || (x > 11 && x < 14.5)){
+  if(x >= -67 && x <= -45 && z >= -30 && z <= -2) return stairH(z); // LAYOUT-FIX-1: thang tam -56
+  if(x >= -70.5 && x < -67){ // LAYOUT-FIX-1: them tay du 3 dai
     if(z > -8.25) return 2.8;
+    if(z > -18.75) return 8.5;
+    return 14.2;
+  }
+  if(x > -45 && x <= -43.5 && z <= -8.25){ // LAYOUT-FIX-1: them dong chi 2 dai tren (bo dai 2.8)
     if(z > -18.75) return 8.5;
     return 14.2;
   }
@@ -104,34 +108,35 @@ function laneZW(x){ // V5.4: gốc 1.9, đỉnh 7.15 (cách tâm đảo 13.15) �
 
 // --- AW_NODES + AW_EDGES: chép nguyên văn (đồ thị tự-đi của người chơi) ---
 const AW_NODES = [
-  [-76,5.6],[-62,5.6],[-50,5.6],[-40,5.6],[-35,4.6],[-18.5,5.8],[-11.5,0.2],[-5,5.9],[0,1],[-2,-6],[-2,-14],[-2,-22],[-2,-29],[0,-36],[6,-45],[24,-51], // V5.4: trục tây đi dải giữa 2 làn (nút 0-3 z 5.6); nút 5 = điểm qua đường tại x -18.5 (cách E 1.2 / W 1.35)
+  [-76,5.6],[-62,5.6],[-50,5.6],[-40,5.6],[-35,4.6],[-18.5,5.8],[-11.5,0.2],[-5,5.9],[-56,1],[-58,-6],[-58,-14],[-58,-22],[-58,-29],[-56,-36],[6,-45],[24,-51], // LAYOUT-FIX-1: cot nut thang tam -56 // V5.4: trục tây đi dải giữa 2 làn (nút 0-3 z 5.6); nút 5 = điểm qua đường tại x -18.5 (cách E 1.2 / W 1.35)
   [8,5.5],[16,6.5],[22,7.2],
   [0,6],[0,11],[0,16],
   [12,-44],[17.5,-32],[17.5,-16],[17.5,0],[17.5,7],[25.5,9.0],[30.3,11],[30.3,15],
-  [3,-11],[6.2,-9.6],
-  [1,-20],[2.8,-19.6],
+  [-53,-11],[-49.8,-9.6],
+  [-55,-20],[-53.2,-19.6], // LAYOUT-FIX-1
   [-8,-40],[-17,-44],
   [-90,5.6],[-104,5.6],[-118,5.6],[-128,4],
   [36.2,20],[42.5,6.2],
   [-142,5.6],[-156,5.6],[-170,5.6],[-184,5.6],[-196,8.8],[-204,5.6],
+  [-53,0.2], // LAYOUT-FIX-1: idx48 nut dem truoc chan thang tay
 ];
 const AW_EDGES = [];
-for(let i = 0; i < 15; i++) AW_EDGES.push([i, i + 1]);
-AW_EDGES.push([7,16],[16,17],[17,18],[8,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46]); // GEOMETRY-2: +trục kéo dài đầu chợ
+for(let i = 0; i < 15; i++){ if(i === 7) continue; AW_EDGES.push([i, i + 1]); } // LAYOUT-FIX-1: bo mat xich 7->8
+AW_EDGES.push([7,16],[16,17],[17,18],[7,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46],[8,48],[48,2]); // GEOMETRY-2: +trục kéo dài đầu chợ; LAYOUT-FIX-1: +noi chan thang tay ve truc
 
 // --- LOOP người đi bộ lang thang: chép nguyên văn ---
-const LOOP = [[-2,3],[-2,-29],[3,-38],[10,-45],[16,-38],[17.5,-28],[17.5,-8],[17.5,7],[24,9.8],[30.3,10.8],[30.3,19.4],[30.3,26.6],[24,25.55],[10,22],[0,24.5],[-13,21.9],[-20,21.9],[-24,25.55],[-31.5,23.5],[-31.5,16.8],[-14,17],[-2,15.5],[0,15.9],[0,8]];
+const LOOP = [[-58,3],[-58,-29],[-53,-38],[10,-45],[16,-38],[17.5,-28],[17.5,-8],[17.5,7],[24,9.8],[30.3,10.8],[30.3,19.4],[30.3,26.6],[24,25.55],[10,22],[0,24.5],[-13,21.9],[-20,21.9],[-24,25.55],[-31.5,23.5],[-31.5,16.8],[-14,17],[-2,15.5],[0,15.9],[0,8]]; // LAYOUT-FIX-1
 
 // --- STALL_DEFS rút gọn (id, x, z, rotY) — chép từ bảng def trong code ---
 const STALLS = [
   ['banhtrang',-36,30,Math.PI],['khoai',-31,11.0,Math.PI],['banhcan',-26,11.0,Math.PI], // V5.5: banhtrang doi vao day nam doan vao z=22.25
   ['supcua',-21,11.0,Math.PI],['sua',22,11.0,Math.PI],['caphe',27,11.0,Math.PI],['yaourt',32,11.0,Math.PI],
   ['len1',-24,15,0],['len2',-16,23.5,Math.PI],['rau',16,15,0],['dau',24,23.5,Math.PI],
-  ['khoainuong',6.2,-21.6,Math.PI/2],['suadau',6.2,-10.4,Math.PI/2],['hoa',37.5,11.0,Math.PI],
+  ['khoainuong',-49.8,-21.6,Math.PI/2],['suadau',-49.8,-10.4,Math.PI/2],['hoa',37.5,11.0,Math.PI],
   ['dacsan',-20,20,Math.PI],['tra',20,20,0],['dongho',-6,-47,0],['luuniem',-31,-47,0],
   ['xien',-16.5,11.0,Math.PI],['che',6,11.0,Math.PI],['tron',43,11.0,Math.PI],
   ['banhuot',-56,30,Math.PI],['suatuoi',-49.5,30,Math.PI], // GEOMETRY-2: z=26 (day nam lui sau mo rong duong)
-  ['banhmi',-56,-19.7,0],['hutieu',-51,-19.7,0],['traicay',-46,-19.7,0],['dauhu',-41,-19.7,0],['chao',-37,-19.7,0], // V5.5: hang bac z=-15.7
+  ['banhmi',-88,30,Math.PI],['hutieu',-74,30,Math.PI],['traicay',-61,30,Math.PI],['dauhu',-41,-19.7,0],['chao',-37,-19.7,0], // V5.5: hang bac z=-15.7
   ['haisan',-100,-19.7,0],['banhflan',-95,30,Math.PI], // GEOMETRY-2: 2 sap tuong tac moi tren doan keo dai
   ['hoasua',-128,19.5,Math.PI],['aokhoac',40,17.5,-Math.PI/2],['aolen',40,22.5,-Math.PI/2], // V5.5: Hoa Sua Tang Bat Ho + khu quan ao
 ].map(([id,x,z,rotY]) => ({ id, x, z, rotY,
@@ -248,7 +253,7 @@ const PULL_OVERS = [
   { id:'PO-khoai', route:'E', at:{x:-29,z:8.4}, impl:true, note:'ĐÃ CÀI trong code: park [-29,8.4]; GEOMETRY-2: điểm cũ (-33.2,4.5) bị làn E mới phủ (đỉnh 5.55 tại x -33) — dời vào dải đỗ giữa làn W (7.15) và mặt sạp (8.9), ngoài đĩa đảo (d 14.4)' },
   { id:'T1-E2', route:'E', at:{x:-52,  z:-1.5}, note:'đầu đường vào phía tây (điểm dừng thiết kế trên làn E)' },
   { id:'T1-W3', route:'W', at:{x:-56,  z:4.25}, note:'vai nam trước sạp bánh ướt đầu đường vào', offLane:true },
-  { id:'T-FOOT',route:'E', at:{x:8,    z:0.2},  note:'chân bậc thang — gửi xe đi bộ lên thang', offLane:true },
+  { id:'T-FOOT',route:'E', at:{x:-48,  z:0.2},  note:'LAYOUT-FIX-1: chân bậc thang hông tây — gửi xe đi bộ lên thang', offLane:true },
   { id:'T3-0',  route:'3', at:{x:35.5, z:8.5},  note:'điểm thuê xe RENT_PT đang cài', offLane:true },
   { id:'T3-1',  route:'3', at:{x:41,   z:7.3},  note:'bãi xe đông (parkedRow z=8.9)' },
 ];
@@ -256,7 +261,7 @@ const PULL_OVERS = [
    nhường khi có người trong bán kính 2.6 (logic yield ở dưới). */
 const CROSSINGS = [
   { node:5,  at:{x:-18.5,z:5.8}, why:'GEOMETRY-2: làn đã dời theo đảo -30 — nút nay trên sân nam đảo, cách làn W 3.4 (vùng chậm W x[-50,-12] phủ); không còn là điểm giữa 2 làn như V5.4' },
-  { node:8,  at:{x:0, z:1},  why:'nút trục đi bộ trước mặt tiền: nằm trong hành lang làn W (d = 0.9) — xe phải nhường' },
+  { node:8,  at:{x:-56, z:1},  why:'LAYOUT-FIX-1: nút chân thang hông tây: nằm trong hành lang làn W (laneZW(-56) = 1.9, d = 0.9) — xe phải nhường (vùng chậm E/W x[-58,-46] phủ)' },
   { node:4,  at:{x:-35,z:4.6}, why:'GEOMETRY-2: nút trục tây nằm TRÊN đỉnh làn E (laneZE(-35) = 4.62, d ~ 0) + cách làn W 2.55 — xe 2 làn phải nhường (yield kiểm ở T11)' },
   { node:3,  at:{x:-40,z:5.6}, why:'GEOMETRY-2: trục z 5.6 cắt đỉnh lượn làn W (laneZW(-40) = 5.3, d = 0.24) — vùng chậm W x[-50,-12] phủ + yield theo bán kính' },
 ];
@@ -356,8 +361,8 @@ check('T0a','R-01 ĐÃ SỬA: RENT_PT đang cài (35.5,8.5) ở mặt đất; đ
   `groundH điểm đang cài = ${groundH(RENT_PT_NOW.x, RENT_PT_NOW.z)}; điểm cũ = ${groundH(RENT_PT_OLD.x, RENT_PT_OLD.z).toFixed(2)} (innerStairH chuyến 1)`);
 check('T0b','groundH tại RENT_PT (35.5,8.5) = 0',
   groundH(RENT_PT_NEW.x, RENT_PT_NEW.z) === 0, `groundH = ${groundH(RENT_PT_NEW.x, RENT_PT_NEW.z)}`);
-check('T0c','AW_NODES/EDGES/LOOP đủ số lượng chép nguyên văn',
-  AW_NODES.length === 48 && AW_EDGES.length === 47 && LOOP.length === 24,
+check('T0c','AW_NODES/EDGES/LOOP đủ số lượng chép nguyên văn (LAYOUT-FIX-1: +1 nút đệm 48, chuỗi bỏ mắt 7->8, +2 cạnh nối chân thang = 49/48)',
+  AW_NODES.length === 49 && AW_EDGES.length === 48 && LOOP.length === 24,
   `nodes=${AW_NODES.length} edges=${AW_EDGES.length} loop=${LOOP.length}`);
 
 // T1 — tuyến không vào vùng cấm + không xuyên đảo/tượng
@@ -540,8 +545,8 @@ for(const [nm, pl, yFn] of [['làn E', LANE_E, entryRampY], ['làn W', LANE_W, e
     if(m.pickLeg === 'ride' && dPick > 3.6) bad.push(`${m.id} lấy hàng (xe) xa ${dPick.toFixed(2)}`);
     if(m.pickLeg === 'walk'){
       // chân đi bộ từ điểm đỗ vào mặt sạp (mẫu đã cài trong code) <= walkMax;
-      // M3 thêm điều kiện mặt sạp nằm trong hình chữ nhật bậc thang x[-11,11] z[-30,-2]
-      const inStairs = st.x >= -11 && st.x <= 11 && st.z >= -30 && st.z <= -2;
+      // M3 thêm điều kiện mặt sạp nằm trong hình chữ nhật bậc thang x[-67,-45] z[-30,-2] (LAYOUT-FIX-1)
+      const inStairs = st.x >= -67 && st.x <= -45 && st.z >= -30 && st.z <= -2; // LAYOUT-FIX-1: hinh chu nhat bac thang moi
       if(dPick > m.walkMax || (m.needStairs && !inStairs)) bad.push(`${m.id} chân đi bộ lấy hàng sai: d=${dPick.toFixed(2)} walkMax=${m.walkMax} inStairs=${inStairs}`);
     }
     if(dDrop > 3.6) bad.push(`${m.id} giao hàng xa ${dDrop.toFixed(2)}`);

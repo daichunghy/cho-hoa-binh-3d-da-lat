@@ -238,7 +238,7 @@ code += `
       }
       // ---- 4b. NPC dac biet tinh ----
       out.specials = {};
-      const SP_EXP = { chuba:[5.6,-19.6], guard:[37.6,9.6], sweeper:[10.4,10.8], xeom:[-181,17.5] }; // GEOMETRY-2: xeom neo lai o via he nam canh bung binh dau cho (spawn moi)
+      const SP_EXP = { chuba:[-50.4,-19.6], guard:[37.6,9.6], sweeper:[10.4,10.8], xeom:[-181,17.5] }; // GEOMETRY-2: xeom neo lai o via he nam canh bung binh dau cho (spawn moi)
       if (!Array.isArray(SPECIAL_NPCS)) fail('SPECIAL_NPCS khong ton tai');
       else {
         if (SPECIAL_NPCS.length !== 4) fail('SPECIAL_NPCS != 4: ' + SPECIAL_NPCS.length);
