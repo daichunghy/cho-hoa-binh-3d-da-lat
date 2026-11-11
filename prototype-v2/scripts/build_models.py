@@ -1363,6 +1363,308 @@ def build_shop():
     box("RoofBox", (2.2, 2.0, 0.9), (1.2, 0.2, 7.5), MATS["Concrete"], 0.03)
     export("shop")
 
+# ============================================================
+#  XH-2 (11/11): HỒ XUÂN HƯƠNG — build_lake() -> lake.glb gồm:
+#  SwanBoat (trắng cổ điển) + SwanBoatPattern (hoa văn S6) + ThuyTa
+#  + CherryTree + IslandBridge. Quy ước mặt tiền -Y blender (= +Z three)
+#  như character/stall. Thuyền: mũi (cổ thiên nga) ở -Y, origin tại MẶT
+#  NƯỚC (game đặt y = 4.9). Màu = tuyến tính quy đổi từ hex sRGB ĐO PIL
+#  ở theme/xuan-huong (KE_HOACH_HO_XUAN_HUONG §3 + §11.3).
+# ============================================================
+def _xh_grid(name, rows, mat, uvs=None, closed=False):
+    """Lưới từ các hàng điểm (mỗi hàng = list (x,y,z) cùng số điểm): thân
+    thuyền loft / ống cổ / dải boong. uv = (lặp u theo hàng, ) hoặc None.
+    closed=True: lưới gần kín (thân/cổ có hàng pinch) — kiểm tra thể tích
+    có dấu, âm = normal hướng vào trong -> đảo mặt. closed=False (dải
+    phẳng): ép normal trung bình hướng +Z (mặt nhìn từ trên)."""
+    verts = []
+    for row in rows:
+        verts += list(row)
+    n = len(rows[0]); faces = []
+    for i in range(len(rows) - 1):
+        for j in range(n - 1):
+            a = i * n + j; b = a + 1; c = a + n; d = c + 1
+            faces.append((a, c, d, b))
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    if uvs is not None:
+        uv = me.uv_layers.new(name="UVMap")
+        for li, loop in enumerate(me.loops):
+            vi = loop.vertex_index
+            r, c = divmod(vi, n)
+            uv.data[li].uv = (r / max(1, len(rows) - 1) * uvs, c / max(1, n - 1))
+    o = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(o)
+    bm = bmesh.new(); bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    if closed:
+        if bm.calc_volume() < 0:
+            bmesh.ops.reverse_faces(bm, faces=list(bm.faces))
+    else:
+        nz = sum(f.normal.z * f.calc_area() for f in bm.faces)
+        if nz < 0:
+            bmesh.ops.reverse_faces(bm, faces=list(bm.faces))
+    bm.to_mesh(me); bm.free()
+    if mat: o.data.materials.append(mat)
+    o.select_set(False)
+    return o
+
+def _xh_boat(pattern):
+    """1 thuyền thiên nga 2 chỗ: thân 2,2 x 1,6, draft 0,25, cao tới mào ~1,62.
+    Trả về root Empty (SwanBoat / SwanBoatPattern) chứa các mesh con đã join cụm."""
+    white  = MATS["SwanWhite"];  beak = MATS["SwanBeak"]
+    eye    = MATS["SwanEye"];    buoy = MATS["BuoyOrange"]; pole = MATS["PotMetal"]
+    inner  = MATS["SwanInner"]
+    if pattern:
+        # Vật liệu "SwanPattern" TRƠN trong GLB (giữ UV thân): web gắn texture
+        # canvas hoa văn lúc chạy (idiom canvas của game) — KHÔNG nhúng ảnh vào
+        # GLB vì GLTFLoader trong harness diag không có `self` (XH-2 đã vấp).
+        hullM = MATS["SwanPattern"]; canM = MATS["CanopySky"]; seatM = MATS["SeatPink"]
+    else:
+        hullM = white; canM = MATS["CanopyWhite"]; seatM = MATS["SeatGreen"]
+    # --- thân: loft 7 tiết diện + 2 hàng pinch đóng mũi/đuôi (đuôi thành transom) ---
+    def prof(hw, gz, bz):
+        return [(-hw - 0.02, gz + 0.02), (-hw, gz), (-hw * 0.98, gz - 0.22),
+                (-hw * 0.78, bz + 0.10), (-hw * 0.42, bz + 0.015), (0.0, bz),
+                (hw * 0.42, bz + 0.015), (hw * 0.78, bz + 0.10),
+                (hw * 0.98, gz - 0.22), (hw, gz), (hw + 0.02, gz + 0.02)]
+    secs = [(1.09, 0.03, 0.38, -0.16), (1.06, 0.66, 0.38, -0.16), (0.72, 0.76, 0.40, -0.23),
+            (0.20, 0.80, 0.40, -0.25), (-0.30, 0.79, 0.40, -0.24), (-0.70, 0.70, 0.42, -0.17),
+            (-0.95, 0.53, 0.46, -0.04), (-1.08, 0.28, 0.50, 0.14), (-1.10, 0.03, 0.50, 0.14)]
+    rows = [[(px, y, pz) for (px, pz) in prof(hw, gz, bz)] for (y, hw, gz, bz) in secs]
+    hull = _xh_grid("Hull", rows, hullM, uvs=2.0, closed=True)
+    # boong mũi + boong đuôi (dải 3 điểm phủ miệng thân)
+    bow = _xh_grid("tmpDeck", [[(-0.30, -1.06, 0.53), (0.0, -1.06, 0.57), (0.30, -1.06, 0.53)],
+                               [(-0.55, -0.80, 0.50), (0.0, -0.80, 0.54), (0.55, -0.80, 0.50)],
+                               [(-0.72, -0.55, 0.45), (0.0, -0.55, 0.49), (0.72, -0.55, 0.45)]], hullM)
+    stern = _xh_grid("tmpDeck2", [[(-0.76, 0.80, 0.43), (0.0, 0.80, 0.47), (0.76, 0.80, 0.43)],
+                                  [(-0.68, 1.04, 0.41), (0.0, 1.04, 0.45), (0.68, 1.04, 0.41)]], hullM)
+    parts_hull = [hull, bow, stern]
+    if not pattern:  # cánh sơn nổi 2 bên hông (ảnh 06: cánh teal đậm) — bản hoa văn đã có texture
+        for sx in (-1, 1):
+            w = sphere("tmpWing", 1.0, (sx * 0.78, 0.30, 0.22), MATS["WingTeal"], scale=(0.055, 0.40, 0.24), seg=12, ring=8)
+            parts_hull.append(w)
+    hull = join_into(parts_hull, "Hull")
+    # --- lòng khoang (luôn trắng như FRP thật, kể cả bản hoa văn — ảnh 23) ---
+    fl = box("tmpFloor", (1.10, 1.72, 0.05), (0, 0.08, 0.03), inner, 0.0)
+    p1 = box("tmpPan", (0.05, 1.72, 0.40), (-0.55, 0.08, 0.22), inner, 0.0); p1.rotation_euler = (0, 0.30, 0)
+    p2 = box("tmpPan", (0.05, 1.72, 0.40), (0.55, 0.08, 0.22), inner, 0.0);  p2.rotation_euler = (0, -0.30, 0)
+    p3 = box("tmpPan", (1.10, 0.05, 0.38), (0, -0.78, 0.21), inner, 0.0)
+    p4 = box("tmpPan", (1.10, 0.05, 0.38), (0, 0.94, 0.21), inner, 0.0)
+    interior = join_into([fl, p1, p2, p3, p4], "Interior")
+    # --- ghế + bàn đạp ---
+    s1 = box("tmpSeat", (1.08, 0.34, 0.09), (0, 0.52, 0.30), seatM, 0.02)
+    s2 = box("tmpSeat", (1.08, 0.08, 0.44), (0, 0.70, 0.50), seatM, 0.02)
+    s3 = box("tmpSeat", (1.08, 0.30, 0.09), (0, -0.30, 0.28), seatM, 0.02)
+    pd = box("tmpPedal", (0.52, 0.26, 0.20), (0, 0.02, 0.12), MATS["MetalDark"], 0.02)
+    seats = join_into([s1, s2, s3, pd], "Seats")
+    # --- cổ + đầu: ống loft theo đường S ĐO từ ảnh 10/06 — đoạn dưới ngả sau,
+    # đoạn trên trả về trước, đầu nhô qua mũi thuyền (path trong mặt YZ) ---
+    path = [(-0.88, 0.36, 0.19), (-0.97, 0.58, 0.175), (-1.03, 0.82, 0.16),
+            (-1.02, 1.05, 0.145), (-0.95, 1.25, 0.13), (-0.87, 1.40, 0.012)]
+    rings = []
+    for i, (yy, zz, rr) in enumerate(path):
+        y0, z0 = path[max(0, i - 1)][0], path[max(0, i - 1)][1]
+        y1, z1 = path[min(len(path) - 1, i + 1)][0], path[min(len(path) - 1, i + 1)][1]
+        ty, tz = y1 - y0, z1 - z0
+        L = math.hypot(ty, tz) or 1.0; ty, tz = ty / L, tz / L
+        ring = []
+        for k in range(10):
+            a = k * 2 * math.pi / 10.0
+            ring.append((rr * math.cos(a), yy + rr * math.sin(a) * (-tz), zz + rr * math.sin(a) * ty))
+        ring.append(ring[0])  # khép vòng: _xh_grid không tự nối điểm cuối -> điểm đầu (hở seam = vệt tối trên cổ, đã vấp ở render XH-2 lượt 1)
+        rings.append(ring)
+    neck = _xh_grid("Neck", rings, white, closed=True)
+    skull = sphere("tmpSkull", 0.145, (0, -0.82, 1.455), white, scale=(0.85, 1.30, 1.0), seg=14, ring=10)
+    # XH-3+ (XH-2.1): BO mao do 3 num (render XH-2 doc nhu GA — Chung Hy bac 21:32 11/11);
+    # dau theo THIEN NGA CAM that: mo CAM DAI hon (0.46, phan thay ~0.35 so voi ~0.17 ban cu),
+    # huong xuong-truoc ~34 do duoi ngang (do anh 10/06: mo dai ~0.9x chieu dai dau, cup xuong),
+    # NUM DEN o goc mo tren tran (dac trung thien nga cam) + chot mong den o dau mo.
+    bk = cyl("tmpBeak", 0.014, 0.082, 0.46, (0, 0, 0), beak, verts=12, bevel=0.0)
+    bk.rotation_euler = (math.radians(123.5), 0, 0); bk.scale = (1.10, 0.85, 1.0)
+    bpy.ops.object.select_all(action='DESELECT'); bk.select_set(True)
+    bpy.context.view_layer.objects.active = bk
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    bk.location = (0, -1.161, 1.334); bk.select_set(False)
+    knob = sphere("tmpKnob", 0.052, (0, -0.94, 1.53), eye, scale=(0.85, 1.0, 1.15), seg=10, ring=8)
+    tip = sphere("tmpBeakTip", 0.021, (0, -1.345, 1.212), eye, scale=(1.0, 1.0, 0.8), seg=8, ring=6)
+    eyes = [sphere("tmpEye", 0.023, (sx * 0.108, -0.90, 1.485), eye, seg=8, ring=6) for sx in (-1, 1)]
+    neckhead = join_into([neck, skull, bk, knob, tip] + eyes, "NeckHead")
+    # --- mái che: 4 cột + tấm phẳng (ảnh 10: mái phẳng hơi nghiêng; đỉnh mái
+    # = 0,87 x chiều cao tới mào theo đo grounding ảnh 10 -> slab z 1.45) ---
+    poles = [cyl("tmpPole", 0.02, 0.02, 1.02, (sx * 0.58, yy, 0.93), pole, verts=8, bevel=0.0)
+             for sx in (-1, 1) for yy in (-0.08, 0.74)]
+    slab = box("tmpCanopy", (1.38, 1.06, 0.05), (0, 0.33, 1.45), canM, 0.01)
+    slab.rotation_euler = (0.045, 0, 0)
+    canopy = join_into(poles + [slab], "Canopy")
+    # --- phao cứu sinh cam bên hông (kế hoạch §6) ---
+    bu = torus("Buoy", 0.15, 0.048, (0.845, 0.28, 0.52), buoy, rot=(0, math.pi / 2, 0))
+    root = bpy.data.objects.new("SwanBoatPattern" if pattern else "SwanBoat", None)
+    bpy.context.collection.objects.link(root)
+    for p in (hull, interior, seats, neckhead, canopy, bu):
+        p.parent = root
+    return root
+
+def _xh_thuyta():
+    wht = MATS["ThuyTaWhite"]; roofM = MATS["ThuyTaRoof"]; gls = MATS["GlassDark"]
+    rail = MATS["WhiteConc"]; sign = MATS["TTSignBlue"]; door = MATS["TrimBrown"]
+    deck = box("tmpDeck", (10.8, 7.4, 0.30), (0, 0, 0.15), wht, 0.02)  # XH-2 đo lại ảnh 37: boong 11,5 -> 10,8 cho tỉ lệ ngang/cao (từ mặt nước) 1,76 ~ ảnh 1,69
+    low = box("tmpLow", (9.6, 5.6, 2.0), (0, 0.5, 1.30), wht, 0.02)
+    cor = box("tmpCor", (10.3, 6.3, 0.18), (0, 0.4, 2.39), wht, 0.01)
+    up = box("tmpUp", (7.2, 4.2, 1.40), (0, 0.8, 3.18), wht, 0.02)
+    base = join_into([deck, low, cor, up], "TTBase")
+    g1 = box("tmpGls", (9.7, 0.10, 0.95), (0, -2.33, 1.52), gls, 0.0)
+    g2 = box("tmpGls", (0.10, 5.5, 0.95), (-4.83, 0.5, 1.52), gls, 0.0)
+    g3 = box("tmpGls", (0.10, 5.5, 0.95), (4.83, 0.5, 1.52), gls, 0.0)
+    g4 = box("tmpGls", (7.3, 0.10, 0.80), (0, -1.33, 3.22), gls, 0.0)
+    glass = join_into([g1, g2, g3, g4], "TTGlass")
+    cols = [cyl("tmpCol", 0.09, 0.09, 1.45, (xx, -1.50, 3.20), wht, verts=10, bevel=0.0)
+            for xx in (-3.4, -1.15, 1.15, 3.4)]
+    cols = join_into(cols, "TTCols")
+    # mái 2 tầng kiểu chùa — profile LÕM đo từ ảnh 37/12: loft vòng chữ nhật,
+    # dốc thoải ở hiên rồi dựng dần lên đỉnh (thay pyramid thẳng) + đầu góc vênh
+    def hip(name, hx, hy, cy, z0, prof):
+        rows = []
+        for (s, dz) in prof:
+            x, y = hx * s, hy * s
+            ring = [(x, cy, z0 + dz), (x, cy + y, z0 + dz), (0.0, cy + y, z0 + dz),
+                    (-x, cy + y, z0 + dz), (-x, cy, z0 + dz), (-x, cy - y, z0 + dz),
+                    (0.0, cy - y, z0 + dz), (x, cy - y, z0 + dz), (x, cy, z0 + dz)]
+            rows.append(ring)
+        return _xh_grid(name, rows, roofM)
+    e1 = box("tmpEave", (10.8, 6.8, 0.14), (0, 0.3, 4.00), roofM, 0.01)
+    tips = []
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            t = box("tmpTip", (0.62, 0.62, 0.06), (sx * 5.25, 0.3 + sy * 3.25, 4.10), roofM, 0.0)
+            t.rotation_euler = (sy * 0.42, -sx * 0.10, 0)
+            tips.append(t)
+    py1 = hip("tmpHip1", 5.2, 3.2, 0.3, 4.07,
+              [(1.0, 0.0), (0.80, 0.15), (0.52, 0.35), (0.20, 0.53), (0.02, 0.65)])
+    e2 = box("tmpEave", (6.4, 4.0, 0.12), (0, 0.5, 4.75), roofM, 0.01)
+    py2 = hip("tmpHip2", 3.3, 1.95, 0.5, 4.81,
+              [(1.0, 0.0), (0.80, 0.12), (0.52, 0.26), (0.20, 0.39), (0.02, 0.49)])
+    fin = sphere("tmpFin", 0.09, (0, 0.5, 5.36), roofM, seg=10, ring=8)
+    roof = join_into([e1, py1, e2, py2, fin] + tips, "TTRoof")
+    # lan can boong: cọc + 2 thanh ngang, quây mặt hồ (-Y) + 2 hông, chừa mặt đảo
+    posts = []
+    for xx in [i * 1.056 - 5.28 for i in range(11)]:
+        posts.append(box("tmpPost", (0.05, 0.05, 0.72), (xx, -3.55, 0.66), rail, 0.0))
+    for sx in (-1, 1):
+        for yy in [i * 0.986 - 3.45 for i in range(8)]:
+            posts.append(box("tmpPost", (0.05, 0.05, 0.72), (sx * 5.32, yy, 0.66), rail, 0.0))
+    r1 = box("tmpRail", (10.70, 0.06, 0.055), (0, -3.55, 1.03), rail, 0.0)
+    r2 = box("tmpRail", (10.70, 0.06, 0.045), (0, -3.55, 0.70), rail, 0.0)
+    r3 = box("tmpRail", (0.06, 7.15, 0.055), (-5.32, 0, 1.03), rail, 0.0)
+    r4 = box("tmpRail", (0.06, 7.15, 0.055), (5.32, 0, 1.03), rail, 0.0)
+    r5 = box("tmpRail", (0.06, 7.15, 0.045), (-5.32, 0, 0.70), rail, 0.0)
+    r6 = box("tmpRail", (0.06, 7.15, 0.045), (5.32, 0, 0.70), rail, 0.0)
+    railing = join_into(posts + [r1, r2, r3, r4, r5, r6], "TTRailing")
+    pole = cyl("tmpSignPole", 0.045, 0.045, 3.4, (2.6, 0.4, 6.55), sign, verts=8, bevel=0.0)
+    board = box("tmpSignBoard", (1.7, 0.07, 0.55), (2.6, 0.4, 7.90), sign, 0.01)
+    signG = join_into([pole, board], "TTSign")
+    dr = box("tmpDoor", (0.95, 0.08, 1.70), (0, 3.32, 1.15), door, 0.01)
+    st = box("tmpStep", (1.30, 0.50, 0.12), (0, 3.45, 0.36), rail, 0.01)
+    doorG = join_into([dr, st], "TTDoor")
+    root = bpy.data.objects.new("ThuyTa", None)
+    bpy.context.collection.objects.link(root)
+    for p in (base, glass, cols, roof, railing, signG, doorG):
+        p.parent = root
+    return root
+
+def _xh_cherry():
+    trunk = MATS["Trunk"]
+    t1 = cyl("tmpTrunk", 0.09, 0.14, 1.15, (0, 0, 0.57), trunk, verts=10, bevel=0.01)
+    t2 = cyl("tmpBranch", 0.05, 0.07, 0.70, (0.22, 0.05, 1.30), trunk, verts=8, bevel=0.0)
+    t2.rotation_euler = (0, 0.5, 0)
+    tr = join_into([t1, t2], "CTTrunk")
+    c1 = sphere("tmpCan", 0.88, (0, 0, 1.95), MATS["CherryA"], scale=(1, 1, 0.82), seg=14, ring=10)
+    c2 = sphere("tmpCan", 0.58, (-0.55, 0.10, 1.58), MATS["CherryB"], seg=12, ring=8)
+    c3 = sphere("tmpCan", 0.60, (0.55, -0.08, 1.62), MATS["CherryA"], seg=12, ring=8)
+    c4 = sphere("tmpCan", 0.50, (0.10, 0.42, 1.72), MATS["CherryB"], seg=12, ring=8)
+    can = join_into([c1, c2, c3, c4], "CTCanopy")
+    root = bpy.data.objects.new("CherryTree", None)
+    bpy.context.collection.objects.link(root)
+    tr.parent = root; can.parent = root
+    return root
+
+def _xh_bridge():
+    # XH-3R: deck RONG 2.5 -> 3.2 (1,76 H — bang ti le XH-3R muc e; ban cu 1,37 H chat so voi nguoi game 1,82u)
+    deck = box("BridgeDeck", (3.2, 7.0, 0.16), (0, 0, 0.04), MATS["BridgeDeckMat"], 0.01)
+    parts = []
+    for sx in (-1, 1):
+        for yy in [i * 1.1 - 3.3 for i in range(7)]:
+            parts.append(box("tmpBPost", (0.05, 0.05, 0.55), (sx * 1.52, yy, 0.40), MATS["WhiteConc"], 0.0))
+        parts.append(box("tmpBRail", (0.06, 7.0, 0.05), (sx * 1.52, 0, 0.69), MATS["WhiteConc"], 0.0))
+        parts.append(box("tmpBRail", (0.06, 7.0, 0.045), (sx * 1.52, 0, 0.43), MATS["WhiteConc"], 0.0))
+    rails = join_into(parts, "BridgeRails")
+    root = bpy.data.objects.new("IslandBridge", None)
+    bpy.context.collection.objects.link(root)
+    deck.parent = root; rails.parent = root
+    return root
+
+def _xh_pine_umbrella():
+    """Thông Đà Lạt CHUẨN (lệnh Chung Hy 21:32 11/11): thân CAO THẲNG + tán
+    Ô/DẸT phân tầng — KHÔNG dùng thông nón. 3 đĩa tán dẹt chồng tầng, thân 5,2."""
+    tr = cyl("PUTTrunk", 0.13, 0.20, 5.2, (0, 0, 2.6), MATS["Trunk"], verts=10, bevel=0.01)
+    layers = []
+    for (r, z, m) in [(2.25, 5.05, "PineDark"), (1.72, 5.95, "PineMid"), (1.18, 6.70, "PineLight")]:
+        s = sphere("tmpPULayer", r, (0, 0, z), MATS[m], scale=(1, 1, 0.17), seg=16, ring=8)
+        layers.append(s)
+    can = join_into(layers, "PUCanopy")
+    root = bpy.data.objects.new("PineUmbrella", None)
+    bpy.context.collection.objects.link(root)
+    tr.parent = root; can.parent = root
+    return root
+
+def _xh_willow():
+    """Liễu rũ mép đảo (ảnh 37: liễu ôm 2 bên Thủy Tạ): thân ngắn + vòm tán +
+    tua rũ quanh vành (cone úp = sợi rũ, không phải thông nón)."""
+    tr = cyl("WTrunk", 0.11, 0.17, 1.6, (0, 0, 0.8), MATS["Trunk"], verts=10, bevel=0.01)
+    dome = sphere("tmpWDome", 1.5, (0, 0, 2.55), MATS["LeafGreen"], scale=(1.15, 1.15, 0.72), seg=14, ring=10)
+    strands = []
+    for k in range(9):
+        a = k * 2 * math.pi / 9.0 + 0.2
+        sx, sy = 1.55 * math.cos(a), 1.55 * math.sin(a)
+        c = cyl("tmpWStrand", 0.02, 0.17, 1.35, (sx, sy, 1.95), MATS["LeafGreen"], verts=7, bevel=0.0)
+        strands.append(c)
+    can = join_into([dome] + strands, "WCanopy")
+    root = bpy.data.objects.new("Willow", None)
+    bpy.context.collection.objects.link(root)
+    tr.parent = root; can.parent = root
+    return root
+
+def build_lake():
+    clear_scene()
+    # vật liệu XH-2 (tuyến tính từ hex sRGB đo thật — ghi hex ở comment)
+    M("SwanWhite",   (0.745, 0.741, 0.764), 0.55)   # thân trắng #e0dfe2 (§3)
+    M("SwanInner",   (0.86, 0.85, 0.83), 0.7)       # lòng khoang FRP trắng
+    M("SwanBeak",    (0.93, 0.48, 0.02), 0.5)       # mỏ vàng cam (ảnh 10)
+    M("SwanCrest",   (0.66, 0.03, 0.015), 0.55)     # (XH-3+: KHONG con dung — mao do da bo khoi dau thuyen theo XH-2.1; giu dinh nghia de rollback)
+    M("SwanEye",     (0.02, 0.02, 0.02), 0.5)       # mắt chấm đen
+    M("WingTeal",    (0.02, 0.17, 0.16), 0.6)       # cánh sơn teal đậm (ảnh 06)
+    M("BuoyOrange",  (0.81, 0.37, 0.05), 0.6)       # phao cam #e8a33d (§11.3)
+    M("CanopyWhite", (0.90, 0.90, 0.88), 0.8)       # mái trắng (ảnh 10)
+    M("SeatGreen",   (0.06, 0.36, 0.13), 0.7)       # ghế xanh lá (ảnh 10)
+    M("CanopySky",   (0.212, 0.715, 0.972), 0.8)    # mái xanh nhạt #7edcfc (§11.3)
+    M("SeatPink",    (0.972, 0.080, 0.276), 0.7)    # ghế hồng #fc508f (§11.3)
+    M("ThuyTaWhite", (0.887, 0.871, 0.833), 0.9)    # tường trắng #f2f0eb (§11.3)
+    M("ThuyTaRoof",  (0.428, 0.535, 0.605), 0.85)   # mái #afc1cc (§11.3)
+    M("TTSignBlue",  (0.0, 0.14, 0.64), 0.6)        # cột biển #0268d0 (§11.3)
+    M("BridgeDeckMat", (0.72, 0.77, 0.77), 0.9)     # sàn cầu #dde2e2 như lát đường dạo
+    M("CherryA",     (0.932, 0.578, 0.689), 0.95)   # tán mai anh đào hồng nhạt
+    M("CherryB",     (0.855, 0.345, 0.530), 0.95)   # tán hồng đậm
+    M("SwanPattern", (0.97, 0.96, 0.94), 0.6)       # nền thân hoa văn — web gắn canvas hoa (S6) theo tên vật liệu này
+    _xh_boat(False)
+    _xh_boat(True)
+    _xh_thuyta()
+    _xh_cherry()
+    _xh_bridge()
+    _xh_pine_umbrella()
+    _xh_willow()
+    export("lake")
+
 build_character()
 build_stall()
 build_market()
@@ -1376,4 +1678,5 @@ build_hotels()
 build_shop()
 build_bridge()
 build_stairs()
+build_lake()
 print("ALL DONE")
