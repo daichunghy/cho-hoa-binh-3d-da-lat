@@ -6626,6 +6626,13 @@ function tickV43(dt, t){
       : '🛵 <b>Xe đang đỗ</b> — còn ' + Math.ceil(Math.max(0, rentParked)) + 's thuê (tới gần xe bấm E để đi tiếp)';
     if(rentParked <= 0){ rentParked = 0; expireRide(); }
   }
+  if(boating > 0){ // XH-4: đồng hồ thuê THUYỀN trên HUD (cùng chip với xe; đang trên thuyền thì chip thuyền thắng) — hết giờ thuyền TỰ TRÔI VỀ BẾN như xe tự về bãi
+    boating -= dt;
+    chip = boating <= 10
+      ? '⏳ <b>Sắp hết giờ thuê thuyền!</b> — còn ' + Math.ceil(Math.max(0, boating)) + 's'
+      : '🛶 <b>Đang chèo thuyền thiên nga</b> — còn ' + Math.ceil(Math.max(0, boating)) + 's (về gần cầu bến bấm E để xuống)';
+    if(boating <= 0){ boating = 0; if(boatOn && !boatAuto) startBoatAuto(); }
+  } else if(boatAuto) chip = '⏰ <b>Hết giờ thuê!</b> — thuyền đang tự trôi về bến…';
   { const rbBtn = document.getElementById('btnReturnBike'); // V5.2: nút Trả xe chỉ hiện khi đang có thuê
     if(rbBtn) rbBtn.style.display = (riding > 0 || rentParked > 0) ? '' : 'none'; }
   if(rentReturn > 0){ // V5.2: xe tự lăn về bãi (~1.6s) thay vì biến mất đột ngột
@@ -7942,6 +7949,8 @@ function interact(){
   else if(currentInteract.type === 'rent') toggleRide();
   else if(currentInteract.type === 'ride') parkBike(); // V5.2: E khi đang cưỡi = xuống xe, xe ĐỖ LẠI tại chỗ
   else if(currentInteract.type === 'remount') remountBike(); // V5.2: cưỡi tiếp trong giờ thuê còn lại
+  else if(currentInteract.type === 'boatrent') toggleBoat(); // XH-4: thuê thuyền thiên nga tại ki-ốt bến hồ (khối XH-4 cuối file)
+  else if(currentInteract.type === 'boatride') tryReturnBoat(); // XH-4: E khi đang chèo — chỉ xuống được khi về gần slip bến
 }
 let dragging = false, lastPX = 0, lastPY = 0;
 const cvs = renderer.domElement;
@@ -7982,17 +7991,6 @@ function collide(px, pz){
       const m = Math.min(dxl, dxr, dzl, dzr);
       if(m === dxl) px = c.minX - r; else if(m === dxr) px = c.maxX + r;
       else if(m === dzl) pz = c.minZ - r; else pz = c.maxZ + r;
-    }
-  }
-  // HẠNG MỤC D (XH-4): Chặn đi bộ xuống mặt nước Hồ Xuân Hương khi không ở trên thuyền thiên nga (cầu/đảo/bến có groundH >= 5.2 vẫn đi bình thường)
-  if(!window.__BOAT_ACTIVE && px <= -223.8 && pz >= 35.8 && pz <= 196.2 && groundH(px, pz) < 5.2){
-    const ox = playerState.x, oz = playerState.z;
-    if(groundH(ox, oz) >= 5.2){
-      if(groundH(px, oz) >= 5.2) pz = oz;
-      else if(groundH(ox, pz) >= 5.2) px = ox;
-      else { px = ox; pz = oz; }
-    } else {
-      pz = Math.min(pz, 35.6);
     }
   }
   px = THREE.MathUtils.clamp(px, -566, 90);
@@ -8040,7 +8038,8 @@ function animate(){
   const rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
   let mx = fx * iy + rx * ix, mz = fz * iy + rz * ix;
   const oldY = playerState.y;
-  if(moving){
+  if(boatOn){ tickBoat(dt, t, ix, iy); } // XH-4: đang trên thuyền — vật lý thuyền ghi thẳng playerState, bỏ qua đi bộ
+  else if(moving){
     let nx = playerState.x + mx * speed * dt;
     let nz = playerState.z + mz * speed * dt;
     if(buffs.leg && groundH(nx, nz) > groundH(playerState.x, playerState.z)) { nx = playerState.x + mx * speed * 1.3 * dt; nz = playerState.z + mz * speed * 1.3 * dt; }
@@ -8050,11 +8049,13 @@ function animate(){
       if(onStairs || indoor || groundH(nx, nz) - playerState.y > 1.1){ nx = playerState.x; nz = playerState.z; }
     }
     const res = collide(nx, nz);
-    playerState.x = res[0]; playerState.z = res[1];
+    const gres = xh4WaterGuard(res[0], res[1]); // XH-4: LUẬT MẶT NƯỚC — đi bộ không đi được trên mặt hồ (chặn ở mép như vực, trượt theo trục còn trống; áp cho cả đi bộ + cưỡi xe)
+    playerState.x = gres[0]; playerState.z = gres[1];
     playerState.face = angLerp(playerState.face, Math.atan2(mx, mz), Math.min(1, dt*12));
     walkPhase += dt * speed * 2.1;
   }
   let targetY = groundH(playerState.x, playerState.z);
+  if(boatOn) targetY = boatState.y; // XH-4: trên thuyền — cao độ = mặt ghế thuyền (mặt nước + bobbing), không phải đáy hồ 4,9
   const onElevated = (playerState.x >= 14.5 && playerState.x <= 20.5 && playerState.z >= -30 && playerState.z <= 9)
     || (playerState.x >= 14 && playerState.x <= 21 && playerState.z >= 7 && playerState.z <= 12)
     || (playerState.x >= 21 && playerState.x <= 33 && playerState.z >= 7 && playerState.z <= 12.2); // V4.7: dưới hành lang đông
@@ -8070,8 +8071,8 @@ function animate(){
   if(now < eatUntil){
     const L = player.userData.limbs;
     L.lArm.rotation.x = -2.1; L.rArm.rotation.x = -2.1;
-  } else if(moving && !riding) swingLimbs(player, walkPhase, 0.55);
-  else if(!riding) { const L = player.userData.limbs; L.lLeg.rotation.x *= 0.8; L.rLeg.rotation.x *= 0.8; L.lArm.rotation.x *= 0.8; L.rArm.rotation.x *= 0.8; }
+  } else if(moving && !riding && !boatOn) swingLimbs(player, walkPhase, 0.55);
+  else if(!riding && !boatOn) { const L = player.userData.limbs; L.lLeg.rotation.x *= 0.8; L.rLeg.rotation.x *= 0.8; L.lArm.rotation.x *= 0.8; L.rArm.rotation.x *= 0.8; } // XH-4: trên thuyền tickBoat giữ pose đạp, không vung tay chân đi bộ
 
   const dist = 12;
   const tx = playerState.x, ty = playerState.y + 2.1, tz = playerState.z;
@@ -8166,7 +8167,7 @@ function animate(){
       if(st.spIdle) st.spIdle(t, st); // NPC-SPECIAL-1: idle riêng theo vai (gật/gõ bàn/quét/ngó quanh)
     } else if(st.kind === 'chat'){
       const cyc = (t * 0.13 + st.ph) % 1;
-      L.rArm.rotation.x = cyc < 0.16 ? -1.85 + Math.sin(t * 7 + st.ph) * 0.16 : -0.18;
+      L.rArm.rotation.x = (st.g.userData.__xh4WaveUntil || 0) > t ? -2.2 + Math.sin(t * 9 + st.ph) * 0.25 : (cyc < 0.16 ? -1.85 + Math.sin(t * 7 + st.ph) * 0.16 : -0.18); // XH-4: người bán vé vẫy tay khi thuyền rời/về bến (tickBoat/disembarkBoat đặt __xh4WaveUntil)
       if(st.head) st.head.rotation.x = Math.sin(t * 0.7 + st.ph) * 0.05;
     }
   }
@@ -8298,6 +8299,7 @@ function animate(){
     if(oNpc && oNpc.g.visible){ const dOrd = Math.hypot(playerState.x - oNpc.g.position.x, playerState.z - oNpc.g.position.z);
       if(dOrd < 3.2 && (!currentInteract || dOrd < currentInteract.d)) currentInteract = { type:'order', d:dOrd }; } }
   if(riding > 0) currentInteract = { type:'ride', d:0 };
+  else if(boatOn) currentInteract = { type:'boatride', d:0 }; // XH-4: đang chèo — E = trả thuyền (tryReturnBoat tự nhắc về bến nếu chưa gần slip)
   else {
     for(const pp of photoPts){
       if(!photoVisible(pp)) continue;
@@ -8317,6 +8319,8 @@ function animate(){
     }
     const npcN = nearestNpc(2.7);
     if(npcN && (!currentInteract || npcN.d < currentInteract.d)) currentInteract = { type:'chat', d:npcN.d, g:npcN.g };
+    { const dBt = Math.hypot(playerState.x - BOAT_RENT_PT.x, playerState.z - BOAT_RENT_PT.z); // XH-4: vùng ki-ốt/bến — 'boatrent' thắng 'chat' (người bán vé CHÍNH LÀ người cho thuê) và thắng các điểm xa hơn
+      if(dBt < 4.6 && (!currentInteract || currentInteract.type === 'chat' || dBt < currentInteract.d)) currentInteract = { type:'boatrent', d:dBt }; }
   }
   if(currentInteract && !anyModalOpen()){
     ctxEl.style.display = 'block';
@@ -8330,6 +8334,8 @@ function animate(){
     else if(currentInteract.type === 'rent') ctxEl.innerHTML = '🏍 <b>E</b> Thuê xe máy dạo chợ — ' + (levelFromXp(G.xp) >= 5 ? 'MIỄN PHÍ cho Cấp 5!' : '30 Xu / 90 giây');
     else if(currentInteract.type === 'ride') ctxEl.innerHTML = '🏍 <b>E</b> Xuống xe (xe đỗ lại tại đây)';
     else if(currentInteract.type === 'remount') ctxEl.innerHTML = '🏍 <b>E</b> Cưỡi tiếp — còn ' + Math.ceil(rentParked) + 's thuê';
+    else if(currentInteract.type === 'boatrent') ctxEl.innerHTML = '🛶 <b>E</b> Thuê thuyền thiên nga — 30 Xu / 5 phút';
+    else if(currentInteract.type === 'boatride') ctxEl.innerHTML = boatAuto ? '🛶 Thuyền đang tự về bến…' : (boatNearSlip() ? '🛶 <b>E</b> Trả thuyền — bước lên cầu bến' : '🛶 Đang chèo — về gần cầu bến rồi bấm <b>E</b> để xuống thuyền');
     else ctxEl.innerHTML = stageState.performing ? '<b>E</b> Góc Hát Đà Lạt đang diễn — nghe hát / tặng Xu 🎶' : '<b>E</b> Góc Hát Đà Lạt (diễn 17:00–21:00)';
   } else ctxEl.style.display = 'none';
 
@@ -9087,14 +9093,12 @@ xh3Couple(31.7, 1.02, 0); xh3Couple(29.3, 0.98, 1); xh3Couple(31.7, 1.06, 1); xh
 function xh3Photographer(x, z, ry){
   const p = crowdPerson(1.0, 'crowd'); dressWarmXH3(p); npcHoldPhone(p);
   p.position.set(x, groundH(x, z), z); p.rotation.y = ry;
-  const st = addStatic(p, 'all', 'special');
-  st.rank = 0;
-  st.spIdle = (t, s) => {
+  regSpecial('xh3photo' + x, p, (t, s) => {
     const L = s.limbs; if(!L) return;
     L.rArm.rotation.x = -1.5 + Math.sin(t * 0.8 + s.ph) * 0.05;
     L.lArm.rotation.x = -1.25 + Math.cos(t * 0.6 + s.ph) * 0.05;
     if(s.head) s.head.rotation.x = 0.12;
-  };
+  });
 }
 xh3Photographer(-245.6, 34.7, 0.35);   // đầu cầu đảo, chụp đảo/thuyền
 xh3Photographer(-317.2, 40.6, -0.15);  // trên thân cầu Y -318, chụp ra hồ
@@ -9402,9 +9406,221 @@ tickWater = function(t){
   XH4C_LAMP_STREAK_MAT.opacity = isNight ? 0.32 + Math.sin(t * 1.7) * 0.04 : 0;
 };
 
-// ================= HẠNG MỤC D (XH-4): VÒNG CHƠI ĐẠP VỊT THIÊN NGA TRÊN HỒ XUÂN HƯƠNG + CHI TIẾT NHÀ THỦY TẠ =================
+// ================= XH-4 (12/11): ĐẠP VỊT THIÊN NGA CHƠI ĐƯỢC + LUẬT MẶT NƯỚC =================
+// Bám khung thuê xe V5.2 (toggleRide/parkBike/expireRide): thuê ở ki-ốt -> đồng hồ HUD trong
+// tickV43 -> hết giờ tự về bến (như xe tự về bãi). Trạng thái thuê KHÔNG lưu vào save (như xe).
+// Mũi thuyền = local +Z (cổ/đầu ở Blender -Y -> glTF +Z; khớp đặt vòng cung đảo XH-2:
+// forward = (sin h, cos h) voi h = rotation.y). Ghe: mat ghe Blender z 0,345 -> origin nguoi
+// choi = mat nuoc + 0,37 (idiom tickSit: origin ~ mat ghe + 0,03, ghe ho yOff 0,53/0,5).
+const BOAT_PRICE = 30, BOAT_RENT_SEC = 300;                          // khoa KE_HOACH §7 + XH-3S: 30 Xu / 5 phut
+const BOAT_RENT_PT = { x:-259, z:33.6 };                             // diem thue: dau cau ben, canh ki-ot ve (-258,5, 30,3)
+const BOAT_ANCHOR = { x:-259, z:39.3, h:Math.PI };                   // neo trong slip (vi tri SwanBoatPlayer cua XH-2)
+const BOAT_SLIP = { x:-259, z:41.0 };                                // tam vung tra thuyen (trong slip, giua 2 ngon cau)
+const ISLE_C = { x:-250, z:58 };                                     // tam dao Thuy Ta (dia R15 groundH)
+let boating = 0, boatOn = false, boatAuto = false, boatParkT = 0;    // dong ho thue (s) / dang tren thuyen / tu troi ve ben / thuyen dang luot ve neo sau khi tra
+let boatWaved = false, boatAutoT = 0, boatThudT = 0, boatPaddleT = 0, guardSplashT = 0, boatWakeT = 0;
+const boatState = { x:BOAT_ANCHOR.x, z:BOAT_ANCHOR.z, h:BOAT_ANCHOR.h, v:0, y:5.27, pedal:0 };
+const sfxSplash = () => tone(240, 70, 0.22, 'sine', 0.07);           // toe nuoc (bus tone/masterGain chung voi ambience)
+const sfxThud = () => tone(120, 55, 0.12, 'sine', 0.09);             // dung bien "coc" mem
+{ // SwanBoatPlayer phai DONG: khoi dong bang V5.4-D da khoa matrixAutoUpdate cua vat tinh worldGroup
+  if(LAKE_PLAYER_BOAT) LAKE_PLAYER_BOAT.traverse(o => { o.matrixAutoUpdate = true; });
+}
+// --- vong gon WAKE sau duoi thuyen (pool rieng; KHONG dung WATER_FX.rings cua dai phun) ---
+const boatWakes = [];
 {
-  // Làm giàu kiến trúc Nhà Thủy Tạ trên đảo (-262, 5.47, 58): lan can boong tàu trắng, phao cứu sinh, bàn dù cà phê nhìn ra mặt hồ
+  const wgeo = new THREE.RingGeometry(0.42, 0.56, 22);
+  for(let i = 0; i < 14; i++){
+    const m = new THREE.Mesh(wgeo, new THREE.MeshBasicMaterial({ color:0xe8f2f4, transparent:true, opacity:0, depthWrite:false }));
+    m.rotation.x = -Math.PI / 2; m.position.y = 4.945; m.visible = false; m.renderOrder = 4; worldGroup.add(m);
+    boatWakes.push({ m, age: 99, big: 1 });
+  }
+}
+let boatWakeIdx = 0;
+function spawnBoatWake(x, z, big){
+  const w = boatWakes[boatWakeIdx++ % boatWakes.length];
+  w.m.position.x = x; w.m.position.z = z; w.age = 0; w.big = big ? 1.6 : 1; w.m.visible = true;
+}
+// --- LUAT MAT NUOC cho nguoi di bo: "nuoc" = trong khung mat nuoc mo rong VA groundH < 5,0
+// (dao/cau/cau ben/san noi groundH tra 5,5 -> khong phai nuoc). Chan o mep nhu vuc: thu tung
+// truc (truot doc mep), ca 2 truc deu nuoc thi dung yen + toe nuoc nhe o diem dinh buoc.
+function xh4OnWater(x, z){ return x >= -560 && x <= -224 && z >= 36 && z <= 196 && groundH(x, z) < 5.0; }
+function xh4WaterGuard(nx, nz){
+  if(!xh4OnWater(nx, nz)) return [nx, nz];
+  let rx, rz;
+  if(!xh4OnWater(nx, playerState.z)){ rx = nx; rz = playerState.z; }
+  else if(!xh4OnWater(playerState.x, nz)){ rx = playerState.x; rz = nz; }
+  else { rx = playerState.x; rz = playerState.z; }
+  const now = performance.now() / 1000;
+  if(now > guardSplashT){ guardSplashT = now + 0.8; spawnBoatWake(nx, nz, true); sfxSplash(); }
+  return [rx, rz];
+}
+// --- BIEN THUYEN (khoa brief XH-4, kiem bang test rieng): day ra khoi vung cam (truot doc bien)
+const BOAT_RB = 1.05; // ban kinh than thuyen khi va (nua be ngang 0,85 + bien an toan)
+const BOAT_RECTS = [ // [minX,maxX,minZ,maxZ] vat cung tren mat nuoc
+  [-266, -262, 36, 42.5],    // ngon tay cau ben
+  [-256, -252, 36, 42.5],    // ngon dong cau ben
+  [-266, -252, 36, 37.2],    // loi noi bo (dau bac slip)
+  [-561.2, -552.8, 60, 130], // dap Ong Dao (solid -557,95,4.2,35 cua XH-1.5) — phan giai mau thuan voi bien tay -556: trong doan dap, tam thuyen phai o dong cua mat dap -553
+  [-282.9, -281.1, 36, 41],  // than cau Y -282 (mesh 1,8 rong)
+  [-318.9, -317.1, 36, 41],  // than cau Y -318
+];
+const BOAT_SEGS = []; // canh cheo cau Y: [x0,z0,x1,z1,ban kinh ne] — khop rect xoay trong groundH (khop (cx,41), dai 2,6, ±0,62 rad)
+for(const cx of [-282, -318]) for(const a of [0.62, -0.62])
+  BOAT_SEGS.push([cx, 41, cx + Math.sin(a) * 2.6, 41 + Math.cos(a) * 2.6, 1.5]);
+function xh4IsleClamp(nx, nz){
+  const dx = nx - ISLE_C.x, dz = nz - ISLE_C.z, d = Math.hypot(dx, dz);
+  if(d >= 17) return [nx, nz, false];
+  if(d > 0.01) return [ISLE_C.x + dx * 17 / d, ISLE_C.z + dz * 17 / d, true];
+  return [ISLE_C.x, ISLE_C.z + 17, true];
+}
+function xh4BoatResolve(nx, nz){
+  let hit = false;
+  if(nx < -556){ nx = -556; hit = true; } else if(nx > -228){ nx = -228; hit = true; }   // bien mat nuoc khoa
+  if(nz < 38){ nz = 38; hit = true; } else if(nz > 192){ nz = 192; hit = true; }          // ke bac / taluy nam
+  { const r = xh4IsleClamp(nx, nz); nx = r[0]; nz = r[1]; if(r[2]) hit = true; }          // dao r >= 17 (chan luon cau dao: moi diem cua dai cau deu nam trong r 17)
+  for(const r of BOAT_RECTS){
+    if(nx > r[0] - BOAT_RB && nx < r[1] + BOAT_RB && nz > r[2] - BOAT_RB && nz < r[3] + BOAT_RB){
+      const dxl = nx - (r[0] - BOAT_RB), dxr = (r[1] + BOAT_RB) - nx;
+      const dzl = nz - (r[2] - BOAT_RB), dzr = (r[3] + BOAT_RB) - nz;
+      const m = Math.min(dxl, dxr, dzl, dzr);
+      if(m === dxl) nx = r[0] - BOAT_RB; else if(m === dxr) nx = r[1] + BOAT_RB;
+      else if(m === dzl) nz = r[2] - BOAT_RB; else nz = r[3] + BOAT_RB;
+      hit = true;
+    }
+  }
+  for(const s of BOAT_SEGS){
+    const vx = s[2] - s[0], vz = s[3] - s[1];
+    const tt = Math.max(0, Math.min(1, ((nx - s[0]) * vx + (nz - s[1]) * vz) / (vx * vx + vz * vz)));
+    const cxp = s[0] + vx * tt, czp = s[1] + vz * tt;
+    const dx = nx - cxp, dz = nz - czp, d = Math.hypot(dx, dz);
+    if(d < s[4]){ if(d > 0.01){ nx = cxp + dx * s[4] / d; nz = czp + dz * s[4] / d; } hit = true; }
+  }
+  for(const b of LAKE_BOATS){ // thuyen neo tinh: vong tranh tron r 2,35 (duoi tinh trang tri, khong khoa cung)
+    if(b === LAKE_PLAYER_BOAT) continue;
+    const dx = nx - b.position.x, dz = nz - b.position.z, d = Math.hypot(dx, dz);
+    if(d < 2.35){ if(d > 0.01){ nx = b.position.x + dx * 2.35 / d; nz = b.position.z + dz * 2.35 / d; } hit = true; }
+  }
+  { const r = xh4IsleClamp(nx, nz); nx = r[0]; nz = r[1]; if(r[2]) hit = true; }          // clamp lai dao sau khi thuyen neo day ( tranh vong lap 16,85<->17)
+  if(nx < -556) nx = -556; else if(nx > -228) nx = -228;
+  if(nz < 38) nz = 38; else if(nz > 192) nz = 192;
+  return [nx, nz, hit];
+}
+function boatNearSlip(){ return Math.hypot(boatState.x - BOAT_SLIP.x, boatState.z - BOAT_SLIP.z) < 4.6; }
+function xh4SellerWave(t){
+  for(const st of statics){ if(!st.g) continue; const p = st.g.position;
+    if(Math.abs(p.x + 258.85) < 0.6 && Math.abs(p.z - 30.3) < 0.6) st.g.userData.__xh4WaveUntil = t + 2.4; }
+}
+function toggleBoat(){
+  if(boatOn){ tryReturnBoat(); return; }
+  if(singing) stopSing(true);
+  if(sitting > 0) sitting = 0;
+  if(state.xu < BOAT_PRICE){ toast('🛶 Thuê thuyền cần 30 Xu — đạp vịt hồ Xuân Hương 30 Xu / 5 phút đó!'); return; }
+  state.xu -= BOAT_PRICE;
+  boating = BOAT_RENT_SEC; boatOn = true; boatAuto = false; boatParkT = 0; boatWaved = false;
+  boatState.x = BOAT_ANCHOR.x; boatState.z = BOAT_ANCHOR.z; boatState.h = BOAT_ANCHOR.h; boatState.v = 0;
+  if(LAKE_PLAYER_BOAT){ LAKE_PLAYER_BOAT.position.set(boatState.x, 4.9, boatState.z); LAKE_PLAYER_BOAT.rotation.set(0, boatState.h, 0); }
+  playerState.x = boatState.x - Math.sin(boatState.h) * 0.45;
+  playerState.z = boatState.z - Math.cos(boatState.h) * 0.45;
+  playerState.face = boatState.h;
+  sfxCoin(); save(); updateHUD();
+  toast('🛶 Lên thuyền! W đạp tới · S lùi · A/D lái — về gần cầu bến bấm E để xuống (-30 Xu)');
+}
+function startBoatAuto(){
+  boatAuto = true; boatAutoT = 0;
+  toast('⏰ Hết giờ thuê — thuyền tự trôi về bến, ngồi yên nhé!');
+}
+function disembarkBoat(){
+  boatOn = false; boatAuto = false; boating = 0; boatParkT = 1.6; boatState.v = 0;
+  playerState.x = -259; playerState.z = 34.9; playerState.face = Math.PI; playerState.y = 5.5; // len duong dao ngay truoc cau ben (groundH 5,5)
+  sfxSplash();
+}
+function tryReturnBoat(){
+  if(!boatOn) return;
+  if(boatAuto){ toast('🛶 Thuyền đang tự trôi về bến — sắp tới rồi!'); return; }
+  if(!boatNearSlip()){ toast('🛶 Về gần cầu bến (cầu gỗ phía bắc) rồi bấm E để xuống thuyền nhé'); return; }
+  disembarkBoat();
+  toast('🛶 Đã trả thuyền — cảm ơn bạn, hẹn gặp lại ở bến thiên nga!');
+}
+// Vat ly thuyen: goi tu animate (nhanh movement) khi boatOn. ix/iy = input camera nhu di bo:
+// iy = ga dap (W toi / S lui), ix = lai. Toc do toi da 2,2u/s, lai ~35°/s hieu qua theo da
+// (toi thieu 35% de con xoay duoc trong slip hep), lui thi lai dao chieu nhu thuyen that.
+function tickBoat(dt, t, ix, iy){
+  const B = boatState;
+  let inX = ix, inY = iy;
+  if(boatAuto){
+    boatAutoT += dt;
+    const dx = BOAT_SLIP.x - B.x, dz = BOAT_SLIP.z - B.z, dist = Math.hypot(dx, dz);
+    if(dist < 2.0 || boatAutoT > 300){ if(boatAutoT > 300){ B.x = BOAT_SLIP.x; B.z = BOAT_SLIP.z; } disembarkBoat(); toast('🛶 Thuyền đã về bến — hẹn gặp lại!'); return; }
+    // Lai thang ve dich; khi cham vong r17 cua dao, resolve day radial ra ngoai -> thuyen truot
+    // doc vong cung ve phia dich (marble steering — hoi tu cho vat can loi, khong can nhanh re rieng).
+    const want = Math.atan2(dx, dz);
+    let dh = want - B.h; while(dh > Math.PI) dh -= Math.PI * 2; while(dh < -Math.PI) dh += Math.PI * 2;
+    inX = THREE.MathUtils.clamp(dh * 1.7, -1, 1);
+    inY = THREE.MathUtils.clamp(dist / 7, 0.3, 0.85) * (Math.abs(dh) > 2.4 ? -0.35 : 1);
+  }
+  const vt = inY * (inY >= 0 ? 2.2 : 1.15);
+  const acc = vt > B.v ? 1.35 : 2.1; // dap: tang toc mem; tha ga: ma sat nuoc ham nhanh hon
+  B.v += THREE.MathUtils.clamp(vt - B.v, -acc * dt, acc * dt);
+  if(!boatAuto && Math.abs(inY) < 0.05 && Math.abs(B.v) < 0.02) B.v = 0;
+  const eff = 0.35 + 0.65 * Math.min(1, Math.abs(B.v) / 1.6);
+  B.h += inX * 0.61 * eff * (B.v < -0.05 ? -1 : 1) * dt;
+  let nx = B.x + Math.sin(B.h) * B.v * dt;
+  let nz = B.z + Math.cos(B.h) * B.v * dt;
+  const rs = xh4BoatResolve(nx, nz); nx = rs[0]; nz = rs[1];
+  if(rs[2]){ if(Math.abs(B.v) > 1.1 && t > boatThudT){ boatThudT = t + 0.5; sfxThud(); spawnBoatWake(nx, nz, true); } B.v *= 0.45; }
+  B.x = nx; B.z = nz;
+  const bobY = 4.9 + Math.sin(t * 1.6 + B.x * 0.045 + B.z * 0.03) * 0.028;
+  B.y = bobY + 0.37;
+  const bm = LAKE_PLAYER_BOAT;
+  if(bm){
+    bm.position.set(B.x, bobY, B.z); bm.rotation.y = B.h;
+    bm.rotation.z = Math.sin(t * 1.25 + 1) * 0.012 - inX * Math.min(1, Math.abs(B.v) / 2.2) * 0.03;
+    bm.rotation.x = Math.sin(t * 1.7) * 0.006 - B.v * 0.010;
+  }
+  playerState.x = B.x - Math.sin(B.h) * 0.45;   // ghe dap: local (0, -0,45) sau tam thuyen (mui +Z)
+  playerState.z = B.z - Math.cos(B.h) * 0.45;
+  playerState.face = B.h;
+  B.pedal += dt * (Math.abs(B.v) > 0.15 ? 2.2 + Math.abs(B.v) * 2.2 : 0);
+  const L = player.userData.limbs;
+  if(L){ const pa = Math.sin(B.pedal * 3.2);
+    L.lLeg.rotation.x = -1.12 + pa * 0.38; L.rLeg.rotation.x = -1.12 - pa * 0.38;
+    L.lArm.rotation.x = -0.62 + pa * 0.07; L.rArm.rotation.x = -0.62 - pa * 0.07; }
+  boatWakeT -= dt;
+  if(Math.abs(B.v) > 0.55 && boatWakeT <= 0){ boatWakeT = 0.30; spawnBoatWake(B.x - Math.sin(B.h) * 1.35, B.z - Math.cos(B.h) * 1.35, false); }
+  boatPaddleT -= dt;
+  if(Math.abs(inY) > 0.3 && Math.abs(B.v) > 0.5 && boatPaddleT <= 0){ boatPaddleT = 0.95; tone(300, 90, 0.16, 'sine', 0.035); } // tieng dap nuoc nhe qua bus tone chung
+  if(!boatWaved && !boatAuto && B.z > 45.5){ boatWaved = true; xh4SellerWave(t); } // thuyen vua roi slip: ban ve vay tay
+}
+// --- tick XH-4 boc NGOAI CUNG chuoi tickWater: cap nhat wake + thuyen neo luot ve slip sau khi tra ---
+let _xh4BoatLT = null;
+const _xh4BoatTW = tickWater;
+tickWater = function(t){
+  _xh4BoatTW(t);
+  const dt = Math.min(0.1, Math.max(0, t - (_xh4BoatLT === null ? t : _xh4BoatLT))); _xh4BoatLT = t;
+  if(dt <= 0) return;
+  for(const w of boatWakes){
+    if(w.age > 1.7){ w.m.visible = false; continue; }
+    w.age += dt;
+    const f = Math.min(1, w.age / 1.7), sc = (0.7 + f * 2.6) * w.big;
+    w.m.scale.set(sc, sc, 1); w.m.material.opacity = 0.42 * (1 - f);
+  }
+  if(boatParkT > 0 && !boatOn){ // sau khi tra: thuyen tu luot ve neo trong slip (idiom rentReturn cua xe)
+    boatParkT -= dt;
+    const k = Math.min(1, dt * 1.5);
+    boatState.x += (BOAT_ANCHOR.x - boatState.x) * k;
+    boatState.z += (BOAT_ANCHOR.z - boatState.z) * k;
+    boatState.h = angLerp(boatState.h, BOAT_ANCHOR.h, Math.min(1, dt * 2.5));
+    if(boatParkT <= 0){ boatState.x = BOAT_ANCHOR.x; boatState.z = BOAT_ANCHOR.z; boatState.h = BOAT_ANCHOR.h; }
+    if(LAKE_PLAYER_BOAT){ LAKE_PLAYER_BOAT.position.set(boatState.x, 4.9 + Math.sin(t * 1.6) * 0.02, boatState.z); LAKE_PLAYER_BOAT.rotation.y = boatState.h; }
+  }
+};
+
+
+// ================= MERGE-ARGON (12/11): PHẦN GIỮ LẠI TỪ BẢN AI STUDIO (commit 3ebaca0) =================
+// Hệ thuyền riêng của Argon (startSwanBoat/stopSwanBoat/boatWaterValid/BOAT_TIME/window.__BOAT_SYS +
+// chặn nước trong collide) đã GỠ SẠCH — game chạy hệ thuyền XH-4 ở trên. Phần Argon còn lại ở đây:
+// trang trí Thủy Tạ + 2 thuyền NPC dạo hồ + thanh Đi Nhanh + nút Về Bến (nối vào hệ XH-4).
+{ // Trang trí Nhà Thủy Tạ trên đảo (-262, 5.47, 58) — Argon: lan can boong tàu trắng, phao cứu sinh, bàn dù cà phê
   const ttDeco = new THREE.Group(); ttDeco.position.set(-262, 5.47, 58); worldGroup.add(ttDeco);
   for(const dz of [-4.2, -2.1, 0, 2.1, 4.2]){
     box(0.06, 0.85, 0.06, 0xf5f5f0, -4.1, 0.42, dz, ttDeco, false);
@@ -9417,277 +9633,56 @@ tickWater = function(t){
   box(0.06, 0.06, 8.6, 0xf5f5f0, -4.1, 0.84, 0, ttDeco, false);
   const ttFrontSign = signMesh('NHÀ HÀNG THỦY TẠ', 4.6, 0.72, '#4a154b', '#ffd98a', 'ĐẢO THỦY TẠ • HỒ XUÂN HƯƠNG');
   ttFrontSign.position.set(3.85, 3.85, 0); ttFrontSign.rotation.y = Math.PI / 2; ttDeco.add(ttFrontSign);
-
-  // Mở khóa ma trận động cho thuyền người chơi (được tạo trước khối đóng băng V5.4-D)
-  if(LAKE_PLAYER_BOAT){
-    LAKE_PLAYER_BOAT.traverse(o => { o.matrixAutoUpdate = true; });
+}
+// 2 thuyền thiên nga NPC dạo chậm trên mặt hồ (Argon) — thuyền neo tĩnh thành thuyền sống;
+// resolve biên XH-4 đọc position sống mỗi lần gọi nên vẫn né đúng 2 thuyền này.
+const MERGE_CRUISERS = [
+  { boat: LAKE_BOATS[0], cx: -292, cz: 78, rx: 18, rz: 14, sp: 0.14, ph: 0.0 },
+  { boat: LAKE_BOATS[2], cx: -332, cz: 94, rx: 22, rz: 18, sp: 0.11, ph: 2.1 },
+];
+for(const nc of MERGE_CRUISERS){ if(nc.boat) nc.boat.traverse(o => { o.matrixAutoUpdate = true; }); }
+const _rbEl = document.getElementById('btnReturnBoat'); // nút HUD của Argon, hiển thị theo trạng thái thuyền XH-4
+const _mergeTW = tickWater;
+tickWater = function(t){
+  _mergeTW(t);
+  for(const nc of MERGE_CRUISERS){
+    if(!nc.boat) continue;
+    const ang = t * nc.sp + nc.ph;
+    const nx = nc.cx + Math.cos(ang) * nc.rx, nz = nc.cz + Math.sin(ang) * nc.rz;
+    const vx = -Math.sin(ang) * nc.rx * nc.sp, vz = Math.cos(ang) * nc.rz * nc.sp;
+    nc.boat.position.set(nx, 4.9 + Math.sin(t * 2.1 + nc.ph) * 0.025, nz);
+    nc.boat.rotation.y = Math.atan2(-vx, -vz);
+    nc.boat.rotation.z = Math.sin(t * 1.8 + nc.ph) * 0.02;
   }
-  // 2 thuyền thiên nga của khách du lịch đang đạp dạo chậm trên mặt hồ (tạo sức sống mặt nước)
-  const npcCruisers = [
-    { boat: LAKE_BOATS[0], cx: -292, cz: 78, rx: 18, rz: 14, sp: 0.14, ph: 0.0 },
-    { boat: LAKE_BOATS[2], cx: -332, cz: 94, rx: 22, rz: 18, sp: 0.11, ph: 2.1 },
-  ];
-  for(const nc of npcCruisers){
-    if(nc.boat) nc.boat.traverse(o => { o.matrixAutoUpdate = true; });
-  }
-
-  // Vệt sóng rẽ nước (wake rings) sau đuôi thuyền người chơi (zero-GC preallocated pool)
-  const WAKE_N = 6;
-  const wakeRings = [];
-  const wakeMatBase = new THREE.MeshBasicMaterial({ color: 0xe2ecef, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
-  for(let i = 0; i < WAKE_N; i++){
-    const wm = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.68, 20), wakeMatBase.clone());
-    wm.rotation.x = -Math.PI / 2; wm.position.set(-259, 4.93, 39.3); wm.visible = false;
-    worldGroup.add(wm);
-    wakeRings.push({ m: wm, x: -259, z: 39.3, age: i / WAKE_N });
-  }
-
-  const BOAT_DOCK = { x: -259, y: 4.9, z: 39.3, rotY: Math.PI };
-  const KIOSK_PT = { x: -258.5, z: 30.3 };
-  const PIER_PT  = { x: -259.0, z: 36.8 };
-  let boatTime = 0, boatHeading = Math.PI, boatSpeed = 0, boatLastT = -1;
-  window.__BOAT_ACTIVE = false;
-
-  // Kiểm tra vị trí (x, z) có nằm trong vùng nước cho phép thuyền bơi (không leo bờ, không xuyên đảo Thủy Tạ / cầu / đập Ông Đạo)
-  function boatWaterValid(x, z){
-    if(x < -548 || x > -226.5 || z < 38.2 || z > 192.5) return false;
-    // Tránh đảo Thủy Tạ tâm (-250, 58) bán kính 16.5 + hành lang cầu ra đảo (x -253.5..-246.5, z 36..44)
-    if(Math.hypot(x + 250, z - 58) < 17.2) return false;
-    if(x > -254.2 && x < -245.8 && z < 44.5) return false;
-    // Tránh 2 cầu chữ Y tại x = -282 và x = -318 (z 36..44.5)
-    if(z < 44.8 && (Math.abs(x + 282) < 3.8 || Math.abs(x + 318) < 3.8)) return false;
-    // Tránh 2 ngón gỗ cầu bến ngoài lồng slip (khi z < 43.2, chỉ cho phép trong lồng slip x -261.5..-256.5)
-    if(z < 43.2 && (x < -261.3 || x > -256.7)) return false;
-    return true;
-  }
-
-  function startSwanBoat(){
-    if(window.__BOAT_ACTIVE){ stopSwanBoat(false); return; }
+  if(_rbEl) _rbEl.style.display = boatOn ? '' : 'none';
+};
+// Thanh Đi Nhanh Địa Danh (#quickNav — Argon): dịch chuyển tức thì tới 6 mốc lớn.
+// Đang trên thuyền (XH-4) thì chặn nhảy — tránh kẹt trạng thái thuyền đang thuê.
+document.querySelectorAll('#quickNav .qnBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const parts = (btn.getAttribute('data-tp') || '').split(',').map(Number);
+    if(parts.length < 2) return;
+    if(boatOn || boatAuto){ toast('🛶 Đang ở trên thuyền — về bến xong rồi hãy đi nhanh nhé!'); return; }
     if(riding > 0) parkBike();
     if(singing) stopSing(true);
     if(sitting > 0) sitting = 0;
-    const free = levelFromXp(G.xp) >= 5;
-    if(!free && state.xu < 30){
-      toast('🦢 Thuê thuyền thiên nga cần 30 Xu — hãy bán đồ trong Giỏ hoặc làm nhiệm vụ nhé!');
-      return;
-    }
-    if(!free) state.xu -= 30;
-    window.__BOAT_ACTIVE = true;
-    boatTime = 300; // 5 phút (300 giây) đúng biển giá 30 XU / 5 PHÚT
-    boatHeading = Math.PI; // hướng mũi ra mặt hồ (+z / nam)
-    boatSpeed = 0;
-    if(LAKE_PLAYER_BOAT){
-      LAKE_PLAYER_BOAT.position.set(BOAT_DOCK.x, BOAT_DOCK.y, 41.2);
-      LAKE_PLAYER_BOAT.rotation.set(0, boatHeading, 0);
-    }
-    playerState.x = BOAT_DOCK.x;
-    playerState.z = 41.2;
-    playerState.y = 5.15;
-    playerState.face = 0;
-    const rb = document.getElementById('btnReturnBoat');
-    if(rb) rb.style.display = '';
-    sfxCoin(); save(); updateHUD();
-    checkZone();
-    toast(free ? '🦢 Lên thuyền thiên nga! (Cấp 5 miễn phí) Dùng W/A/S/D hoặc phím mũi tên để đạp vịt dạo Hồ Xuân Hương — bấm E gần bến hoặc nút 🦢 Về bến để trả thuyền.' : '🦢 Đã thuê thuyền thiên nga (-30 Xu / 5 phút)! Dùng W/A/S/D để đạp vịt dạo Hồ Xuân Hương, bấm E hoặc nút 🦢 Về bến để lên bờ.');
-  }
-
-  function stopSwanBoat(expired){
-    if(!window.__BOAT_ACTIVE) return;
-    window.__BOAT_ACTIVE = false;
-    boatTime = 0; boatSpeed = 0;
-    for(const wr of wakeRings) wr.m.visible = false;
-    if(LAKE_PLAYER_BOAT){
-      LAKE_PLAYER_BOAT.position.set(BOAT_DOCK.x, BOAT_DOCK.y, BOAT_DOCK.z);
-      LAKE_PLAYER_BOAT.rotation.set(0, BOAT_DOCK.rotY, 0);
-      LAKE_PLAYER_BOAT.updateMatrix();
-    }
-    // Đưa người chơi lên mặt cầu bến an toàn
-    playerState.x = -259.0;
-    playerState.z = 36.6;
-    playerState.y = groundH(-259.0, 36.6);
-    playerState.face = Math.PI;
+    autoWalk.active = false;
+    const [tx, tz, tf] = parts;
+    playerState.x = tx; playerState.z = tz;
+    playerState.y = groundH(tx, tz);
+    if(!Number.isNaN(tf)) playerState.face = tf;
     player.position.set(playerState.x, playerState.y, playerState.z);
-    const L = player.userData.limbs;
-    if(L){ L.lLeg.rotation.x = 0; L.rLeg.rotation.x = 0; L.lArm.rotation.x = 0; L.rArm.rotation.x = 0; }
-    const rb = document.getElementById('btnReturnBoat');
-    if(rb) rb.style.display = 'none';
-    toast(expired ? '⏰ Hết 5 phút thuê thuyền thiên nga — thuyền đã cập bến Hồ Xuân Hương!' : '🦢 Đã cập bến trả thuyền thiên nga — cảm ơn bạn!');
-  }
-
-  const btnRB = document.getElementById('btnReturnBoat');
-  if(btnRB) btnRB.addEventListener('click', () => stopSwanBoat(false));
-
-  // Tích hợp phím E tại ki-ốt vé (-258.5, 30.3) hoặc đầu cầu bến (-259, 36.8)
-  window.addEventListener('keydown', e => {
-    if(e.code !== 'KeyE' || anyModalOpen()) return;
-    if(window.__BOAT_ACTIVE){
-      const dDock = Math.hypot(playerState.x - BOAT_DOCK.x, playerState.z - BOAT_DOCK.z);
-      if(dDock < 9.5){ e.stopImmediatePropagation(); stopSwanBoat(false); }
-      return;
-    }
-    const dK = Math.hypot(playerState.x - KIOSK_PT.x, playerState.z - KIOSK_PT.z);
-    const dP = Math.hypot(playerState.x - PIER_PT.x, playerState.z - PIER_PT.z);
-    if(Math.min(dK, dP) < 4.2){
-      e.stopImmediatePropagation();
-      startSwanBoat();
-    }
-  }, true);
-
-  // Hỗ trợ chạm vào ctxPrompt hoặc nút hành động cảm ứng khi đứng ở bến thuyền
-  const _origInteract = interact;
-  ctxEl.addEventListener('click', () => {
-    if(window.__BOAT_ACTIVE){ stopSwanBoat(false); return; }
-    const dK = Math.hypot(playerState.x - KIOSK_PT.x, playerState.z - KIOSK_PT.z);
-    const dP = Math.hypot(playerState.x - PIER_PT.x, playerState.z - PIER_PT.z);
-    if(Math.min(dK, dP) < 4.2) startSwanBoat();
+    checkZone();
+    toast('📍 Đã di chuyển tới: ' + btn.textContent.trim());
   });
-
-  // Thanh Đi Nhanh Địa Danh (#quickNav): dịch chuyển tức thì đến 6 mốc lớn để dễ chơi & khám phá
-  document.querySelectorAll('#quickNav .qnBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const parts = (btn.getAttribute('data-tp') || '').split(',').map(Number);
-      if(parts.length < 2) return;
-      if(window.__BOAT_ACTIVE) stopSwanBoat(false);
-      if(riding > 0) parkBike();
-      if(sitting > 0) sitting = 0;
-      autoWalk.active = false;
-      const [tx, tz, tf] = parts;
-      playerState.x = tx; playerState.z = tz;
-      playerState.y = groundH(tx, tz);
-      if(!Number.isNaN(tf)) playerState.face = tf;
-      player.position.set(playerState.x, playerState.y, playerState.z);
-      checkZone();
-      toast('📍 Đã di chuyển tới: ' + btn.textContent.trim());
-    });
-  });
-
-  // Bọc tickWater để cập nhật chuyển động thuyền người chơi + thuyền NPC + sóng rẽ nước + HUD
-  const _xh4BoatTW = tickWater;
-  tickWater = function(t){
-    _xh4BoatTW(t);
-    const dt = boatLastT < 0 ? 0.016 : Math.min(0.05, Math.max(0.001, t - boatLastT));
-    boatLastT = t;
-
-    // Cập nhật 2 thuyền thiên nga NPC dạo trên mặt hồ
-    for(let i = 0; i < npcCruisers.length; i++){
-      const nc = npcCruisers[i];
-      if(!nc.boat) continue;
-      const ang = t * nc.sp + nc.ph;
-      const nx = nc.cx + Math.cos(ang) * nc.rx;
-      const nz = nc.cz + Math.sin(ang) * nc.rz;
-      const vx = -Math.sin(ang) * nc.rx * nc.sp;
-      const vz =  Math.cos(ang) * nc.rz * nc.sp;
-      nc.boat.position.set(nx, 4.9 + Math.sin(t * 2.1 + nc.ph) * 0.025, nz);
-      nc.boat.rotation.y = Math.atan2(-vx, -vz);
-      nc.boat.rotation.z = Math.sin(t * 1.8 + nc.ph) * 0.02;
-    }
-
-    if(!window.__BOAT_ACTIVE){
-      const dK = Math.hypot(playerState.x - KIOSK_PT.x, playerState.z - KIOSK_PT.z);
-      const dP = Math.hypot(playerState.x - PIER_PT.x, playerState.z - PIER_PT.z);
-      if(Math.min(dK, dP) < 4.2 && !anyModalOpen()){
-        ctxEl.style.display = 'block';
-        ctxEl.innerHTML = '🦢 <b>E</b> Thuê thuyền thiên nga đạp vịt Hồ Xuân Hương — ' + (levelFromXp(G.xp) >= 5 ? 'MIỄN PHÍ (Cấp 5)' : '30 Xu / 5 phút');
-      }
-      return;
-    }
-
-    // Đếm ngược thời gian thuê thuyền
-    boatTime -= dt;
-    if(boatTime <= 0){
-      stopSwanBoat(true);
-      return;
-    }
-
-    // Điều khiển thuyền thiên nga theo hướng camera / phím W,A,S,D + bập bềnh sóng nước
-    let ix = 0, iy = 0;
-    if(!anyModalOpen()){
-      if(keys['KeyW'] || keys['ArrowUp']) iy += 1;
-      if(keys['KeyS'] || keys['ArrowDown']) iy -= 1;
-      if(keys['KeyD'] || keys['ArrowRight']) ix += 1;
-      if(keys['KeyA'] || keys['ArrowLeft']) ix -= 1;
-      ix += joyVec.x; iy += -joyVec.y;
-    }
-    const ilen = Math.hypot(ix, iy);
-    if(ilen > 1){ ix /= ilen; iy /= ilen; }
-    const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw);
-    const rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
-    const mx = fx * iy + rx * ix, mz = fz * iy + rz * ix;
-    const pedaling = ilen > 0.08;
-    const targetSp = pedaling ? 5.8 : 0;
-    boatSpeed += (targetSp - boatSpeed) * Math.min(1, dt * 4.5);
-
-    if(pedaling){
-      const wantYaw = Math.atan2(-mx, -mz); // SwanBoat trong lake.glb hướng mũi về -Z khi rotY = 0 (rotY = PI hướng về +Z)
-      boatHeading = angLerp(boatHeading, wantYaw, Math.min(1, dt * 4.2));
-    }
-    const moveDirX = -Math.sin(boatHeading), moveDirZ = -Math.cos(boatHeading);
-    let bx = LAKE_PLAYER_BOAT ? LAKE_PLAYER_BOAT.position.x : playerState.x;
-    let bz = LAKE_PLAYER_BOAT ? LAKE_PLAYER_BOAT.position.z : playerState.z;
-    const nx = bx + moveDirX * boatSpeed * dt;
-    const nz = bz + moveDirZ * boatSpeed * dt;
-    if(boatWaterValid(nx, nz)){ bx = nx; bz = nz; }
-    else if(boatWaterValid(nx, bz)){ bx = nx; }
-    else if(boatWaterValid(bx, nz)){ bz = nz; }
-    else { boatSpeed *= 0.3; }
-
-    const bob = Math.sin(t * 2.4) * 0.032;
-    const roll = Math.sin(t * 1.9) * 0.022 - ix * 0.05;
-    if(LAKE_PLAYER_BOAT){
-      LAKE_PLAYER_BOAT.position.set(bx, 4.9 + bob, bz);
-      LAKE_PLAYER_BOAT.rotation.set(pedaling ? 0.025 : 0, boatHeading, roll);
-    }
-    // Đặt nhân vật ngồi trong khoang thuyền thiên nga, chân đạp nhịp nhàng
-    playerState.x = bx;
-    playerState.z = bz;
-    playerState.y = 5.12 + bob;
-    playerState.face = boatHeading + Math.PI;
-    player.position.set(bx, playerState.y, bz);
-    player.rotation.y = playerState.face;
-    const L = player.userData.limbs;
-    if(L){
-      const cyc = t * (pedaling ? 7.5 : 2.0);
-      L.lLeg.rotation.x = -1.15 + Math.sin(cyc) * (pedaling ? 0.42 : 0.08);
-      L.rLeg.rotation.x = -1.15 - Math.sin(cyc) * (pedaling ? 0.42 : 0.08);
-      L.lArm.rotation.x = -0.75; L.rArm.rotation.x = -0.75;
-    }
-
-    // Cập nhật vòng sóng rẽ nước sau đuôi thuyền
-    for(let i = 0; i < WAKE_N; i++){
-      const wr = wakeRings[i];
-      wr.age += dt * (pedaling ? 0.65 : 0.28);
-      if(wr.age >= 1){
-        wr.age -= 1;
-        wr.x = bx - moveDirX * 1.15;
-        wr.z = bz - moveDirZ * 1.15;
-      }
-      wr.m.visible = true;
-      wr.m.position.set(wr.x, 4.93, wr.z);
-      const sc = 0.7 + wr.age * (pedaling ? 2.8 : 1.5);
-      wr.m.scale.set(sc, sc, 1);
-      wr.m.material.opacity = (1 - wr.age) * (pedaling ? 0.42 : 0.18);
-    }
-
-    // Hiển thị đồng hồ thuê thuyền & nhắc trả thuyền khi gần bến
-    const mins = Math.floor(boatTime / 60), secs = Math.floor(boatTime % 60);
-    const timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
-    eventChipEl.style.display = 'block';
-    eventChipEl.innerHTML = '🦢 <b>Đang đạp vịt Hồ Xuân Hương</b> — còn <b>' + timeStr + '</b> (bấm nút <b>🦢 Về bến</b> trên góc phải để lên bờ bất cứ lúc nào)';
-    const dDock = Math.hypot(bx - BOAT_DOCK.x, bz - BOAT_DOCK.z);
-    if(dDock < 9.5 && !anyModalOpen()){
-      ctxEl.style.display = 'block';
-      ctxEl.innerHTML = '🦢 <b>E</b> Cập bến trả thuyền thiên nga (lên bờ)';
-    }
-  };
-
-  window.__BOAT_SYS = {
-    start: startSwanBoat,
-    stop: stopSwanBoat,
-    isValidWater: boatWaterValid,
-    isActive: () => window.__BOAT_ACTIVE,
-    timeLeft: () => boatTime,
-  };
-}
+});
+// Nút 🦢 Về bến (HUD Argon) nối vào hệ thuyền XH-4: gần slip -> trả thuyền ngay (như bấm E);
+// đang ở xa -> thuyền TỰ TRÔI VỀ BẾN chở người chơi theo (startBoatAuto), cập bến tự xuống.
+if(_rbEl) _rbEl.addEventListener('click', () => {
+  if(!boatOn) return;
+  if(boatAuto){ toast('🛶 Thuyền đang tự trôi về bến — sắp tới rồi!'); return; }
+  if(boatNearSlip()) tryReturnBoat(); else startBoatAuto();
+});
 
 animate();
 setTimeout(() => toast('👋 Chào mừng tới Chợ Hòa Bình 3D! Đi dạo, đóng dấu hộ chiếu (P) và ăn hết chợ đêm Đà Lạt nhé'), 700);
