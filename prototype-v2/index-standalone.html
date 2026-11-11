@@ -3467,29 +3467,50 @@ for(const q of QUEUES){
   claLight.position.set(31, 8.8, 19.4); worldGroup.add(claLight); lampLights.push(claLight);
 }
 const WATER_FX = { surfs: [], jets: [], rings: [] }; // BLENDER-DEEP-2 (mục 7): đăng ký mặt nước + tia để animate gợn/chảy nhẹ trong tickWater
+const waterMats = []; // WATER-1: material mặt nước — applyDayNight bật emissive teal ban đêm (cơ chế list như uplightMats)
 function tickWater(t){
-  for(const sf of WATER_FX.surfs){ sf.m.position.y = sf.y + Math.sin(t * 1.7) * 0.02; sf.m.material.opacity = 0.84 + Math.sin(t * 2.3) * 0.06; }
-  for(const rg of WATER_FX.rings){ const f = (t * 0.32 + rg.ph) % 1; const sc = 0.7 + f * 1.7; rg.m.scale.set(sc, sc, 1); rg.m.material.opacity = 0.38 * (1 - f); }
-  for(const jt of WATER_FX.jets){ const pu = 1 + Math.sin(t * 5.2 + jt.userData.ph) * 0.07; jt.scale.set(1, pu, 1); jt.material.opacity = 0.5 + Math.sin(t * 5.2 + jt.userData.ph) * 0.08; }
+  for(const sf of WATER_FX.surfs){ sf.m.position.y = sf.y + Math.sin(t * 1.7) * 0.02; if(sf.tex){ sf.tex.offset.x = (t * 0.008) % 1; sf.tex.offset.y = (t * 0.005) % 1; } } // WATER-1: bỏ dao động opacity (làm rửa màu) — cảm giác nước bằng texture gợn trôi chéo chậm trong tickWater
+  for(const rg of WATER_FX.rings){ const f = (t * 0.32 + rg.ph) % 1; const sc = 0.7 + f * 1.7; rg.m.scale.set(sc, sc, 1); rg.m.material.opacity = 0.5 * (1 - f); } // WATER-1: đỉnh opacity 0.38 -> 0.5 (trên nền teal tối CR gợn = 5.43 thay vì 1.71)
+  for(const jt of WATER_FX.jets){ const pu = 1 + Math.sin(t * 5.2 + jt.userData.ph) * 0.07; jt.scale.set(1, pu, 1); jt.material.opacity = 0.7 + Math.sin(t * 5.2 + jt.userData.ph) * 0.05; } // WATER-1: tia 0.55 -> quanh 0.7
 }
 { // ================= V5.5: ĐÀI PHUN NƯỚC + KHU QUẦN ÁO + BÀN GHẾ HOA SỮA =================
   // Neo (research/21): sân trước chợ phía ĐÔNG bậc thang, đối diện quảng trường bậc cấp —
   // đài phun nước làm mốc giữa sân, dãy quần áo ở mé đông sân quay mặt về đài phun/bậc thang.
   const FNT = { x:27, z:5.2 }; // GEOMETRY-2: đài phun lùi +2.5 về đông — mở sân dưới bậc về phía tây; hàng chờ cà phê đổi 'side' nên khoảng cách tới bồn >= 3.8
   cyl(2.7, 2.9, 0.55, 0x8a8074, FNT.x, 0.28, FNT.z, worldGroup, 18); // bồn tròn đá
-  const fwater = new THREE.Mesh(new THREE.CircleGeometry(2.45, 20), new THREE.MeshStandardMaterial({ color:0xa8cfe0, roughness:0.25, transparent:true, opacity:0.9 }));
-  fwater.rotation.x = -Math.PI/2; fwater.position.set(FNT.x, 0.5, FNT.z); worldGroup.add(fwater);
-  WATER_FX.surfs.push({ m: fwater, y: 0.5 }); // BLENDER-DEEP-2 (mục 7): mặt bồn gợn nhẹ
+  // WATER-1 (research/27): nước cũ 0xa8cfe0 phẳng trơn — CR với sân plaza chỉ 1.47, rửa thành khối xám. Bản mới:
+  // nền teal đậm 0x276a8a nhat vào canvas (map NHÂN màu material sẽ làm vệt sáng tối đi — bake màu vào texture,
+  // material trắng) + ~46 vệt gợn #bfe6f5; đĩa đáy 0x14425c chặn đá bồn pha rửa qua lớp opacity.
+  const ripC = document.createElement('canvas'); ripC.width = ripC.height = 256;
+  const rg2 = ripC.getContext('2d'); rg2.fillStyle = '#276a8a'; rg2.fillRect(0, 0, 256, 256);
+  for(let gi = 0; gi < 46; gi++){
+    const gx = Math.abs((Math.sin(gi * 12.9) * 43758.5) % 1) * 256, gy = Math.abs((Math.sin(gi * 78.2) * 23741.3) % 1) * 256, gr = 6 + Math.abs((Math.sin(gi * 5.7) * 9876.5) % 1) * 16;
+    rg2.strokeStyle = 'rgba(191,230,245,' + (0.35 + (gi % 5) * 0.12) + ')'; rg2.lineWidth = 2 + (gi % 3);
+    rg2.beginPath(); rg2.arc(gx, gy, gr, gi * 1.7, gi * 1.7 + 1.1 + (gi % 4) * 0.5); rg2.stroke();
+  }
+  const ripTex = new THREE.CanvasTexture(ripC); ripTex.wrapS = ripTex.wrapT = THREE.RepeatWrapping; ripTex.repeat.set(2, 2); ripTex.colorSpace = THREE.SRGBColorSpace;
+  // WATER-1 PHÁT HIỆN GỐC RỄ (raycast three r160 kiểm chứng): bồn là CylinderGeometry ĐẶC CÓ NẮP — đĩa nắp đá
+  // y 0.555 che KÍN mặt nước y 0.5 + vòng gợn 0.53 từ mọi góc nhìn trên cao; thứ người chơi thấy xưa nay chỉ là
+  // nắp đá + tia. Bản sửa nâng cả chồng mặt nước LÊN TRÊN miệng bồn (đáy 0.558 / nước 0.58 / gợn 0.605+) — bồn
+  // giữ nguyên vị trí/kích thước, chỉ mặt nước từ nay mới thật sự nhìn thấy được.
+  const fbot = new THREE.Mesh(new THREE.CircleGeometry(2.45, 20), new THREE.MeshBasicMaterial({ color:0x14425c }));
+  fbot.rotation.x = -Math.PI/2; fbot.position.set(FNT.x, 0.558, FNT.z); worldGroup.add(fbot); // WATER-1: đĩa đáy ngay trên nắp bồn
+  const fwater = new THREE.Mesh(new THREE.CircleGeometry(2.45, 20), new THREE.MeshStandardMaterial({ map:ripTex, roughness:0.15, transparent:true, opacity:0.93, emissive:0x1d4e5f, emissiveIntensity:0 }));
+  fwater.rotation.x = -Math.PI/2; fwater.position.set(FNT.x, 0.58, FNT.z); worldGroup.add(fwater);
+  WATER_FX.surfs.push({ m: fwater, y: 0.58, tex: ripTex }); // WATER-1: tickWater trôi offset texture thay dao động opacity
+  waterMats.push(fwater.material); // WATER-1: đêm -> emissive teal x0.55 qua applyDayNight
+  const frim = new THREE.Mesh(new THREE.RingGeometry(2.45, 2.72, 28), new THREE.MeshStandardMaterial({ color:0xd8d2c2, roughness:0.9 }));
+  frim.rotation.x = -Math.PI/2; frim.position.set(FNT.x, 0.565, FNT.z); worldGroup.add(frim); // WATER-1: vành miệng bồn sáng 0xd8d2c2 — "bờ" đọc được từ mọi hướng
   for(let ri = 0; ri < 2; ri++){
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.5 + ri * 0.8, 0.62 + ri * 0.8, 24), new THREE.MeshBasicMaterial({ color:0xeaf6fc, transparent:true, opacity:0.35, depthWrite:false }));
-    ring.rotation.x = -Math.PI/2; ring.position.set(FNT.x, 0.53 + ri * 0.012, FNT.z); worldGroup.add(ring);
+    ring.rotation.x = -Math.PI/2; ring.position.set(FNT.x, 0.605 + ri * 0.012, FNT.z); worldGroup.add(ring); // WATER-1: gợn 0.53 -> 0.605 — bản cũ nằm DƯỚI nắp bồn 0.555 nên không bao giờ thấy
     WATER_FX.rings.push({ m: ring, ph: ri * 0.5 });
   }
   cyl(0.26, 0.44, 2.3, 0x8a8074, FNT.x, 1.42, FNT.z, worldGroup, 10); // BLENDER-DEEP-2 (mục 4): cột giữa CAO 1.5 -> 2.3 — đài phun bớt bẹt
   cyl(0.95, 0.52, 0.25, 0x8a8074, FNT.x, 2.62, FNT.z, worldGroup, 12); // BLENDER-DEEP-2 (mục 4): bát chính theo cột mới
   cyl(0.5, 0.3, 0.18, 0x8a8074, FNT.x, 3.12, FNT.z, worldGroup, 10); // BLENDER-DEEP-2: bát tầng 2
   ball(0.16, 0x8a8074, FNT.x, 3.34, FNT.z, worldGroup, 0.9); // BLENDER-DEEP-2: chóp cầu
-  const jetMat = new THREE.MeshBasicMaterial({ color:0xcfe8f4, transparent:true, opacity:0.55 });
+  const jetMat = new THREE.MeshBasicMaterial({ color:0xeaf6fc, transparent:true, opacity:0.7 }); // WATER-1: tia gần trắng tuyệt đối như ảnh thật 44 (#eef0f5)
   for(let i = 0; i < 6; i++){
     const a = i / 6 * Math.PI * 2;
     const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5, 5), jetMat.clone()); // BLENDER-DEEP-2: tia dài 1.15 -> 1.5 + material riêng để nhấp nhô
@@ -6500,6 +6521,7 @@ function applyDayNight(){
     for(const m of vehTailMats) m.emissiveIntensity = 2.8; // V4.4
     for(const m of vehGlowMats) m.opacity = 0.33; // V5.2: vệt sáng đèn pha trên mặt đường — vòng đảo đêm đọc thành vành sáng chuyển động
     for(const m of uplightMats) m.emissiveIntensity = 2.8; // V4.4
+    for(const m of waterMats) m.emissiveIntensity = 0.55; // WATER-1: mặt nước phát teal nhẹ — mảng lạnh nổi giữa sân ấm ban đêm
     stringBulbMat.color.setHex(0xfff3cf); // V4.4: dây bóng sạp bật sáng
     starMat.opacity = 0.9; smokeMat.opacity = 0.62; bigSmokeMat.opacity = 0.5;
     btn.textContent = '☀️ Chợ ngày';
@@ -6527,6 +6549,7 @@ function applyDayNight(){
     for(const m of vehTailMats) m.emissiveIntensity = 0.3;
     for(const m of vehGlowMats) m.opacity = 0;
     for(const m of uplightMats) m.emissiveIntensity = 0;
+    for(const m of waterMats) m.emissiveIntensity = 0; // WATER-1
     stringBulbMat.color.setHex(0xb8b0a0);
     starMat.opacity = 0; smokeMat.opacity = 0.32; bigSmokeMat.opacity = 0.2;
     btn.textContent = '🌙 Chợ đêm';
