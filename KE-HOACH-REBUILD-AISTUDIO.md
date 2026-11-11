@@ -55,7 +55,40 @@ Bạn đã đọc repo. Việc tiếp theo KHÔNG phải thêm tính năng mới
 
 **Tương tác (gắn với hệ lạnh sẵn có — quan trọng):** mua ly sữa nóng **15 Xu** → uống tại chỗ: nhân vật bốc hơi ấm, chỉ số "ấm" tăng, hết trạng thái run lạnh trong 3 phút game; hồng trà mang đi được (item trong túi, dùng lúc đang đi hồ). Đây là khu cho người chơi "sạc ấm" trước khi ra hồ buổi tối — phải nối đúng vào hệ nhiệt độ hiện có, không làm hệ mới.
 
-## PHASE 5 — UGC SELFIE & CHIA SẺ ẢNH (tính năng mới, làm cuối)
+## PHASE 5 — HỆ GAMEPLAY SỐNG: MUA – ĂN – ĐI DẠO – TƯƠNG TÁC – COI BÓI
+
+Các phase trên dựng NƠI CHỐN; phase này dựng VIỆC LÀM trong nơi chốn đó. Game hiện đã có khung (tiền Xu Chợ, túi đồ cơ bản, tủ đồ, thuê xe/thuyền, hộ chiếu) — nhiệm vụ là làm chúng thành vòng chơi trọn vẹn, không làm hệ song song trùng lặp.
+
+### 5.1 Túi đồ & vật phẩm (nền của mọi thứ dưới đây)
+- Túi đồ có giao diện mở được (phím/nút riêng), chia 4 ngăn: **Đồ ăn – Thức uống – Đặc sản & lưu niệm – Đồ dùng**. Vật phẩm mua ở bất kỳ đâu phải VỀ ĐÚNG NGĂN và còn đó sau khi lưu/nạp lại (ghi vào save `chohb3d-v1`, tương thích save cũ).
+- Mỗi vật phẩm có: tên Việt đúng, giá, mô tả 1 dòng, hiệu ứng khi dùng, hạn dùng nếu là đồ ăn (đồ ăn để quá 1 ngày game = hỏng, bỏ thùng rác được Xu 0 nhưng +điểm sạch sẽ nhỏ — chi tiết vui, đừng bỏ).
+- Đặc sản mua ở chợ/2 shop đỉnh thang (mứt, trà, len…) là vật phẩm **tặng được**: tặng NPC tăng thân thiện (xem 5.5), tặng đủ người mở thành tựu trong hộ chiếu.
+
+### 5.2 Mua sắm trọn vòng (chợ + quầy rong + shop)
+- Tới quầy → bấm tương tác → bảng hàng của quầy đó (mỗi quầy bán đúng nhóm hàng của nó, giá theo Xu, có món đắt/rẻ khác nhau) → chọn món → **mặc cả** (mini-tương tác 1 chạm: 50% giảm 10–20%, thất bại tiểu thương lắc đầu nhưng vẫn bán giá gốc; mỗi quầy mặc cả được 1 lần/ngày game) → trả Xu → món vào túi + tiểu thương nói 1 câu theo kết quả.
+- Mua xong phải THẤY được: nhân vật cầm túi đồ đi theo vài giây, hoặc món ăn cầm trên tay ngay (xem 5.3). Cấm mua xong "biến mất vào hư không" không dấu vết.
+- Hàng rong quanh hồ/quảng trường cũng mua được theo cùng vòng này (bánh tráng nướng, khoai nướng, kẹo chỉ…), không cần bảng lớn — menu rút gọn 3 món.
+
+### 5.3 Ăn & uống (hành động phải nhìn thấy)
+- Đồ ăn/thức uống trong túi bấm **Dùng** → nhân vật thực hiện hành động: cầm lên ăn/uống (animation đơn giản bằng chuyển động tay + vật phẩm trên tay + hiệu ứng: hơi nóng bốc với đồ nóng, tiếng "ngon" dạng bong bóng chữ), mất vài giây game, không bị cắt giữa chừng bởi di chuyển (đang ăn thì đứng/ngồi yên).
+- Hiệu ứng rõ ràng, nối vào hệ sẵn có: đồ nóng (sữa đậu nành, khoai nướng, bánh tráng) → **+ấm** (hệ lạnh); đồ ngọt/kem → +vui (chỉ số tâm trạng hiển thị ở HUD nhỏ); nước/trà → mang đi dùng khi đang đi dạo.
+- Ăn tại điểm đẹp (ghế bờ hồ, bậc thang, quảng trường) cho +vui gấp đôi — khuyến khích người chơi picnic; ăn xong có **vỏ/rác trên tay** phải bỏ thùng rác (tương tác nhỏ, thùng rác đã có ở bờ hồ + chợ).
+
+### 5.4 Hành động & đi dạo
+- **Bánh xe hành động** (giữ phím/nút cảm xúc): Vẫy tay, Cúi chào, Ngồi xuống (ngồi được trên ghế/bậc thang/bờ cỏ đúng điểm), Pose chụp ảnh (2–3 pose), Nhảy theo nhạc (chỉ "bắt nhịp" khi gần góc hát/fountain có nhạc), Chỉ tay ngắm cảnh.
+- **Chế độ đi dạo**: nút chuyển đi thường ↔ đi dạo thong thả (tốc độ chậm, camera hạ thấp + lia nhẹ điện ảnh, nhân vật thỉnh thoảng tự ngẩng ngắm cảnh khi qua điểm đẹp). Đi dạo quanh hồ đủ 1 vòng = ghi nhận vào hộ chiếu (thành tựu "Một vòng Xuân Hương").
+- NPC cũng dùng các hành động này (ngồi ghế, vẫy chào người chơi khi thân thiện cao) — thế giới sống hai chiều, không phải mình người chơi diễn.
+
+### 5.5 Tương tác NPC có chiều sâu
+- Chào hỏi theo giờ ("Chào buổi sáng cô!"), NPC nhớ mặt: mua quen ở 1 quầy 3 lần → lần sau được giảm 5% + gọi tên; tặng quà đúng sở thích (ghi trong hội thoại gợi ý) → thân thiện tăng, mở câu thoại mới + đôi khi tặng lại món nhỏ.
+- Xin chụp ảnh cùng NPC (nối Phase 6 selfie): NPC đồng ý thì đứng cạnh pose; từ chối khéo khi đang bận bán hàng giờ đông.
+
+### 5.6 Coi bói — làm cho ra trò (chú Ba ở chiếu nghỉ tam cấp, GIỮ NGUYÊN vị trí)
+- Một phiên bói trọn vẹn: ngồi xuống chiếu → chọn hình thức (**Xem bài** / **Xin xăm** / **Xem chỉ tay**) → trả **20 Xu** → chú Ba xào bài/rút xăm với animation → ra **quẻ có tên + lời giải 3–4 câu viết sẵn theo quẻ** (kho tối thiểu 12 quẻ, rút ngẫu nhiên có trọng số theo "vận" trong ngày) → quẻ gắn **hiệu ứng nhỏ thật trong ngày game**: vd quẻ Tài = mặc cả dễ thành hơn, quẻ Duyên = NPC thân thiện nhanh hơn, quẻ An = trời ít lạnh hơn.
+- **Quẻ ngày**: mỗi ngày thật (theo đồng hồ máy) người chơi có 1 quẻ nền; xem ở trang đầu hộ chiếu. Coi bói ở chú Ba là phiên sâu hơn, tốn Xu.
+- Viết lời quẻ: giọng Nam bộ hóm hỉnh, không hù dọa, không phán chết chóc/bệnh tật; quẻ xấu phải có câu "hóa giải" bằng hành động trong game (vd: ném xu fountain, tặng quà 1 người) — nối các hệ lại với nhau.
+
+## PHASE 6 — UGC SELFIE & CHIA SẺ ẢNH (tính năng mới, làm sau Phase 5 vì dùng pose ở 5.4)
 
 Mục tiêu: người chơi chụp selfie trong game và **chia sẻ ra ngoài** được, ảnh nhìn là biết ngay Chợ Hòa Bình Online (khung + địa điểm + nhân vật chibi của người chơi).
 
@@ -73,6 +106,6 @@ Mục tiêu: người chơi chụp selfie trong game và **chia sẻ ra ngoài**
 
 ## THỨ TỰ & NGHIỆM THU
 
-- Làm lần lượt Phase 1 → 5, mỗi phase xong phải: chạy đủ bộ test scripts của repo và báo số thật; mô tả thay đổi trong CHANGELOG kèm **ảnh chụp màn hình preview** của từng khu ở góc tầm mắt người chơi (nếu môi trường của bạn render được) hoặc mô tả chính xác những gì đã thay để người kiểm chứng đối chiếu.
+- Làm lần lượt Phase 1 → 6, mỗi phase xong phải: chạy đủ bộ test scripts của repo và báo số thật; mô tả thay đổi trong CHANGELOG kèm **ảnh chụp màn hình preview** của từng khu ở góc tầm mắt người chơi (nếu môi trường của bạn render được) hoặc mô tả chính xác những gì đã thay để người kiểm chứng đối chiếu.
 - Tiêu chí đạt của mỗi khu: (1) đủ "nhận diện bắt buộc"; (2) có đủ 3 lớp chi tiết; (3) có tương tác chạy được; (4) không phá luật khóa + không đen màn hình + save cũ nguyên vẹn.
 - Sync về GitHub vào **nhánh `aistudio-v1`**, không ghi đè `main`. Bên dự án sẽ kéo về chạy kiểm chứng độc lập rồi mới hợp nhất — vì vậy CHANGELOG phải trung thực tuyệt đối: làm được tới đâu ghi tới đó, mục chưa xong ghi "CHƯA XONG", cấm nhận bừa.
