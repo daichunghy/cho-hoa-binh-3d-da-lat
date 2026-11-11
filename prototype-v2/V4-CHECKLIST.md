@@ -1916,3 +1916,37 @@ diag 900 sạch · SEED_SAVE 300 sạch · standalone diag 300 sạch (GAME_ROOT
 ### GHI CHÚ DRIFT (QUAN TRỌNG cho các vòng sau)
 - **Từ vòng này, GLB SHIP = build của build_models.py HIỆN TẠI.** Drift 1.648 byte tầng JSON/float giữa script trên đĩa (sửa 19:17 09/11) và GLB ship cũ (build 19:04 09/11) đã được HẤP THỤ bằng cắt comment ở trên; hình học đã chứng minh khớp 0.01 toàn bộ 214 mesh. Các vòng sau build lại market.glb sẽ ra ~1.652.364 (xác định — build 2 lần cùng kích thước), KHÔNG coi 1.650.712 là chuẩn nữa, không "truy drift" lại.
 - Backup vòng này: assets/market.glb.bak-fasciageo2-20261111 + scripts/build_models.py.bak-fasciageo2-20261111 + index.html.bak-fasciageo2-20261111. Không đẩy GitHub, không upload link (theo brief).
+
+## GLB-QUANTIZE-1 — 11/11/2026 (1 mục: lượng tử hoá KHR_mesh_quantization toàn bộ 14 GLB trong assets/) — **XONG, 8/8 CỔNG XANH**
+### QUY TRÌNH (đúng research/26 mục 1 + quy trình an toàn 6 bước)
+- Công cụ: gltf-transform CLI 4.5.1 cài tại /tmp/diag (npm i @gltf-transform/cli) — KHÔNG cài vào dự án. Lệnh mặc định: `gltf-transform quantize` (POSITION 14-bit, NORMAL 10-bit, TEXCOORD 12-bit, COLOR 8-bit). KHÔNG meshopt (tránh decoder), KHÔNG weld/simplify, KHÔNG strip TEXCOORD_0 (luật cấm research/26 mục 3: web gắn TEX_GRIME bằng UV lúc chạy).
+- Dump cấu trúc TRƯỚC bằng @gltf-transform/core (NodeIO + ALL_EXTENSIONS): cả 14 file đều **0 skin / 0 animation / 0 morph** (character.glb là mesh tĩnh nhiều primitive, không có skin) -> không cần tham số skin riêng.
+- Quantize trên bản sao -> dump SAU -> đối chiếu: nodes/meshes/primitives/verts/tris/primsUV/morph/tên material **khớp 100% ở 14/14 file**; extension duy nhất thêm vào là KHR_mesh_quantization (market vốn có sẵn KHR_materials_emissive_strength từ trước, giữ nguyên). Không file nào bị loại. three r160 đọc native, 0 dòng code sửa.
+- Thay assets kèm backup từng file: `assets/<ten>.glb.bak-quantize-20261111`.
+### BẢNG BYTE (trước -> sau)
+| file | trước | sau | giảm |
+|---|---|---|---|
+| bridge.glb | 353.360 | 78.432 | -77,8% |
+| cafe.glb | 151.052 | 54.472 | -63,9% |
+| character.glb | 361.500 | 224.468 | -37,9% |
+| hotels.glb | 1.488.196 | 403.116 | -72,9% |
+| lamp.glb | 100.012 | 71.692 | -28,3% |
+| market.glb | 1.652.364 | 664.956 | -59,8% |
+| pier.glb | 19.104 | 13.392 | -29,9% |
+| pine.glb | 65.404 | 33.232 | -49,2% |
+| roundabout.glb | 1.080.236 | 689.652 | -36,2% |
+| shop.glb | 172.392 | 65.024 | -62,3% |
+| stairs.glb | 95.096 | 38.256 | -59,8% |
+| stall.glb | 1.110.612 | 526.280 | -52,6% |
+| theater.glb | 426.716 | 152.104 | -64,4% |
+| vehicle.glb | 360.472 | 222.200 | -38,4% |
+| **TỔNG assets** | **7.436.516** | **3.237.276** | **-4.199.240 (-56,5%)** |
+- Standalone: 10.484.705 -> **4.885.717** (-5.598.988, -53,4%). Trần 10.485.760 -> **HEADROOM MỚI = 5.600.043 byte** (trước vòng này chỉ dư 1.055). Nút thắt byte của dự án đã gỡ: từ nay thêm nội dung không còn phải cắt comment bù từng trăm byte (vẫn giữ kỷ luật đo trước/sau).
+### CỔNG 8/8 XANH (trên bộ assets quantized)
+diag 900 sạch · SEED_SAVE 300 sạch · package + standalone diag 300 sạch (GAME_ROOT=/tmp/quant1/sa) · traffic **26/26** · audit **0 lỗi cứng / 0 nhảy lưới** · test_bd2 PASS · check_sweep3 PASS · test_real1 PASS.
+### NGHIỆM THU HÌNH (render_facade_real.py cùng thông số, GLB gốc vs quantized)
+- Ảnh: renders/quantize-before.png + renders/quantize-after.png + ghép renders/quantize-cmp.png.
+- Median PIL theo vùng màu hiệu dụng (phân đoạn theo màu đích FACADE-COLOR-1): tường kem [202,203,204] vs [202,203,204] lệch **0,0**; kính MarketWin [74,85,90] vs [74,85,90] lệch **0,0**; băng đào [184,181,179] vs [184,181,179] lệch **0,0**; chữ đỏ [181,99,87] vs [182,99,87] lệch **1,0**. Lệch lớn nhất **1,0/255 <= 2 ĐẠT** (chênh còn lại là nhiễu render Cycles). Số pixel từng vùng khớp sát (kính 43.069/42.997, đào 63.460/63.585) -> hình học thực tế không đổi. Soi mắt 2 ảnh: không phân biệt được.
+### LUẬT PIPELINE MỚI (để lại đường lặp lại)
+- **Từ nay MỖI lần build lại bất kỳ GLB nào từ Blender phải chạy `bash scripts/quantize_glbs.sh` trước khi đóng gói/ship** (script tự backup .bak-quantize-<ngày>, validate từng file mới thay, in bảng trước/sau; có DRY_RUN=1). Đã test script ở chế độ DRY_RUN trên bản gốc: cho lại đúng số byte 664.956/13.392 (xác định).
+- GLB ship từ vòng này = bản QUANTIZED của build_models.py hiện tại; bản float gốc luôn nằm ở .bak-quantize-20261111 cạnh mỗi file. Không đẩy GitHub, không upload link (theo brief).
