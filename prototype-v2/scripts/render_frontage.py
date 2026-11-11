@@ -193,12 +193,10 @@ for o in bpy.data.objects:
 
 
 # ---------- FRONTAGE-1: mo phong pano canvas cua game (dung thong so code) ----------
-# FASCIA-GEO-2 (11/11): market.glb NAP TU assets/ DA CO fascia moi — zigzag
-# nang +0.24 (chevron 5.06..6.38, ZigzagBack 5.01..6.43), canopy ha -0.10
-# (ShopAwnings wpos 3.52, khoang 3.27..3.77). AdBand/pano KHONG doi thong so
-# (van y 3.95..5.15) nen khoi mo phong duoi giu nguyen; cua so thay duoc cua
-# pano do chinh hinh khoi GLB quyet dinh. Xuat mac dinh: fascia-after.png.
-# 9 pano 7.5x1.15 tai y=4.55, z=11.71+d(x) theo cung R=142.28, rotY=PI-asin(x/R).
+# ADBAND-TALL-1 (11/11): market.glb nap tu assets/ (ban quantized cua build moi)
+# — AdBand 3.00..5.15, canopy ha -0.85 (tam 2.67, tai tuong ~2.92), AdTrimB
+# 2.86..3.00, zigzag giu nguyen (chevron 5.06..6.38, ZigzagBack 5.01..6.43).
+# 9 pano 7.5x2.11 tai y=4.075, z=11.71+d(x) theo cung R=142.28, rotY=PI-asin(x/R).
 # Day la MO PHONG dung thong so code (texture PIL ve lai bo cuc canvas), KHONG
 # phai mesh game — game ve bang CanvasTexture trong index.html.
 import math as _m
@@ -217,7 +215,7 @@ def add_panel(kind, x):
         mat.node_tree.links.new(tex.outputs['Color'], bsdf.inputs['Emission Color'])
         bsdf.inputs['Emission Strength'].default_value = 0.5
     me = bpy.data.meshes.new('AdSimMesh')
-    hw, hh = 3.75, 0.575
+    hw, hh = 3.75, 1.055
     verts = [(-hw,-hh,0),(hw,-hh,0),(hw,hh,0),(-hw,hh,0)]
     me.from_pydata(verts, [], [[0,1,2,3]]); me.update()
     uv = me.uv_layers.new(name='UV')
@@ -226,7 +224,7 @@ def add_panel(kind, x):
     ob = bpy.data.objects.new('AdSim_' + kind, me)
     bpy.context.scene.collection.objects.link(ob)
     ob.data.materials.append(mat)
-    Tt = Matrix.Translation((x, 4.55, 11.71 + d)) @ Matrix.Rotation(_m.pi - _m.asin(x / R9), 4, 'Y')
+    Tt = Matrix.Translation((x, 4.075, 11.71 + d)) @ Matrix.Rotation(_m.pi - _m.asin(x / R9), 4, 'Y')
     ob.matrix_world = A_MAT @ Tt
 for _i, _k in enumerate(['B','G','Y','G','L','G','G','Y','B']):
     add_panel(_k, -32 + _i * 8)

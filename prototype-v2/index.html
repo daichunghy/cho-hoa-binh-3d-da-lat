@@ -954,41 +954,44 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
   solid(17.5, 9.5, 3.6, 2.6); // khối sân thượng tầng 2
 }
 { // FRONTAGE-1 (11/11): pano quảng cáo + LED đỏ tầng trệt theo ảnh 01. GLB đã có dải AdBand
-  // PHẲNG 7.5x1.2 màu clamp nhạt không họa tiết -> tầng trệt "thưa". Đo ảnh 01 (crop phóng
-  // to dải trệt): pano ~0.43 chiều cao tầng trệt, nền trắng + logo xanh Cozy + túi/chai sản
-  // phẩm xanh-vàng-cam, LED giữa nền gần đen chữ đỏ tươi trên cửa chính. Phủ pano canvas
-  // đúng 9 nhịp AdBand: tâm x -32..32 bước 8, 7.5 x 1.15 (y 3.98..5.13), z theo cung V9
-  // z=11.71+d(x) R=142.28, yaw=PI-asin(x/R). Dán trên tường, không thêm solid.
+  // PHẲNG màu clamp nhạt không họa tiết -> tầng trệt "thưa". Nền trắng + logo xanh Cozy +
+  // túi/chai sản phẩm xanh-vàng-cam, LED giữa nền gần đen chữ đỏ tươi trên cửa chính.
+  // ADBAND-TALL-1 (11/11): AdBand GLB cao 1.20 -> 2.15 (3.00..5.15) = 0.43 x tầng trệt
+  // (mẫu số 0..đáy ZigzagBack 5.01; ảnh 01 đo 40px/86px = 0.465). Pano canvas theo:
+  // 7.5 x 2.11 (y 3.02..5.13), texture 512x144, LED 3 dòng như ảnh. Phủ đúng 9 nhịp:
+  // tâm x -32..32 bước 8, z theo cung V9 z=11.71+d(x) R=142.28, yaw=PI-asin(x/R).
+  // Dán trên tường, không thêm solid, không chắn Entrance (kính dưới y 3.02 vẫn lộ).
   const R9 = 142.28;
   function adTex(kind){
-    const c = document.createElement('canvas'); c.width = 512; c.height = 80;
+    const c = document.createElement('canvas'); c.width = 512; c.height = 144;
     const g = c.getContext('2d');
     if(kind === 'L'){
-      g.fillStyle = '#120608'; g.fillRect(0, 0, 512, 152);
-      g.fillStyle = '#ff2418'; g.textAlign = 'center'; g.font = 'bold 27px Arial, sans-serif';
-      g.fillText('TOÀN ĐẢNG, TOÀN DÂN, TOÀN QUÂN', 256, 32);
-      g.font = 'bold 23px Arial, sans-serif';
-      g.fillText('THI ĐUA LẬP THÀNH TÍCH CHÀO MỪNG ĐẠI HỘI XIV', 256, 64);
+      g.fillStyle = '#120608'; g.fillRect(0, 0, 512, 144);
+      g.fillStyle = '#ff2418'; g.textAlign = 'center'; g.font = 'bold 29px Arial, sans-serif';
+      g.fillText('TOÀN ĐẢNG, TOÀN DÂN, TOÀN QUÂN', 256, 46);
+      g.font = 'bold 27px Arial, sans-serif';
+      g.fillText('THI ĐUA LẬP THÀNH TÍCH', 256, 86);
+      g.fillText('CHÀO MỪNG ĐẠI HỘI XIV', 256, 124);
     } else {
-      g.fillStyle = kind === 'Y' ? '#f6c90e' : '#f4f6f1'; g.fillRect(0, 0, 512, 152);
-      g.fillStyle = '#2e7d32'; g.fillRect(20, 10, 130, 60);
-      g.fillStyle = '#ffffff'; g.font = 'italic bold 34px Arial, sans-serif'; g.textAlign = 'center';
-      g.fillText('Cozy', 85, 52);
+      g.fillStyle = kind === 'Y' ? '#f6c90e' : '#f4f6f1'; g.fillRect(0, 0, 512, 144);
+      g.fillStyle = '#2e7d32'; g.fillRect(24, 18, 150, 108);
+      g.fillStyle = '#ffffff'; g.font = 'italic bold 42px Arial, sans-serif'; g.textAlign = 'center';
+      g.fillText('Cozy', 99, 90);
       if(kind === 'B'){
         const bc = ['#69a83c', '#f2b705', '#e07b2a', '#69a83c'];
         for(let i = 0; i < 4; i++){
           const bx = 196 + i * 76;
-          g.fillStyle = '#37503a'; g.fillRect(bx + 14, 6, 16, 10);
-          g.fillStyle = bc[i]; g.fillRect(bx, 16, 44, 58);
-          g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(bx + 7, 30, 30, 26);
+          g.fillStyle = '#37503a'; g.fillRect(bx + 14, 10, 16, 16);
+          g.fillStyle = bc[i]; g.fillRect(bx, 26, 44, 104);
+          g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(bx + 7, 44, 30, 58);
         }
       } else {
-        g.fillStyle = '#57a639'; g.fillRect(200, 8, 100, 64);
-        g.fillStyle = '#f2b705'; g.fillRect(330, 8, 100, 64);
-        g.fillStyle = '#2e7d32'; g.fillRect(200, 8, 100, 24);
-        g.fillStyle = '#e07b2a'; g.fillRect(330, 8, 100, 24);
-        g.fillStyle = '#ffffff'; g.font = 'bold 19px Arial, sans-serif';
-        g.fillText('TRÀ', 250, 29); g.fillText('MẬT', 380, 29);
+        g.fillStyle = '#57a639'; g.fillRect(210, 16, 110, 112);
+        g.fillStyle = '#f2b705'; g.fillRect(345, 16, 110, 112);
+        g.fillStyle = '#2e7d32'; g.fillRect(210, 16, 110, 34);
+        g.fillStyle = '#e07b2a'; g.fillRect(345, 16, 110, 34);
+        g.fillStyle = '#ffffff'; g.font = 'bold 22px Arial, sans-serif';
+        g.fillText('TRÀ', 265, 41); g.fillText('MẬT', 400, 41);
       }
     }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
@@ -999,11 +1002,11 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
   const lt = adTex('L');
   adMats.L = new THREE.MeshStandardMaterial({ map: lt, emissive: 0xffffff, emissiveMap: lt, emissiveIntensity: 0.5, roughness: 0.85 });
   const seq = ['B', 'G', 'Y', 'G', 'L', 'G', 'G', 'Y', 'B'];
-  const geoP = new THREE.PlaneGeometry(7.5, 1.15);
+  const geoP = new THREE.PlaneGeometry(7.5, 2.11);
   for(let i = 0; i < 9; i++){
     const x = -32 + i * 8, d = R9 - Math.sqrt(R9 * R9 - x * x);
     const m = new THREE.Mesh(geoP, adMats[seq[i]]);
-    m.position.set(x, 4.55, 11.71 + d);
+    m.position.set(x, 4.075, 11.71 + d);
     m.rotation.y = Math.PI - Math.asin(x / R9);
     worldGroup.add(m);
   }

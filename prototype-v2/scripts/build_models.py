@@ -794,13 +794,16 @@ def build_market():
     # mái hiên sọc từng ô (dưới dải pano, dốc xuống phía phố) — gộp 1 mesh
     awn_parts = []
     for bi, x in enumerate(range(-28, 29, 8)):
-        awn = box("tmpAwn", (5.9, 1.15, 0.06), (x, 8.62, 3.52),
+        awn = box("tmpAwn", (5.9, 1.15, 0.06), (x, 8.62, 2.67),
                   MATS["StripeA"] if bi % 2 == 0 else MATS["StripeB"], 0.0)
         awn.rotation_euler = (-0.40, 0, 0)
         awn_parts.append(awn)
     join_into(awn_parts, "ShopAwnings")
     # Dải BIỂN QUẢNG CÁO nhiều màu liền mạch trên ki-ốt + LED đỏ ở giữa (ảnh 01)
     # V4.8: pano cao hơn (1.20) + ô lồng hai tông màu cho có nhịp/chi tiết
+    # ADBAND-TALL-1 (11/11): pano cao 1.20 -> 2.15 (3.00..5.15) dat ti le anh that
+    # 0.43 x tang tret (0..day ZigzagBack 5.01); canopy ha -0.85 (tam 2.67) nam
+    # ngay duoi pano nhu anh; AdTrimB ha theo xuong 2.86..3.00.
     ad_mats = [MATS["AdGreen"], MATS["AdYellow"], MATS["AdWhite"], MATS["AdGreen"],
                MATS["AdLED"],
                MATS["AdYellow"], MATS["AdGreen"], MATS["AdWhite"], MATS["AdYellow"]]
@@ -810,12 +813,12 @@ def build_market():
     inset_parts = []
     for i, x in enumerate(range(-32, 33, 8)):
         if i == 4:
-            box("AdFrame", (7.9, 0.20, 1.50), (x, 8.16, 4.55), MATS["TrimBrown"], 0.01)
-        box("AdBand", (7.5, 0.14, 1.20), (x, 8.22, 4.55), ad_mats[i], 0.01)
-        inset_parts.append(box("tmpIn", (6.4, 0.16, 0.80), (x, 8.26, 4.55), inset_mats[i], 0.0))
+            box("AdFrame", (7.9, 0.20, 2.45), (x, 8.16, 4.075), MATS["TrimBrown"], 0.01)
+        box("AdBand", (7.5, 0.14, 2.15), (x, 8.22, 4.075), ad_mats[i], 0.01)
+        inset_parts.append(box("tmpIn", (6.4, 0.16, 1.75), (x, 8.26, 4.075), inset_mats[i], 0.0))
     join_into(inset_parts, "AdInsets")
     box("AdTrimT", (67, 0.2, 0.14), (0, 8.18, 5.24), trim, 0.0)
-    box("AdTrimB", (67, 0.2, 0.14), (0, 8.18, 3.86), trim, 0.0)
+    box("AdTrimB", (67, 0.2, 0.14), (0, 8.18, 2.93), trim, 0.0)
     # Dải ZIGZAG trắng — chi tiết nhận diện mạnh nhất (ảnh 01 + chợ 1937)
     # V4.1: nền cao hơn (1.42) + xám đậm, chevron cao/dày hơn -> tương phản mạnh
     box("ZigzagBack", (66.5, 0.18, 1.42), (0, 8.04, 5.72), MATS["ZigBack"], 0.0)
