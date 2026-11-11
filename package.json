@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "description": "Cho Hoa Binh Online - game web 3D Cho Da Lat (Three.js, static site; game chinh o prototype-v2/index.html)",
   "scripts": {
-    "dev": "serve . -l 5173",
-    "start": "serve . -l 5173",
+    "dev": "serve . -l 3000",
+    "start": "serve . -l 3000",
     "build": "echo static-site-no-build-step"
   },
   "dependencies": {

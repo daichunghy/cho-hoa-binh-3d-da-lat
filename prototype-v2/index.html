@@ -10,30 +10,31 @@
     font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif; color:#f7e8c8; }
   #app { position:fixed; inset:0; }
   canvas { display:block; }
-  .panel { background:linear-gradient(165deg, rgba(88,55,29,.93), rgba(43,24,12,.94)); border:1.5px solid rgba(216,164,65,.8); border-radius:18px;
-    backdrop-filter: blur(6px); box-shadow:0 4px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,220,150,.28); }
-  #hudMain { position:fixed; top:10px; left:10px; padding:10px 14px; z-index:20; min-width:190px; }
-  #hudMain .title { font-size:15px; font-weight:700; letter-spacing:.4px; color:#ffd98a; }
-  #zoneName { font-size:13px; margin-top:2px; color:#fff; }
-  #xuRow { margin-top:6px; font-size:14px; }
+  .panel { background:linear-gradient(165deg, rgba(66,40,22,.92), rgba(32,18,10,.95)); border:1.5px solid rgba(232,180,84,.82); border-radius:16px;
+    backdrop-filter: blur(8px); box-shadow:0 8px 24px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,230,175,.28); }
+  #hudMain { position:fixed; top:12px; left:12px; padding:11px 15px; z-index:20; min-width:215px; font-variant-numeric:tabular-nums; }
+  #hudMain .title { font-size:14.5px; font-weight:800; letter-spacing:.5px; color:#ffe094; text-shadow:0 1px 4px rgba(0,0,0,.6); }
+  #zoneName { font-size:12.5px; margin-top:3px; color:#fff6e0; font-weight:600; }
+  #xuRow { margin-top:6px; font-size:13.5px; display:flex; align-items:center; gap:5px; }
   #xuVal { color:#ffd94d; font-weight:800; font-size:17px; }
-  #questPanel { position:fixed; top:10px; left:50%; transform:translateX(-50%);
-    padding:8px 14px; z-index:20; font-size:13px; text-align:center; max-width:92vw; }
+  #questPanel { position:fixed; top:12px; left:50%; transform:translateX(-50%);
+    padding:8px 16px; z-index:20; font-size:12.5px; text-align:center; max-width:min(540px,88vw); font-variant-numeric:tabular-nums; }
   #questPanel b { color:#ffd98a; }
   #questPanel .done { color:#8be08b; font-weight:700; }
-  #hudBtns { position:fixed; top:10px; right:10px; z-index:20; display:flex; gap:8px; }
-  .hbtn { cursor:pointer; color:#ffeec4; font-size:13px; font-weight:600;
-    background:linear-gradient(165deg, rgba(88,55,29,.93), rgba(43,24,12,.94)); border:1.5px solid rgba(216,164,65,.75); border-radius:14px; padding:9px 12px; backdrop-filter: blur(6px); box-shadow:inset 0 1px 0 rgba(255,220,150,.25); }
-  .hbtn:active { transform:scale(.96); }
-  #buffs { position:fixed; left:10px; bottom:118px; z-index:20; display:flex; flex-direction:column; gap:6px; }
+  #hudBtns { position:fixed; top:12px; right:12px; z-index:20; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:42vw; }
+  .hbtn { cursor:pointer; color:#fff2d2; font-size:12.5px; font-weight:700;
+    background:linear-gradient(165deg, rgba(76,46,24,.94), rgba(36,20,10,.96)); border:1.5px solid rgba(226,174,78,.78); border-radius:12px; padding:8px 11px; backdrop-filter: blur(6px); box-shadow:0 3px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,225,160,.28); transition:transform .12s, border-color .15s, background .15s; }
+  .hbtn:hover { border-color:#ffd94d; background:linear-gradient(165deg, rgba(98,60,31,.96), rgba(48,27,14,.98)); }
+  .hbtn:active { transform:scale(.95); }
+  #buffs { position:fixed; left:12px; bottom:118px; z-index:20; display:flex; flex-direction:column; gap:6px; }
   .buff { padding:6px 10px; font-size:12px; min-width:170px; }
   .buff .bar { height:5px; background:rgba(255,255,255,.18); border-radius:3px; margin-top:4px; overflow:hidden; }
   .buff .fill { height:100%; border-radius:3px; }
   .buffWarm .fill { background:#ff9a3c; } .buffLeg .fill { background:#7ec850; } .buffAlert .fill { background:#ffd94d; }
-  #ctxPrompt { position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:20;
-    padding:13px 22px; font-size:17.5px; font-weight:600; display:none; text-align:center; cursor:pointer;
-    border:2px solid rgba(255,217,77,.9); animation:ctxPulse 1.6s ease-in-out infinite; }
-  @keyframes ctxPulse { 0%,100% { box-shadow:0 0 0 rgba(255,190,60,0); } 50% { box-shadow:0 0 24px rgba(255,190,60,.6); } }
+  #ctxPrompt { position:fixed; left:50%; bottom:88px; transform:translateX(-50%); z-index:20;
+    padding:12px 22px; font-size:16.5px; font-weight:700; display:none; text-align:center; cursor:pointer;
+    border:2px solid rgba(255,217,77,.95); animation:ctxPulse 1.6s ease-in-out infinite; }
+  @keyframes ctxPulse { 0%,100% { box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 0 rgba(255,190,60,0); } 50% { box-shadow:0 6px 24px rgba(0,0,0,.55), 0 0 24px rgba(255,190,60,.65); } }
   /* V4.7: thẻ hướng dẫn lớn "một việc một lúc" */
   #tutCard { position:fixed; left:50%; top:138px; transform:translateX(-50%); z-index:26; width:min(560px,94vw);
     padding:15px 20px 13px; text-align:center; cursor:pointer; display:none;
@@ -44,14 +45,15 @@
   #tutCard .tdist { font-size:14.5px; color:#ffd98a; }
   #tutSkip { margin-top:10px; cursor:pointer; border:1.5px solid rgba(255,217,138,.6); background:rgba(0,0,0,.25);
     color:#ffeec4; border-radius:10px; padding:6px 14px; font-size:13px; font-weight:700; }
-  #guidePanel { cursor:pointer; }
-  #ctxPrompt b { color:#ffd94d; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.35);
+  #guidePanel { cursor:pointer; padding:10px 13px; transition:border-color .15s; }
+  #guidePanel:hover { border-color:#ffd94d; }
+  #ctxPrompt b { color:#ffd94d; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.4);
     border-radius:6px; padding:1px 8px; margin-right:6px; }
-  #cookBar { position:fixed; left:50%; bottom:150px; transform:translateX(-50%); z-index:20;
+  #cookBar { position:fixed; left:50%; bottom:148px; transform:translateX(-50%); z-index:20;
     padding:8px 14px; font-size:13px; display:none; text-align:center; min-width:230px; }
   #cookBar .bar { height:6px; background:rgba(255,255,255,.15); border-radius:3px; margin-top:5px; overflow:hidden; }
   #cookFill { height:100%; width:0%; background:#ffb347; }
-  #toasts { position:fixed; top:74px; left:50%; transform:translateX(-50%); z-index:40;
+  #toasts { position:fixed; top:68px; left:50%; transform:translateX(-50%); z-index:40;
     display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:max-content; max-width:94vw; }
   .toast { padding:10px 18px; font-size:14px; border-radius:12px; text-align:center;
     background:linear-gradient(165deg, rgba(88,55,29,.96), rgba(43,24,12,.96)); border:1.5px solid rgba(216,164,65,.8); color:#ffeec4;
@@ -59,9 +61,9 @@
   .toast.stamp { background:linear-gradient(165deg, rgba(112,62,26,.96), rgba(56,30,14,.96)); border-color:#f0c268; color:#ffe9b0; font-weight:700; }
   @keyframes tin { from { opacity:0; transform:translateY(-8px);} to { opacity:1; transform:none;} }
   .modal { position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.45); }
+    background:rgba(0,0,0,.48); }
   .modal.open { display:flex; }
-  .sheet { width:min(430px,94vw); max-height:84vh; overflow-y:auto; padding:18px;
+  .sheet { width:min(440px,94vw); max-height:84vh; overflow-y:auto; padding:18px;
     background:linear-gradient(170deg, #503219, #2a170b 70%); border:2px solid rgba(216,164,65,.85); border-radius:22px; box-shadow:0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,150,.3); }
   .sheet h2 { font-size:17px; color:#ffd98a; margin-bottom:4px; }
   .sheet .sub { font-size:12.5px; color:#dcbc8d; margin-bottom:12px; }
@@ -79,7 +81,7 @@
   .stampCell { border:1.6px dashed rgba(255,255,255,.25); border-radius:10px; padding:10px; font-size:13px;
     color:#8f887a; text-align:center; }
   .stampCell.got { border:1.6px solid #f0c268; color:#ffe9b0; background:rgba(246,173,31,.14); font-weight:700; }
-  #tempRow { font-size:13px; margin-top:5px; color:#cfe6f5; }
+  #tempRow { font-size:12.5px; margin-top:5px; color:#cfe6f5; }
   #warmRow { display:flex; align-items:center; gap:7px; margin-top:5px; font-size:12.5px; }
   #warmRow .wbar { flex:1; height:8px; background:rgba(255,255,255,.18); border-radius:4px; overflow:hidden; min-width:90px; }
   #warmFill { height:100%; width:100%; background:linear-gradient(90deg,#ff7a3c,#ffb347); transition:width .3s; }
@@ -102,10 +104,10 @@
     font-weight:800; display:none; align-items:center; justify-content:center; text-align:center; touch-action:none; }
   @media (pointer:coarse) { #joyBase { display:block; } #actBtn { display:flex; } #buffs { bottom:150px; } }
   #hint { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); z-index:15; font-size:12px;
-    color:rgba(255,255,255,.75); background:rgba(0,0,0,.35); padding:5px 12px; border-radius:8px; text-align:center; max-width:94vw; }
+    color:rgba(255,244,220,.88); background:rgba(22,14,8,.72); border:1px solid rgba(216,164,65,.35); padding:5px 14px; border-radius:10px; text-align:center; max-width:94vw; backdrop-filter:blur(4px); }
   @media (pointer:coarse) { #hint { display:none; } }
-  #guidePanel { position:fixed; left:14px; top:118px; z-index:16; max-width:340px; font-size:13px; line-height:1.45; }
-  #orderChip { position:fixed; top:118px; right:10px; z-index:20; padding:9px 12px; max-width:250px;
+  #guidePanel { position:fixed; left:12px; top:162px; z-index:16; width:276px; font-size:12.5px; line-height:1.42; }
+  #orderChip { position:fixed; top:438px; right:12px; z-index:20; padding:9px 12px; max-width:250px;
     font-size:12.5px; line-height:1.45; display:none; border-color:rgba(255,181,46,.85); }
   #orderChip b { color:#ffd98a; }
   #guidePanel .gprog { color:#ffd98a; font-weight:700; }
@@ -113,8 +115,15 @@
     letter-spacing:1px; color:#ffd98a; text-shadow:0 2px 14px rgba(0,0,0,.75), 0 0 34px rgba(255,150,50,.45);
     opacity:0; transition:opacity .6s; pointer-events:none; white-space:nowrap; }
   #areaCard.show { opacity:1; }
-  #minimap { position:fixed; right:14px; top:118px; z-index:16; border-radius:12px; border:1.5px solid rgba(255,200,110,.45);
-    background:rgba(16,12,8,.88); box-shadow:0 6px 22px rgba(0,0,0,.5); }
+  #minimap { position:fixed; right:12px; top:60px; z-index:16; border-radius:14px; border:1.5px solid rgba(232,180,84,.65);
+    background:rgba(16,12,8,.9); box-shadow:0 6px 22px rgba(0,0,0,.55); }
+  #quickNav { position:fixed; right:12px; top:224px; z-index:18; width:156px; padding:8px; display:flex; flex-direction:column; gap:4px; }
+  #quickNav .qnTitle { font-size:11px; font-weight:800; color:#ffd98a; letter-spacing:.4px; text-align:center; margin-bottom:2px; }
+  #quickNav .qnGrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .qnBtn { cursor:pointer; border:1px solid rgba(216,164,65,.55); border-radius:8px; padding:5px 4px; font-size:11px; font-weight:700;
+    color:#ffeec4; background:rgba(28,16,8,.78); text-align:center; transition:background .15s, border-color .15s, transform .1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .qnBtn:hover { border-color:#ffd94d; background:rgba(92,54,24,.92); color:#fff; }
+  .qnBtn:active { transform:scale(.95); }
   #bubble { position:fixed; z-index:22; max-width:210px; background:#fff8ea; color:#3a2c1c; font-size:12.5px; font-weight:600;
     padding:7px 11px; border-radius:13px; transform:translate(-50%,-115%); display:none; pointer-events:none;
     box-shadow:0 4px 14px rgba(0,0,0,.45); text-align:center; }
@@ -134,8 +143,8 @@
   @keyframes xpShake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(1.5px); } 75% { transform:translateX(-1.5px); } }
   .xpPop { position:absolute; left:26px; font-size:15px; font-weight:800; color:#cfa9ff; text-shadow:0 1px 6px rgba(0,0,0,.85);
     animation:xuFly 1.6s ease-out forwards; white-space:nowrap; }
-  #eventChip { position:fixed; top:172px; right:10px; z-index:20; padding:8px 12px; max-width:250px;
-    font-size:13px; line-height:1.4; display:none; border-color:rgba(255,150,80,.85); }
+  #eventChip { position:fixed; top:372px; right:12px; z-index:20; padding:8px 12px; max-width:250px;
+    font-size:12.5px; line-height:1.4; display:none; border-color:rgba(255,180,80,.9); }
   #eventChip b { color:#ffd98a; }
   #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:60; }
   #flash.go { animation:flashGo .45s ease-out; }
@@ -158,7 +167,7 @@
   #btnWardrobe .wdCount { color:#ffd94d; font-weight:800; }
 
 /* BLENDER-DEEP-2 (mục 15-17): chế độ chơi */
-#modePanel{ position:fixed; left:10px; top:158px; width:248px; z-index:30; padding:10px 12px; font-size:13px; }
+#modePanel{ position:fixed; left:12px; top:274px; width:276px; z-index:25; padding:10px 12px; font-size:12.5px; }
 #modePanelTitle{ font-weight:bold; color:#ffd94d; margin-bottom:6px; }
 #modeTasks .tk{ margin:3px 0; color:#e8e2d4; }
 #modeTasks .tk.done{ color:#9fd48a; text-decoration:line-through; }
@@ -199,6 +208,17 @@
 <div id="areaCard"></div>
 <div id="bubble"></div>
 <canvas id="minimap" width="156" height="156"></canvas>
+<div id="quickNav" class="panel">
+  <div class="qnTitle">📍 ĐI NHANH ĐỊA DANH</div>
+  <div class="qnGrid">
+    <button class="qnBtn" id="qnMarket" data-tp="-22,3.5,0">🏮 Chợ Đêm</button>
+    <button class="qnBtn" id="qnHall" data-tp="0,18.2,0">🏛 Nhà Lồng</button>
+    <button class="qnBtn" id="qnStairs" data-tp="-56,-10,3.14">🪜 Bậc Thang</button>
+    <button class="qnBtn" id="qnSquare" data-tp="22,-48,0">🎭 Hòa Bình</button>
+    <button class="qnBtn" id="qnPier" data-tp="-259,32.5,0">🦢 Bến Hồ</button>
+    <button class="qnBtn" id="qnThuyTa" data-tp="-250,51.5,0">🌸 Thủy Tạ</button>
+  </div>
+</div>
 <div id="xuPops"></div>
 
 <div id="hudBtns">
@@ -210,6 +230,7 @@
   <button class="hbtn" id="btnWardrobe">🧣 Tủ đồ (<span id="wdCount">1</span>)</button>
   <button class="hbtn" id="btnUpgrade">⬆️ Nâng cấp</button>
   <button class="hbtn" id="btnReturnBike" style="display:none">🛵 Trả xe</button>
+  <button class="hbtn" id="btnReturnBoat" style="display:none">🦢 Về bến</button>
 </div>
 
 <div id="buffs"></div>
@@ -899,16 +920,47 @@ const HYDRA_COLS = [0x7a9cc6, 0x9a7ab8, 0xd89ab8, 0xe8e4da, 0x86b8d8];
   const st = cloneAsset('stairs');
   st.position.set(-56, 0, -16); // LAYOUT-FIX-1: thang ve hong tay (tam -56)
   worldGroup.add(st);
-  // SWEEP-NIGHT-1: tường hông thang (SideWall/ConcreteDk) là mảng phẳng sáng choán góc trái khung (luc thang con o tam 0)
-  // mặt tiền (verdict V8 điểm (3)); ảnh thật 01 chỗ này là tường kè phong hoá sẫm + cây trên sườn.
-  // -> clone vật liệu CHỈ cho 2 mesh SideWall: hạ tông 0x8a8175 + phủ TEX_GRIME (không đụng bậc/chiếu nghỉ).
+  // SWEEP-NIGHT-1 + HẠNG MỤC B: tường hông thang & bề mặt bậc thang có độ mòn thực tế (TEX_GRIME)
   st.traverse(o => {
-    if(o.isMesh && o.name.indexOf('SideWall') === 0 && o.material && !Array.isArray(o.material)){
-      o.material = o.material.clone();
-      o.material.color.setHex(0x8a8175);
-      o.material.map = TEX_GRIME;
+    if(o.isMesh && o.material && !Array.isArray(o.material)){
+      if(o.name.indexOf('SideWall') === 0){
+        o.material = o.material.clone();
+        o.material.color.setHex(0x8a8175);
+        o.material.map = TEX_GRIME;
+      } else {
+        o.material = o.material.clone();
+        o.material.map = TEX_GRIME;
+      }
     }
   });
+  // HẠNG MỤC B: Vệt mòn sẫm dọc luồng bước chân trên 3 nhịp bậc & 2 chiếu nghỉ
+  const wearMat = new THREE.MeshStandardMaterial({ color:0x5e564c, map:TEX_GRIME, roughness:0.95, transparent:true, opacity:0.65, polygonOffset:true, polygonOffsetFactor:-2 });
+  for(const [wz, wy, wd] of [[-10.25, 5.68, 3.8], [-20.75, 11.34, 3.8]]){
+    const wm = new THREE.Mesh(new THREE.PlaneGeometry(15.5, wd), wearMat);
+    wm.rotation.x = -Math.PI / 2; wm.position.set(-56, wy, wz); worldGroup.add(wm);
+  }
+  for(let sz = -2.6; sz >= -29.6; sz -= 0.9){
+    if((sz <= -8.25 && sz >= -12.25) || (sz <= -18.75 && sz >= -22.75)) continue;
+    for(const wx of [-59.2, -52.8]){
+      const tread = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 0.36), wearMat);
+      tread.rotation.x = -Math.PI / 2; tread.position.set(wx, stairH(sz) + 0.015, sz); worldGroup.add(tread);
+    }
+  }
+  // HẠNG MỤC B: Lan can sắt sơn đen/xám đậm dọc giữa thang và 2 biên bậc tam cấp (ảnh thật 08/10)
+  const railFlights = [[-2.2, 0, -8.25, 5.67], [-12.25, 5.67, -18.75, 11.33], [-22.75, 11.33, -29.8, 17.0]];
+  for(const rx of [-64.4, -56.0, -47.6]){
+    for(const [z0, y0, z1, y1] of railFlights){
+      const dz = z1 - z0, dy = y1 - y0, len = Math.hypot(dz, dy), ang = Math.atan2(dy, -dz);
+      const bar = box(0.07, 0.07, len, 0x2b2d2f, rx, (y0 + y1) / 2 + 0.88, (z0 + z1) / 2, worldGroup, false);
+      bar.rotation.x = ang;
+      const bar2 = box(0.05, 0.05, len, 0x3b3e42, rx, (y0 + y1) / 2 + 0.48, (z0 + z1) / 2, worldGroup, false);
+      bar2.rotation.x = ang;
+      for(let p = 0; p <= 3; p++){
+        const f = p / 3;
+        box(0.07, 0.9, 0.07, 0x2b2d2f, rx, y0 + dy * f + 0.45, z0 + dz * f, worldGroup, false);
+      }
+    }
+  }
   // thông che sườn tây dọc 3 thềm cạnh thang (groundH thềm tây: z -22 -> 14.2, -15 -> 8.5, -8 -> 2.8)
   pine(-69.8, -22, 1.0); pine(-69.8, -15, 0.9); pine(-69.8, -8, 0.85);
   const stairSign = signMesh('BẬC THANG CHỢ ĐÀ LẠT', 10, 1.4, '#3a2e24', '#ffe9b0');
@@ -1277,20 +1329,35 @@ function brandShop(x, z, rotY, kind){ // BLENDER-DEEP-2 + V6: kiến trúc cao n
     solid(cx, cz - 1.5, 2.7, 0.8);
   };
   // V6 CHUẨN ĐỊA LÝ & ẢNH THẬT 08/10: Hai công trình biểu tượng ôm trọn 2 bên đỉnh cầu thang
-  // 1. Phía Tây: THƯƠNG XÁ LA TULIPE (3 tầng, mái ngói đỏ, biển xanh chữ trắng "LỐI VÀO MUA SẮM" - ảnh 08)
+  // 1. Phía Tây: THƯƠNG XÁ LA TULIPE (3 tầng kiến trúc Pháp, mái ngói đỏ có cửa sổ mái dormer, biển xanh chữ trắng "LỐI VÀO MUA SẮM", trụ đèn 5 bóng tròn cổ điển - ảnh 08)
   function buildLaTulipe(x, z, y){
     const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
     box(8.8, 8.8, 6.2, 0xe8dcbe, 0, 4.4, 0, g);
+    // Pilasters & phào chỉ kiến trúc Pháp
+    for(const px of [-4.25, -1.35, 1.35, 4.25]) box(0.28, 8.8, 0.18, 0xd8c8a4, px, 4.4, 3.11, g, false);
+    box(9.0, 0.22, 6.4, 0xcab894, 0, 3.2, 0, g, false);
+    box(9.0, 0.22, 6.4, 0xcab894, 0, 6.0, 0, g, false);
     box(9.2, 0.3, 6.6, 0x7a3024, 0, 8.95, 0, g, false);
     const rLen = Math.hypot(4.6, 2.2);
     const sl1 = box(rLen, 0.16, 6.8, 0x8a3828, -2.2, 9.9, 0, g, false); sl1.rotation.z = Math.atan2(2.2, 4.4);
     const sl2 = box(rLen, 0.16, 6.8, 0x8a3828, 2.2, 9.9, 0, g, false); sl2.rotation.z = -Math.atan2(2.2, 4.4);
+    // 2 cửa sổ mái Mansard (dormer) đặc trưng La Tulipe
+    for(const dx of [-2.1, 2.1]){
+      box(1.2, 1.1, 0.9, 0xe8dcbe, dx, 9.85, 2.65, g, false);
+      box(1.4, 0.18, 1.1, 0x7a3024, dx, 10.48, 2.65, g, false);
+      box(0.7, 0.7, 0.1, 0x2d3540, dx, 9.8, 3.12, g, false);
+    }
     box(8.2, 1.8, 0.15, 0xe8dcbe, 0, 9.7, 3.11, g, false);
-    const tulipeSign = signMesh('Thương xá La Tulipe', 7.8, 1.35, '#0d3b66', '#ffffff', 'LỐI VÀO MUA SẮM');
-    tulipeSign.position.set(0, 5.2, 3.2); g.add(tulipeSign);
+    const tulipeSign = signMesh('Thương xá La Tulipe', 8.0, 1.4, '#0d3b66', '#ffffff', 'LỐI VÀO MUA SẮM • THỜI TRANG & ĐẶC SẢN');
+    tulipeSign.position.set(0, 5.2, 3.24); g.add(tulipeSign);
     box(6.8, 2.4, 0.15, 0x2e3538, 0, 1.4, 3.12, g, false);
     const wp = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 2.0), new THREE.MeshStandardMaterial({ color:0xffecc4, emissive:0xff9a3c, emissiveIntensity:0.55, roughness:0.5 }));
     wp.position.set(0, 1.4, 3.22); g.add(wp);
+    // Ma-nơ-canh trưng bày áo khoác dạ trong tủ kính tầng trệt
+    for(const [mx, mc] of [[-1.8, 0xc8372d], [0, 0x2e6da4], [1.8, 0xd9a62e]]){
+      cyl(0.16, 0.2, 0.65, mc, mx, 1.05, 3.28, g, 8);
+      ball(0.12, 0xe8d8c0, mx, 1.52, 3.28, g, 0.9);
+    }
     for(const wx of [-2.4, 0, 2.4]){
       for(const wy of [4.2, 7.1]){
         box(1.4, 1.4, 0.1, 0x3d3028, wx, wy, 3.12, g, false);
@@ -1299,28 +1366,50 @@ function brandShop(x, z, rotY, kind){ // BLENDER-DEEP-2 + V6: kiến trúc cao n
       }
     }
     const awn = box(7.6, 0.08, 1.6, 0xc8312b, 0, 2.85, 3.85, g, false); awn.rotation.x = -0.25;
+    // Trụ đèn 5 bóng tròn cổ điển xanh rêu trước Thương xá La Tulipe (ảnh 08)
+    const lpX = 4.6, lpZ = 3.8;
+    cyl(0.12, 0.18, 3.8, 0x1f3d2b, lpX, 1.9, lpZ, g, 8);
+    const globeMat = new THREE.MeshStandardMaterial({ color:0xfff6dc, emissive:0xffc86b, emissiveIntensity:1.8, roughness:0.25 });
+    lampGlows.push(globeMat);
+    for(const [gx, gy, gz] of [[0, 4.05, 0], [-0.45, 3.75, 0], [0.45, 3.75, 0], [0, 3.75, -0.45], [0, 3.75, 0.45]]){
+      if(gx || gz) box(0.04, 0.25, 0.04, 0x1f3d2b, lpX + gx * 0.6, gy - 0.15, lpZ + gz * 0.6, g, false);
+      const gl = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), globeMat);
+      gl.position.set(lpX + gx, gy, lpZ + gz); g.add(gl);
+    }
     solid(x, z, 4.5, 3.2);
     return g;
   }
   buildLaTulipe(-73.5, -36.4, 17);
 
-  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH
+  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH THANG (mặt tiền lam gỗ thông ấm + xanh rừng đậm #1b4332, kệ mứt/trà nhiều tầng - ảnh 10)
   function buildLangfarmStairs(x, z, y){
     const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
-    box(8.8, 6.4, 6.2, 0xd4a373, 0, 3.2, 0, g);
-    box(9.2, 0.3, 6.6, 0x4a3428, 0, 6.55, 0, g, false);
+    box(8.8, 6.4, 6.2, 0x1b4332, 0, 3.2, 0, g);
+    // Hệ lam gỗ thông đứng đặc trưng thương hiệu L'angfarm Đà Lạt
+    for(let sx = -4.1; sx <= 4.11; sx += 0.45){
+      box(0.14, 6.2, 0.12, 0xc88a4b, sx, 3.15, 3.12, g, false);
+    }
+    box(9.2, 0.3, 6.6, 0x3b2618, 0, 6.55, 0, g, false);
     const rLen = Math.hypot(4.6, 2.1);
-    const sl1 = box(rLen, 0.16, 6.8, 0x2e5030, -2.2, 7.55, 0, g, false); sl1.rotation.z = Math.atan2(2.1, 4.4);
-    const sl2 = box(rLen, 0.16, 6.8, 0x2e5030, 2.2, 7.55, 0, g, false); sl2.rotation.z = -Math.atan2(2.1, 4.4);
-    box(8.2, 1.7, 0.15, 0xd4a373, 0, 7.35, 3.11, g, false);
-    const lfSign = signMesh("L'ANGFARM", 7.8, 1.25, '#1b4332', '#ffd98a', 'ĐẶC SẢN ĐÀ LẠT • MỨT • TRÀ • HOA KHÔ');
-    lfSign.position.set(0, 4.8, 3.2); g.add(lfSign);
-    box(6.8, 2.3, 0.15, 0x3d2817, 0, 1.35, 3.12, g, false);
-    const wp = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.9), new THREE.MeshStandardMaterial({ color:0xffecc4, emissive:0xff9a3c, emissiveIntensity:0.5, roughness:0.5 }));
-    wp.position.set(0, 1.35, 3.22); g.add(wp);
-    box(5.8, 0.08, 0.7, 0x74522f, 0, 0.95, 3.55, g, false);
-    const jarCols = [0xd8542e, 0xe8c33c, 0x9a4a7a, 0x3f7a44, 0xe07b2a];
-    for(let i = 0; i < 5; i++){ cyl(0.12, 0.12, 0.28, jarCols[i], -2.0 + i * 1.0, 1.15, 3.55, g, 8); }
+    const sl1 = box(rLen, 0.16, 6.8, 0x1b4332, -2.2, 7.55, 0, g, false); sl1.rotation.z = Math.atan2(2.1, 4.4);
+    const sl2 = box(rLen, 0.16, 6.8, 0x1b4332, 2.2, 7.55, 0, g, false); sl2.rotation.z = -Math.atan2(2.1, 4.4);
+    box(8.2, 1.7, 0.15, 0x234f3b, 0, 7.35, 3.11, g, false);
+    const lfSign = signMesh("L'ANGFARM", 8.0, 1.35, '#133325', '#ffd98a', 'ĐẶC SẢN ĐÀ LẠT • MỨT • TRÀ ATISO • HỒNG TREO');
+    lfSign.position.set(0, 4.85, 3.28); g.add(lfSign);
+    // Mái hiên lam gỗ + sắt xanh
+    box(7.8, 0.12, 1.45, 0x1b4332, 0, 2.95, 3.75, g, false);
+    box(6.8, 2.3, 0.15, 0x3d2817, 0, 1.35, 3.14, g, false);
+    const wp = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.9), new THREE.MeshStandardMaterial({ color:0xffecc4, emissive:0xff9a3c, emissiveIntensity:0.55, roughness:0.5 }));
+    wp.position.set(0, 1.35, 3.24); g.add(wp);
+    // Kệ gỗ 2 tầng trưng bày hũ mứt, hộp trà atiso & dây hồng treo gió trước cửa
+    for(const [sy, sz] of [[0.72, 3.62], [1.18, 3.45]]){
+      box(6.0, 0.08, 0.55, 0x8a5a32, 0, sy, sz, g, false);
+    }
+    const jarCols = [0xd8542e, 0xe8c33c, 0x9a4a7a, 0x3f7a44, 0xe07b2a, 0xc8372d, 0x2e6b46];
+    for(let i = 0; i < 7; i++){
+      cyl(0.11, 0.11, 0.26, jarCols[i], -2.4 + i * 0.8, 0.90, 3.62, g, 8);
+      box(0.28, 0.24, 0.22, jarCols[(i + 2) % 7], -2.4 + i * 0.8, 1.34, 3.45, g, false);
+    }
     pine(x + 5.2, z - 1.2, 1.35);
     pine(x + 4.8, z + 3.2, 1.2);
     solid(x, z, 4.5, 3.2);
@@ -3012,6 +3101,7 @@ function mergeGroupStatics(g, exclude){
     if(!m || Array.isArray(m) || m.map) return;
     const geo = o.geometry;
     if(!geo || !geo.attributes.position || !geo.attributes.normal || !geo.attributes.uv) return;
+    if(geo.attributes.position.isInterleavedBufferAttribute || geo.attributes.normal.isInterleavedBufferAttribute || geo.attributes.uv.isInterleavedBufferAttribute) return;
     if(geo.morphAttributes && Object.keys(geo.morphAttributes).length) return;
     const sig = (geo.index ? 'i' : 'n') + '|' + Object.keys(geo.attributes).sort().join(',');
     let byMat = groups.get(sig);
@@ -3337,36 +3427,170 @@ mergeStallStatics();
   DECOR_S_XS.forEach((x, i) => buildDecorStall(x, 30, Math.PI, i + 5)); // BLENDER-DEEP-2: hang nam lui 30
 }
 const INDOOR_COUNTERS = { shutters: [], people: [] }; // BLENDER-DEEP-2 (mục 10): quầy + khách trong nhà lồng (đóng theo giờ)
-{ // V4.5: lưới quầy nhà lồng (research/16 mục 4.3 + ảnh thật 16/19) — quầy trang trí
-  // lấp đầy sảnh: hàng áp tường 2 phía + dãy đôi giữa lưng đối lưng, biển QUẦY SỐ đỏ.
+{ // HẠNG MỤC A: NỘI THẤT CHỢ ĐÀ LẠT — 40 QUẦY PHÂN HÓA 7 NHÓM HÀNG THẬT + CỘT NHÀ LỒNG + ĐÈN TREO + SÀN MÒN (ảnh thật 10/12/16/17/19/20)
   const inner = stalls.filter(s => s.x >= -34 && s.x <= 34 && s.z >= 12 && s.z <= 28);
-  const CATS = ['RAU CỦ','TRÁI CÂY','ĐỒ KHÔ','MỨT & KẸO','GIA VỊ','HOA TƯƠI','THỊT & CÁ','BÁNH KẸO'];
-  const AWNS = [0xc8372d, 0x2e6da4, 0xc06c44, 0x68804f, 0x8668c4, 0xd97c2e]; // SOUND-COLOR-1: terracotta #c06c44 đo ảnh 31, xanh muted #68804f
-  const GOODS = [0xe07b2a, 0x6a9a4a, 0xc23b2e, 0xe8c832, 0xf0ead8, 0x9a4a7a];
+  // 7 nhóm ngành hàng thật trong nhà lồng Chợ Đà Lạt:
+  // 0: RAU CỦ (sọt nhựa nghiêng), 1: TRÁI CÂY (thúng/mẹt xếp tầng + cân đồng hồ), 2: HOA TƯƠI & HOA KHÔ (xô hoa + giỏ hoa bất tử treo),
+  // 3: VẢI & ĐỒ LEN (sào treo áo + xấp vải xếp chồng), 4: ĐỒ KHÔ & GIA VỊ (kệ 3 tầng hũ nắp đỏ + bao tải mở miệng),
+  // 5: ĐẶC SẢN MỨT & TRÀ (hộp quà xếp tháp + dây hồng treo gió + lồng đèn đỏ), 6: ĐỒ ĂN NHÀ LỒNG (nồi nước lèo + tủ kính + tô chồng + ghế đẩu)
+  const GROUP_DEFS = [
+    { cat:'RAU CỦ ĐÀ LẠT', awn:0x2e6b46, bg:'#1f4d2e', fg:'#ffe9b0', names:['SẠP BÀ TƯ','SẠP MINH TÂM','SẠP THANH LAN','SẠP ĐỨC HẠNH','SẠP HỒNG PHÚC'] },
+    { cat:'TRÁI CÂY TƯƠI', awn:0xc8372d, bg:'#7a1f1a', fg:'#ffd94d', names:['SẠP MỸ LỆ','SẠP KIM ANH','SẠP TẤN PHÁT','SẠP NGỌC BÍCH','SẠP HỒNG ĐÀO'] },
+    { cat:'HOA TƯƠI & HOA KHÔ', awn:0x8668c4, bg:'#3d2652', fg:'#ffeef8', names:['HOA LAN ANH','HOA XUÂN HƯƠNG','HOA BẤT TỬ','HOA TÚ CẦU','HOA MAI LAN'] },
+    { cat:'VẢI & ĐỒ LEN', awn:0x2e6da4, bg:'#193759', fg:'#ffffff', names:['LEN CÔ BA','VẢI THU HÀ','LEN KIM DUNG','VẢI MỸ HẠNH','LEN NGỌC MAI'] },
+    { cat:'ĐỒ KHÔ & GIA VỊ', awn:0xc06c44, bg:'#5c2e16', fg:'#ffe9b0', names:['SẠP HƯNG PHÁT','SẠP ANH TUẤN','SẠP TÂN THÀNH','SẠP VẠN LỢI','SẠP PHÚC LỘC'] },
+    { cat:'ĐẶC SẢN MỨT & TRÀ', awn:0xb8332a, bg:'#8c1d18', fg:'#ffd94d', names:['ĐẶC SẢN TUYẾT HẠNH','ĐẶC SẢN HƯƠNG THU','ĐẶC SẢN BÍCH VÂN','ĐẶC SẢN NGỌC LAN','ĐẶC SẢN ĐÀ LẠT'] },
+    { cat:'ẨM THỰC NHÀ LỒNG', awn:0xd97c2e, bg:'#4a2810', fg:'#ffd98a', names:['BÚN RIÊU CÔ NĂM','BÁNH CANH DÌ TƯ','CHÈ NÓNG BÀ BẢY','PHỞ ĐÀ LẠT','MIẾN GÀ CÔ HAI'] },
+  ];
+  const tubeBulbMat = new THREE.MeshBasicMaterial({ color:0xfff4d6 });
   let qn = 0;
   const rows = [];
-  for(let i = 0; i < 12; i++){ const cx = -28.6 + i * 5.2; rows.push({ x:cx, z:14.55, f:1 }); rows.push({ x:cx, z:26.7, f:-1 }); }
-  for(let i = 0; i < 12; i++){ const cx = -28.6 + i * 5.2; rows.push({ x:cx, z:19.35, f:-1 }); rows.push({ x:cx, z:20.65, f:1 }); }
+  for(let i = 0; i < 12; i++){ const cx = -28.6 + i * 5.2; rows.push({ x:cx, z:14.55, f:1, row:0, col:i }); rows.push({ x:cx, z:26.7, f:-1, row:3, col:i }); }
+  for(let i = 0; i < 12; i++){ const cx = -28.6 + i * 5.2; rows.push({ x:cx, z:19.35, f:-1, row:1, col:i }); rows.push({ x:cx, z:20.65, f:1, row:2, col:i }); }
   for(const r of rows){
     if(r.x > 25 && r.z > 14) continue;                       // chừa miệng thang trong nhà (đông-bắc)
     if(inner.some(s => Math.abs(r.x - s.x) < 4.6 && Math.abs(r.z - s.z) < 2.7)) continue;
     qn++;
+    // Phân vùng ngành hàng theo khu vực thật trong nhà lồng (Đông: Rau/Trái cây/Hoa, Tây: Len/Vải, Giữa: Đặc sản/Đồ khô/Ẩm thực)
+    const gIdx = r.x < -12 ? (qn % 2 === 0 ? 3 : 5) : (r.x > 10 ? (qn % 3) : [4, 5, 6, 1, 2][qn % 5]);
+    const gd = GROUP_DEFS[gIdx];
+    const shopName = gd.names[qn % gd.names.length];
     const g = new THREE.Group(); g.position.set(r.x, 0.5, r.z); g.rotation.y = r.f > 0 ? 0 : Math.PI;
     worldGroup.add(g);
-    box(4.3, 0.95, 1.4, qn % 2 ? 0x8a6a42 : 0x74522f, 0, 0.48, 0, g);
-    box(4.4, 0.08, 1.55, AWNS[qn % AWNS.length], 0, 1.85, 0.25, g);
-    for(const px of [-2.05, 2.05]) box(0.09, 1.9, 0.09, 0x5a4632, px, 0.95, 0.55, g);
-    for(let gi = 0; gi < 3; gi++)
-      ball(0.21, GOODS[(qn + gi) % GOODS.length], -1.1 + gi * 1.1, 1.12, 0.1, g, 0.75);
-    if(qn % 3 === 0){ // V4.9 MỤC 7: khay hàng NGHIÊNG cho 1/3 số quầy (plan/A4)
-      for(const tx of [-0.95, 0.95]){
-        const tr = box(0.95, 0.05, 0.62, 0x74522f, tx, 1.24, 0.42, g, false); tr.rotation.x = -0.34;
-        for(let ti = 0; ti < 3; ti++) ball(0.1, GOODS[(qn + ti + 2) % GOODS.length], tx - 0.26 + ti * 0.26, 1.36, 0.36, g, 0.8);
+    // Quầy gỗ/đá mài có chân đế phân biệt theo ngành
+    const baseCol = [0x6e785f, 0x8a6a42, 0x74584a, 0x5c6878, 0x7d5838, 0x844436, 0x8c7a68][gIdx];
+    box(4.3, 0.92, 1.4, baseCol, 0, 0.46, 0, g);
+    box(4.42, 0.06, 1.48, 0xd8cfc0, 0, 0.94, 0, g, false); // mặt bàn đá mài/gỗ sáng
+    box(4.4, 0.08, 1.55, gd.awn, 0, 1.88, 0.25, g);
+    for(const px of [-2.05, 2.05]) box(0.09, 1.92, 0.09, 0x4a3b2c, px, 0.96, 0.55, g);
+    // Đèn tuýp/bóng ấm treo dưới mái từng quầy (ảnh thật 10/16)
+    const tube = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.045, 0.08), tubeBulbMat);
+    tube.position.set(0, 1.79, 0.28); g.add(tube);
+
+    // --- BÀY HÀNG ĐẶC TRƯNG THEO 7 NHÓM NGÀNH HÀNG ---
+    if(gIdx === 0){ // 0: RAU CỦ — sọt/rổ nhựa đục lỗ nghiêng (đỏ/xanh lá/xanh dương) đầy củ cải trắng, cà rốt, bắp cải, súp lơ
+      const crateCols = [0x2e7d32, 0xc62828, 0x1565c0, 0xef6c00];
+      const vegCols = [0x558b2f, 0xef6c00, 0xf5f5f0, 0x7cb342, 0x8e24aa];
+      for(let ci = 0; ci < 4; ci++){
+        const cx = -1.45 + ci * 0.96;
+        const cr = box(0.82, 0.18, 0.68, crateCols[ci % 4], cx, 1.08, 0.12, g, false); cr.rotation.x = 0.28;
+        for(let vi = 0; vi < 4; vi++){
+          ball(0.13, vegCols[(ci + vi) % 5], cx - 0.18 + (vi % 2) * 0.36, 1.20 + Math.floor(vi / 2) * 0.08, 0.04 + Math.floor(vi / 2) * 0.22, g, 0.78);
+        }
+      }
+      // 2 bao tải khoai/hành mở miệng dưới chân quầy trước
+      for(const sx of [-1.2, 1.2]) cyl(0.24, 0.28, 0.42, 0xb89c72, sx, 0.21, 0.86, g, 8);
+    } else if(gIdx === 1){ // 1: TRÁI CÂY — thúng/mẹt tre tròn xếp bậc 2 tầng + cân đồng hồ Nhơn Hòa trắng
+      const fruitCols = [0xd62828, 0xf77f00, 0x4f772d, 0xfcbf49, 0x9d4edd];
+      for(let ti = 0; ti < 3; ti++){
+        const tx = -1.25 + ti * 1.1;
+        cyl(0.42, 0.36, 0.12, 0xc29b61, tx, 1.03, 0.22, g, 10); // mẹt tầng dưới
+        for(let fi = 0; fi < 5; fi++){
+          const a = fi * 1.256;
+          ball(0.11, fruitCols[(ti + fi) % 5], tx + Math.cos(a) * 0.2, 1.14, 0.22 + Math.sin(a) * 0.2, g, 0.85);
+        }
+        cyl(0.34, 0.30, 0.12, 0xb58d52, tx, 1.26, -0.22, g, 10); // thúng tầng trên
+        for(let fi = 0; fi < 4; fi++) ball(0.10, fruitCols[(ti + fi + 2) % 5], tx - 0.12 + (fi % 2) * 0.24, 1.37, -0.22 + (fi > 1 ? 0.12 : -0.12), g, 0.85);
+      }
+      // Cân đồng hồ trắng mặt tròn ở góc phải quầy
+      box(0.28, 0.24, 0.24, 0xf0ead8, 1.65, 1.08, 0.25, g, false);
+      cyl(0.16, 0.12, 0.05, 0xcfd8dc, 1.65, 1.25, 0.25, g, 8);
+    } else if(gIdx === 2){ // 2: HOA TƯƠI & HOA KHÔ — xô hoa cẩm tú cầu/hồng + giỏ hoa bất tử treo lủng lẳng trên xà
+      const flCols = [0x7eb6d9, 0xe05780, 0xffd166, 0x9b5de5, 0xef476f];
+      for(let bi = 0; bi < 4; bi++){
+        const bx = -1.4 + bi * 0.93;
+        cyl(0.20, 0.16, 0.38, 0x37474f, bx, 1.15, 0.20, g, 8);
+        ball(0.26, flCols[(qn + bi) % 5], bx, 1.44, 0.20, g, 0.85);
+      }
+      // 3 giỏ hoa bất tử treo dưới mái (ảnh thật 19)
+      for(const hx of [-1.2, 0, 1.2]){
+        cyl(0.01, 0.01, 0.35, 0x4a3b2c, hx, 1.68, 0.52, g, 4);
+        cyl(0.18, 0.12, 0.14, 0xc29b61, hx, 1.48, 0.52, g, 8);
+        ball(0.19, flCols[(qn + Math.abs(hx * 2 | 0)) % 5], hx, 1.58, 0.52, g, 0.75);
+      }
+    } else if(gIdx === 3){ // 3: VẢI & ĐỒ LEN — sào ngang treo áo len/khăn + chồng vải xếp lớp trên bàn
+      box(3.8, 0.04, 0.04, 0xcfd8dc, 0, 1.62, 0.42, g, false); // sào inox treo đồ
+      const woolCols = [0xc8372d, 0x2e6da4, 0xe8c33c, 0x68804f, 0xc95d7e, 0xd97c2e, 0xf0ead8];
+      for(let wi = 0; wi < 7; wi++){
+        box(0.38, 0.48, 0.08, woolCols[(qn + wi) % 7], -1.44 + wi * 0.48, 1.34, 0.42, g, false);
+      }
+      for(let si = 0; si < 4; si++){
+        for(let l = 0; l < 3; l++){
+          box(0.65, 0.10, 0.52, woolCols[(qn + si + l) % 7], -1.35 + si * 0.9, 1.02 + l * 0.11, -0.05, g, false);
+        }
+      }
+    } else if(gIdx === 4){ // 4: ĐỒ KHÔ & GIA VỊ — kệ 2 tầng xếp hũ nhựa nắp đỏ + bao tải nấm/đậu mở miệng (ảnh thật 10/16)
+      box(3.9, 0.06, 0.42, 0x6a4a30, 0, 1.28, -0.25, g, false);
+      box(3.9, 0.06, 0.38, 0x6a4a30, 0, 1.56, -0.32, g, false);
+      const dryCols = [0xd4a373, 0xb5651d, 0xe9c46a, 0x8d5524, 0xf4a261];
+      for(let ji = 0; ji < 6; ji++){
+        const jx = -1.5 + ji * 0.6;
+        cyl(0.11, 0.11, 0.22, dryCols[(qn + ji) % 5], jx, 1.42, -0.25, g, 8);
+        cyl(0.115, 0.115, 0.04, 0xc62828, jx, 1.54, -0.25, g, 8); // nắp đỏ đặc trưng
+      }
+      for(let si = 0; si < 4; si++){
+        const sx = -1.35 + si * 0.9;
+        cyl(0.28, 0.32, 0.22, 0xc2a878, sx, 1.08, 0.25, g, 10);
+        ball(0.24, dryCols[(si + 2) % 5], sx, 1.18, 0.25, g, 0.5);
+      }
+    } else if(gIdx === 5){ // 5: ĐẶC SẢN MỨT & TRÀ — kệ tháp hộp quà + dây hồng treo gió + lồng đèn đỏ nhỏ (ảnh thật 16)
+      const specCols = [0xc8372d, 0x2e6b46, 0xe07b2a, 0xd9a62e, 0x8e24aa];
+      for(let bi = 0; bi < 5; bi++){
+        const bx = -1.4 + bi * 0.7;
+        box(0.52, 0.24, 0.42, specCols[(qn + bi) % 5], bx, 1.09, 0.18, g, false);
+        box(0.44, 0.22, 0.36, specCols[(qn + bi + 2) % 5], bx, 1.32, -0.10, g, false);
+      }
+      // Dây hồng treo gió & lồng đèn đỏ treo trước diềm mái
+      for(const hx of [-1.45, 0, 1.45]){
+        ball(0.14, 0xd62828, hx, 1.66, 0.58, g, 0.85);
+      }
+    } else { // 6: ẨM THỰC NHÀ LỒNG — nồi inox lớn + tủ kính nhỏ + chồng tô sứ + 2 ghế đẩu nhựa trước quầy
+      cyl(0.34, 0.32, 0.42, 0xcfd8dc, -1.1, 1.18, 0.15, g, 12); // nồi nước lèo inox
+      cyl(0.36, 0.34, 0.04, 0x90a4ae, -1.1, 1.40, 0.15, g, 12);
+      box(1.1, 0.55, 0.48, 0xbfe0ea, 0.25, 1.24, 0.18, g, false); // tủ kính đồ ăn
+      for(let bi = 0; bi < 3; bi++) cyl(0.14, 0.10, 0.16, 0xf5f5f0, 1.35 + bi * 0.28, 1.05, 0.20, g, 8); // chồng tô
+      for(const sx of [-0.85, 0.85]) box(0.32, 0.34, 0.32, 0xc62828, sx, 0.17, 0.92, g, false); // ghế đẩu nhựa đỏ
+    }
+
+    // Biển hiệu chữ Việt chuẩn thương hiệu chợ Đà Lạt (tên sạp + số quầy + ngành hàng)
+    const sg = signMesh(shopName, 3.85, 0.95, gd.bg, gd.fg, 'QUẦY SỐ ' + qn + ' • ' + gd.cat);
+    sg.position.set(0, 2.52, 0.62); g.add(sg);
+    // Tiểu thương đứng/ngồi bán sau mỗi quầy trang trí (ẩn khi nhà lồng đóng cửa ban đêm)
+    const vnd = crowdPerson(0.42);
+    vnd.position.set(r.x + ((qn % 3) - 1) * 0.35, 0.5, r.z - r.f * 0.92);
+    vnd.rotation.y = r.f > 0 ? 0 : Math.PI;
+    const _vst = addStatic(vnd, 'all', 'stand'); _vst.hallSched = 'all'; INDOOR_COUNTERS.people.push(_vst);
+    const shu = box(4.4, 2.05, 0.08, 0x707880, 0, 2.42, 0.98, g, false); shu.visible = false; INDOOR_COUNTERS.shutters.push(shu); // BLENDER-DEEP-2: cửa cuốn quầy
+  }
+  // Làm giàu thêm 6 quầy tương tác chính trong nhà lồng (len1, len2, rau, dau, dacsan, tra) với đèn tuýp ấm & hàng treo
+  for(const st of inner){
+    const tb = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.05, 0.09), tubeBulbMat);
+    tb.position.set(0, 2.18, 0.35); st.group.add(tb);
+    if(st.id === 'len1' || st.id === 'len2'){
+      box(2.6, 0.04, 0.04, 0xcfd8dc, 0, 1.92, 0.55, st.group, false);
+      const wc = [0xc8372d, 0x2e6da4, 0xe8c33c, 0xc95d7e, 0x68804f];
+      for(let i = 0; i < 5; i++) box(0.34, 0.45, 0.08, wc[i], -0.96 + i * 0.48, 1.66, 0.55, st.group, false);
+    } else if(st.id === 'dacsan' || st.id === 'tra'){
+      for(const hx of [-1.1, 0, 1.1]){
+        cyl(0.01, 0.01, 0.45, 0x5a4632, hx, 1.95, 0.72, st.group, 4);
+        for(let k = 0; k < 3; k++) ball(0.075, 0xe07b2a, hx, 2.08 - k * 0.14, 0.72, st.group, 0.85);
       }
     }
-    const sg = signMesh('QUẦY SỐ ' + qn, 3.6, 0.95, '#f3e3c2', '#b02020', CATS[qn % CATS.length]);
-    sg.position.set(0, 2.55, 0.62); g.add(sg);
-    const shu = box(4.4, 2.05, 0.08, 0x707880, 0, 2.42, 0.98, g, false); shu.visible = false; INDOOR_COUNTERS.shutters.push(shu); // BLENDER-DEEP-2: cửa cuốn quầy
+  }
+  // Hệ cột bê tông chịu lực nhà lồng đúng nhịp lưới (x = -20.8, -10.4, 0, 10.4, 20.8) + xà trần & máng đèn nhà lồng (ảnh thật 10/16)
+  for(const cx of [-20.8, -10.4, 0, 10.4, 20.8]){
+    for(const cz of [13.55, 27.45]){
+      box(0.48, 5.4, 0.48, 0xcfc4b0, cx, 3.2, cz, worldGroup, false);
+      box(0.58, 0.9, 0.58, 0x7d7468, cx, 0.95, cz, worldGroup, false); // chân cột sơn sẫm chống bẩn
+    }
+    // Dầm ngang trần nhà lồng nối 2 hàng cột + máng đèn huỳnh quang đôi treo lối đi
+    box(0.28, 0.32, 14.2, 0x8a8074, cx, 5.75, 20.5, worldGroup, false);
+    for(const lz of [17.0, 23.6]){
+      box(0.04, 1.1, 0.04, 0x4a4640, cx, 5.2, lz, worldGroup, false);
+      box(1.6, 0.07, 0.22, 0xd8d2c2, cx, 4.65, lz, worldGroup, false);
+      const hl = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.04, 0.16), tubeBulbMat);
+      hl.position.set(cx, 4.61, lz); worldGroup.add(hl);
+    }
   }
   // lửng kính visual dọc tường bắc (sàn lửng + kính + lan can) — NPC đứng ở khối người
   box(56, 0.3, 0.95, 0x6e665a, 0, 3.55, 26.95, worldGroup);
@@ -3385,12 +3609,27 @@ const INDOOR_COUNTERS = { shutters: [], people: [] }; // BLENDER-DEEP-2 (mục 1
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), railBulbMat);
     bulb.position.set(bx, 5.02 - Math.sin(i * 2.4) * 0.05, 26.4); worldGroup.add(bulb);
   }
+  // HẠNG MỤC A: Sàn nhà lồng lát gạch nhám quả trám vàng đất có vệt cũ/mòn dọc lối đi (ảnh thật 10/16)
   { const c = document.createElement('canvas'); c.width = c.height = 256; const g2 = c.getContext('2d');
-    g2.fillStyle = '#7a7268'; g2.fillRect(0, 0, 256, 256);
-    g2.fillStyle = '#8d8478';
-    for(let ry = 0; ry < 4; ry++) for(let rx = 0; rx < 4; rx++){ g2.save(); g2.translate(rx * 64 + 32, ry * 64 + 32); g2.rotate(Math.PI / 4); g2.fillRect(-21, -21, 42, 42); g2.restore(); }
+    g2.fillStyle = '#786c5e'; g2.fillRect(0, 0, 256, 256);
+    for(let ry = 0; ry < 4; ry++) for(let rx = 0; rx < 4; rx++){
+      g2.save(); g2.translate(rx * 64 + 32, ry * 64 + 32); g2.rotate(Math.PI / 4);
+      g2.fillStyle = (rx + ry) % 2 === 0 ? '#9c8a70' : '#8c7b63';
+      g2.fillRect(-21, -21, 42, 42);
+      g2.strokeStyle = 'rgba(48,40,32,0.55)'; g2.lineWidth = 2; g2.strokeRect(-21, -21, 42, 42);
+      g2.restore();
+    }
+    // Vệt mòn bước chân sẫm màu + vết nước cũ trên sàn nhà lồng
+    g2.fillStyle = 'rgba(42,35,28,0.24)';
+    g2.fillRect(0, 36, 256, 44); g2.fillRect(0, 176, 256, 44);
+    for(let wi = 0; wi < 120; wi++){
+      const wx = Math.abs((Math.sin(wi * 37.3) * 9876.5) % 1) * 256;
+      const wy = Math.abs((Math.sin(wi * 83.1) * 5432.1) % 1) * 256;
+      g2.fillStyle = wi % 2 ? 'rgba(35,28,22,0.14)' : 'rgba(215,198,170,0.08)';
+      g2.beginPath(); g2.arc(wx, wy, 3 + (wi % 9), 0, Math.PI * 2); g2.fill();
+    }
     const dt = new THREE.CanvasTexture(c); dt.wrapS = dt.wrapT = THREE.RepeatWrapping; dt.repeat.set(11, 3); dt.colorSpace = THREE.SRGBColorSpace;
-    const fl = new THREE.Mesh(new THREE.PlaneGeometry(58, 15.6), new THREE.MeshStandardMaterial({ map:dt, roughness:1, polygonOffset:true, polygonOffsetFactor:-2 }));
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(58, 15.6), new THREE.MeshStandardMaterial({ map:dt, roughness:0.92, polygonOffset:true, polygonOffsetFactor:-2 }));
     fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.56, 20.2); fl.receiveShadow = true; worldGroup.add(fl); }
 }
 { // V4.7: người mua đứng trước ~80% quầy trang trí trong nhà lồng (đông như ảnh thật 16/19)
@@ -3756,21 +3995,41 @@ function tickWater(t){
   cyl(0.95, 0.52, 0.25, 0x8a8074, FNT.x, 2.62, FNT.z, worldGroup, 12); // BLENDER-DEEP-2 (mục 4): bát chính theo cột mới
   cyl(0.5, 0.3, 0.18, 0x8a8074, FNT.x, 3.12, FNT.z, worldGroup, 10); // BLENDER-DEEP-2: bát tầng 2
   ball(0.16, 0x8a8074, FNT.x, 3.34, FNT.z, worldGroup, 0.9); // BLENDER-DEEP-2: chóp cầu
-  const jetMat = new THREE.MeshBasicMaterial({ color:0xeaf6fc, transparent:true, opacity:0.7 }); // WATER-1: tia gần trắng tuyệt đối như ảnh thật 44 (#eef0f5)
-  for(let i = 0; i < 6; i++){
-    const a = i / 6 * Math.PI * 2;
-    const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5, 5), jetMat.clone()); // BLENDER-DEEP-2: tia dài 1.15 -> 1.5 + material riêng để nhấp nhô
-    jet.position.set(FNT.x + Math.cos(a) * 0.5, 2.95, FNT.z + Math.sin(a) * 0.5); jet.userData.ph = i * 1.05; WATER_FX.jets.push(jet); // BLENDER-DEEP-2: tia từ bát mới (đầu tia r ~0.92 < bồn 2.45)
-    jet.rotation.z = -Math.cos(a) * 0.6; jet.rotation.x = Math.sin(a) * 0.6; worldGroup.add(jet); // SWEEP-1: SUA DAU — ban cu (z=+cos, x=-sin) lam tia CHUM VAO TAM (do thuc bang three: dau tia r 0.095, chan tia r 0.745) thanh hinh chop; dau moi: tia phun RA NGOAI (dau r 0.745, van trong bon r 2.45)
+  const jetMat = new THREE.MeshBasicMaterial({ color:0xeaf6fc, transparent:true, opacity:0.74 }); // WATER-1: tia gần trắng tuyệt đối như ảnh thật 44 (#eef0f5)
+  for(let i = 0; i < 8; i++){
+    const a = i / 8 * Math.PI * 2;
+    const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.036, 1.55, 6), jetMat.clone());
+    jet.position.set(FNT.x + Math.cos(a) * 0.52, 2.95, FNT.z + Math.sin(a) * 0.52); jet.userData.ph = i * 0.85; WATER_FX.jets.push(jet);
+    jet.rotation.z = -Math.cos(a) * 0.62; jet.rotation.x = Math.sin(a) * 0.62; worldGroup.add(jet);
+    // Vòng tia phụ phun từ mặt nước lên bát giữa
+    const ljet = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.03, 1.35, 5), jetMat.clone());
+    ljet.position.set(FNT.x + Math.cos(a + 0.39) * 1.45, 1.25, FNT.z + Math.sin(a + 0.39) * 1.45); ljet.userData.ph = i * 1.1 + 0.4; WATER_FX.jets.push(ljet);
+    ljet.rotation.z = Math.cos(a + 0.39) * 0.42; ljet.rotation.x = -Math.sin(a + 0.39) * 0.42; worldGroup.add(ljet);
   }
-  const cjet = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 1.1, 6), jetMat.clone());
-  cjet.position.set(FNT.x, 3.85, FNT.z); cjet.userData.ph = 0.5; worldGroup.add(cjet); WATER_FX.jets.push(cjet); // BLENDER-DEEP-2: tia đứng giữa từ bát tầng 2
+  const cjet = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 1.35, 8), jetMat.clone());
+  cjet.position.set(FNT.x, 3.92, FNT.z); cjet.userData.ph = 0.5; worldGroup.add(cjet); WATER_FX.jets.push(cjet);
+  const ring3 = new THREE.Mesh(new THREE.RingGeometry(1.75, 1.92, 28), new THREE.MeshBasicMaterial({ color:0xeaf6fc, transparent:true, opacity:0.32, depthWrite:false }));
+  ring3.rotation.x = -Math.PI/2; ring3.position.set(FNT.x, 0.622, FNT.z); worldGroup.add(ring3);
+  WATER_FX.rings.push({ m: ring3, ph: 1.05 });
   const fup = new THREE.MeshStandardMaterial({ color:0x3a3f45, emissive:0xffc98a, emissiveIntensity:0, roughness:0.5 });
   uplightMats.push(fup); // đèn chân đài phun — sáng đêm qua applyDayNight (uplightMats)
   for(const [ux, uz] of [[25.1,3.3],[28.9,3.3],[25.1,7.1],[28.9,7.1]]){ // GEOMETRY-2: theo FNT mới (27,5.2)
     const ub = box(0.22, 0.18, 0.22, 0x3a3f45, ux, 0.09, uz, worldGroup, false); ub.material = fup;
   }
   glowDisc(FNT.x, FNT.z, 3.4, 0); // quầng sáng chân đài phun ban đêm
+  // HẠNG MỤC C: Ghế đá công viên (tỉ lệ 2.1m dài / 0.5m cao ngồi / 1.0m tựa) + cột cờ phướn lễ hội quanh Quảng trường
+  for(const [bx, bz, bry] of [[22.2, 5.2, Math.PI/2], [31.8, 5.2, -Math.PI/2]]){
+    const bg = new THREE.Group(); bg.position.set(bx, 0, bz); bg.rotation.y = bry; worldGroup.add(bg);
+    box(2.1, 0.09, 0.55, 0xd8d2c2, 0, 0.455, 0, bg, false);
+    const bbk = box(2.1, 0.52, 0.08, 0xd8d2c2, 0, 0.76, -0.26, bg, false); bbk.rotation.x = -0.10;
+    box(0.16, 0.41, 0.5, 0x6e665a, -0.85, 0.205, 0, bg, false);
+    box(0.16, 0.41, 0.5, 0x6e665a, 0.85, 0.205, 0, bg, false);
+  }
+  for(const [fx, fz, fc] of [[20.5, 9.8, 0xc8372d], [33.5, 9.8, 0xd9a62e], [20.5, 0.8, 0x2e6da4], [33.5, 0.8, 0xc8372d]]){
+    cyl(0.045, 0.06, 5.6, 0x555049, fx, 2.8, fz, worldGroup, 8);
+    box(0.55, 1.45, 0.04, fc, fx + 0.3, 4.65, fz, worldGroup, false);
+    ball(0.09, 0xffd94d, fx, 5.65, fz, worldGroup, 0.9);
+  }
   box(64, 0.08, 14.2, 0xa79a84, 14, 0.01, 4.8, worldGroup, false); // tấm sân quảng trường rộng rãi dưới chân bậc tam cấp (x -18..46, z -2.3..11.9), tách biệt rõ với vành vòng xoay
   box(0.7, 0.1, 14.2, 0x6e6257, -18.0, 0.02, 4.8, worldGroup, false); // dải viền đá phân tách rõ ranh giới giữa vòng xoay (mép vành -16.4) và sân dưới bậc tam cấp (-11..11)
   for(const hz of [0.5, 3.5, 6.5, 9.5]) hydrangea(-14.2, hz, 0.9);
@@ -5193,12 +5452,27 @@ let singer = null, singerLimbs = null;
   guitar.position.set(0.16, 0.92, 0.30); guitar.rotation.set(0.15, 0, -0.35);
   singer.add(guitar);
   box(0.45, 0.45, 3.6, 0x6a4a30, sx - 5.4, sy + 0.22, sz);
-  [[0x5f7a8c, -53.3], [0x8c6a5a, -52.0], [0x6a7a68, -50.7]].forEach(([col, az], ai) => {
-    const a = makePerson(col, 0x4a4640, ai === 1 ? 'none' : 'cap');
-    a.position.set(sx - 5.4, sy + 0.45, az); a.rotation.y = Math.PI / 2;
+  // Ghế đá công viên (2.1m x 0.5m x 1.0m) + vòng người nghe nhạc đường phố quanh Góc Hát Quảng Trường
+  box(2.1, 0.09, 0.55, 0xd8d2c2, sx, sy + 0.455, sz + 4.8, worldGroup, false);
+  box(2.1, 0.52, 0.08, 0xd8d2c2, sx, sy + 0.76, sz + 5.06, worldGroup, false);
+  box(0.85, 0.14, 0.42, 0x3b2618, sx - 1.5, sy + 0.42, sz + 1.85, worldGroup, false); // hộp đàn mở nhận tip
+  [[0x5f7a8c, sx - 5.4, -53.3, Math.PI / 2, true],
+   [0x8c6a5a, sx - 5.4, -52.0, Math.PI / 2, true],
+   [0x6a7a68, sx - 5.4, -50.7, Math.PI / 2, true],
+   [0xc8372d, sx - 3.6, -47.8, 2.45, false],
+   [0x2e6da4, sx - 0.6, -47.2, 3.14, true],
+   [0xd9a62e, sx + 0.6, -47.2, 3.14, true],
+   [0x74566b, sx + 3.2, -48.2, -2.5, false]].forEach(([col, ax, az, ary, sit], ai) => {
+    const a = makePerson(col, 0x4a4640, ai % 2 === 1 ? 'beanie' : 'cap');
     const L = a.userData.limbs;
-    if(L){ L.lLeg.rotation.x = -1.5; L.rLeg.rotation.x = -1.5; }
-    a.userData.ph = ai * 1.7;
+    if(sit){
+      a.position.set(ax, sy + 0.45, az);
+      if(L){ L.lLeg.rotation.x = -1.5; L.rLeg.rotation.x = -1.5; }
+    } else {
+      a.position.set(ax, sy, az);
+    }
+    a.rotation.y = ary;
+    a.userData.ph = ai * 1.3;
     worldGroup.add(a); stageAudience.push(a);
   });
   const nc = document.createElement('canvas'); nc.width = nc.height = 64;
@@ -5279,6 +5553,7 @@ const STAMPS = [
   { id:'produce', label:'Khu Nông sản & Hoa' },
   { id:'special', label:'Khu Đặc sản mang về' },
   { id:'night',   label:'Chợ đêm Âm Phủ' },
+  { id:'lake',    label:'Hồ Xuân Hương — Thủy Tạ' },
 ];
 const inRect = (x,z,r) => x>=r[0] && x<=r[1] && z>=r[2] && z<=r[3];
 function detectZone(x, z, y){
@@ -5294,10 +5569,10 @@ function detectZone(x, z, y){
   if(x >= 13 && x <= 22 && z > -32 && z < 12) return { stamp:null, label:'Cầu nổi vào tầng 2 chợ' };
   if(z <= -2 && z >= -30 && x >= -62 && x <= -50) return { stamp:null, label:'Bậc thang chợ Đà Lạt' }; // LAYOUT-FIX-1: thang tam -56
   if(z < -2 && z > -30) return { stamp:null, label:'Sườn đồi Hòa Bình' };
-  if(Math.hypot(x + 250, z - 58) <= 16) return { stamp:null, label:'Đảo Thủy Tạ — Hồ Xuân Hương' }; // XH-0
-  if(x >= -560 && x <= -224 && z > 36 && z <= 196) return { stamp:null, label:'Hồ Xuân Hương' }; // XH-1.5: vung nuoc mo rong (XH-0: x -352..-224, z 36..116)
-  if(x <= -208 && z > 196 && z <= 232) return { stamp:null, label:'Bờ nam hồ Xuân Hương' }; // XH-1.5: taluy + them bo nam xa (nen canh)
-  if(x <= -200 && z >= 18 && z <= 36) return { stamp:null, label:'Bờ hồ Xuân Hương — Đ. Trần Quốc Toản' }; // XH-0: duong dao bo bac
+  if(Math.hypot(x + 250, z - 58) <= 16) return { stamp:'lake', label:'Đảo Thủy Tạ — Hồ Xuân Hương' }; // XH-0 + HẠNG MỤC E: đóng dấu hộ chiếu Hồ Xuân Hương
+  if(x >= -560 && x <= -224 && z > 36 && z <= 196) return { stamp:'lake', label:'Hồ Xuân Hương' }; // XH-1.5: vung nuoc mo rong
+  if(x <= -208 && z > 196 && z <= 232) return { stamp:'lake', label:'Bờ nam hồ Xuân Hương' }; // XH-1.5: taluy + them bo nam xa
+  if(x <= -200 && z >= 18 && z <= 36) return { stamp:'lake', label:'Bờ hồ Xuân Hương — Đ. Trần Quốc Toản' }; // XH-0: duong dao bo bac
   if(x <= -200 && z >= 6 && z < 18) return { stamp:null, label:'Lối xuống hồ Xuân Hương' }; // XH-0: loi noi tu bung binh dau cho
   if(z >= 6.5 && z < 12) return { stamp:null, label:'Quảng trường trước chợ' };
   return { stamp:null, label:'Đường Nguyễn Thị Minh Khai' };
@@ -5315,7 +5590,7 @@ function checkZone(){
     toast('📕 Đóng dấu hộ chiếu: ' + (s ? s.label : zn.label) + ' (' + stampCount() + '/' + STAMPS.length + ')', 'stamp');
     if(stampCount() === STAMPS.length && !state.passFull){
       state.passFull = true; state.xu += 150; save();
-      toast('🏆 Đủ 9/9 dấu Hộ chiếu Đi Chợ! Thưởng +150 Xu Chợ', 'stamp');
+      toast('🏆 Đủ ' + STAMPS.length + '/' + STAMPS.length + ' dấu Hộ chiếu Đi Chợ! Thưởng +150 Xu Chợ', 'stamp');
     }
     checkQuest(); updateHUD();
   }
@@ -6024,6 +6299,8 @@ const PHOTO_SPOTS = [
   { id:'hilltop', name:'Đỉnh đồi Hòa Bình nhìn xuống chợ', x:10, z:-57 },
   { id:'bridge', name:'Giữa cầu nổi vào tầng 2', x:17.5, z:-12 },
   { id:'stage', name:'Góc Hát Đà Lạt', x:24.6, z:-48.5 },
+  { id:'thuyta', name:'Nhà Thủy Tạ — Hồ Xuân Hương', x:-250, z:44.5 },
+  { id:'ybridge', name:'Cầu chữ Y ngắm Hồ Xuân Hương', x:-282, z:40.2 },
   { id:'terrace', name:'Sân thượng chợ — điểm bí mật', x:17.5, z:9.6, secret:true },
 ];
 const photoPts = [];
@@ -6432,10 +6709,18 @@ function tempNow(){
   }
   return 15;
 }
+// HẠNG MỤC E: Hơi thở lạnh Đà Lạt (zero-GC particle pool 48 hạt cho cả người chơi + NPC gần khi trời lạnh <= 19.5°C hoặc Độ Ấm thấp)
+const BREATH_COUNT = 48;
 const breathGeo = new THREE.BufferGeometry();
-const breathPos = new Float32Array(6 * 3);
+const breathPos = new Float32Array(BREATH_COUNT * 3);
 breathGeo.setAttribute('position', new THREE.BufferAttribute(breathPos, 3));
-const breathPts = new THREE.Points(breathGeo, new THREE.PointsMaterial({ color:0xffffff, size:0.3, transparent:true, opacity:0.55, depthWrite:false }));
+const _bCan = document.createElement('canvas'); _bCan.width = _bCan.height = 64;
+const _bCtx = _bCan.getContext('2d');
+const _bGrd = _bCtx.createRadialGradient(32, 32, 2, 32, 32, 30);
+_bGrd.addColorStop(0, 'rgba(245,250,255,0.85)'); _bGrd.addColorStop(0.5, 'rgba(230,242,252,0.42)'); _bGrd.addColorStop(1, 'rgba(230,242,252,0)');
+_bCtx.fillStyle = _bGrd; _bCtx.fillRect(0, 0, 64, 64);
+const breathTex = new THREE.CanvasTexture(_bCan);
+const breathPts = new THREE.Points(breathGeo, new THREE.PointsMaterial({ map:breathTex, color:0xffffff, size:0.42, transparent:true, opacity:0.68, depthWrite:false }));
 breathPts.visible = false; breathPts.frustumCulled = false; worldGroup.add(breathPts);
 const tempEl = document.getElementById('tempVal'), warmFillEl = document.getElementById('warmFill'), heatEl = document.getElementById('heatHint');
 function tickSystems(dt, t){
@@ -6458,16 +6743,49 @@ function tickSystems(dt, t){
   warmFillEl.style.width = effW + '%';
   warmFillEl.style.background = effW < 25 ? '#57b6ff' : '';
   heatEl.textContent = (nearHeat ? ' · 🔥 gần bếp, đang ấm lên' : (effW < 25 ? ' · 🥶 lạnh quá — tìm đồ nóng hoặc đứng gần bếp!' : '')) + (wdWarmTotal > 0 ? ' · 🧣 đồ đang mặc +' + wdWarmTotal + '°' : '');
-  scene.fog.density = fogBase + Math.max(0, 15.5 - curTemp) * 0.0008 + fogHourBonus(); // BLENDER-DEEP-2 (mục 11): + sương theo giờ (tối đa ~0.016 khuya lạnh — tầm nhìn 25u còn ~85%)
-  const cold = effW < 25;
-  breathPts.visible = cold;
-  if(cold){
+  scene.fog.density = fogBase + Math.max(0, 15.5 - curTemp) * 0.0008 + fogHourBonus(); // BLENDER-DEEP-2 (mục 11): + sương theo giờ
+  const coldAir = curTemp <= 19.5 || effW < 40;
+  breathPts.visible = coldAir;
+  if(coldAir){
     const bfx = Math.sin(playerState.face), bfz = Math.cos(playerState.face);
-    for(let i = 0; i < 6; i++){
-      const p = (t * 0.45 + i / 6) % 1;
-      breathPos[i * 3]     = playerState.x + bfx * (0.28 + p * 0.75) + Math.sin(p * 6 + i) * 0.05;
-      breathPos[i * 3 + 1] = playerState.y + 1.12 + p * 0.38;
-      breathPos[i * 3 + 2] = playerState.z + bfz * (0.28 + p * 0.75) + Math.cos(p * 5 + i) * 0.05;
+    // 8 hạt đầu: hơi thở người chơi theo nhịp thở tự nhiên
+    for(let i = 0; i < 8; i++){
+      const p = (t * 0.52 + i / 8) % 1;
+      breathPos[i * 3]     = playerState.x + bfx * (0.26 + p * 0.72) + Math.sin(p * 6 + i) * 0.05;
+      breathPos[i * 3 + 1] = player.position.y + 1.18 + p * 0.42;
+      breathPos[i * 3 + 2] = playerState.z + bfz * (0.26 + p * 0.72) + Math.cos(p * 5 + i) * 0.05;
+    }
+    // 40 hạt tiếp theo (20 cặp x 2 hạt): hơi thở trắng của 20 NPC gần người chơi nhất (zero-GC, không cấp phát mảng)
+    let slot = 8;
+    const wLen = wanderers.length;
+    for(let wi = 0; wi < wLen && slot < BREATH_COUNT; wi++){
+      const w = wanderers[wi];
+      if(!w.active || !w.g.visible) continue;
+      const gx = w.g.position.x, gz = w.g.position.z;
+      if(Math.abs(gx - playerState.x) > 28 || Math.abs(gz - playerState.z) > 28) continue;
+      const wy = w.g.rotation.y, nfx = Math.sin(wy), nfz = Math.cos(wy);
+      for(let k = 0; k < 2 && slot < BREATH_COUNT; k++, slot++){
+        const p = (t * 0.44 + wi * 0.37 + k * 0.45) % 1;
+        breathPos[slot * 3]     = gx + nfx * (0.24 + p * 0.58) + Math.sin(p * 5 + wi) * 0.04;
+        breathPos[slot * 3 + 1] = w.g.position.y + 1.16 + p * 0.36;
+        breathPos[slot * 3 + 2] = gz + nfz * (0.24 + p * 0.58) + Math.cos(p * 5 + wi) * 0.04;
+      }
+    }
+    const sLen = statics.length;
+    for(let si = 0; si < sLen && slot < BREATH_COUNT; si++){
+      const st = statics[si];
+      if(!st.active || !st.g.visible) continue;
+      const gx = st.g.position.x, gz = st.g.position.z;
+      if(Math.abs(gx - playerState.x) > 26 || Math.abs(gz - playerState.z) > 26) continue;
+      const sy = st.g.rotation.y, nfx = Math.sin(sy), nfz = Math.cos(sy);
+      const p = (t * 0.42 + si * 0.31) % 1;
+      breathPos[slot * 3]     = gx + nfx * (0.24 + p * 0.55);
+      breathPos[slot * 3 + 1] = st.g.position.y + 1.14 + p * 0.34;
+      breathPos[slot * 3 + 2] = gz + nfz * (0.24 + p * 0.55);
+      slot++;
+    }
+    for(; slot < BREATH_COUNT; slot++){
+      breathPos[slot * 3] = playerState.x; breathPos[slot * 3 + 1] = -99; breathPos[slot * 3 + 2] = playerState.z;
     }
     breathGeo.attributes.position.needsUpdate = true;
   }
@@ -6525,21 +6843,61 @@ function hallTick(){
 }
 
 const FORTUNE_PT = { x:-53.2, z:-19.2 }; // LAYOUT-FIX-1: chieu nghi 1 thang moi
-{
-  const fx = 2.8, fz = -20.8, fy = stairH(fz);
-  box(1.9, 0.06, 1.5, 0x8c2f2f, fx, fy + 0.03, fz);                 // thảm đỏ
-  box(0.5, 0.3, 0.5, 0x6a4a30, fx, fy + 0.15, fz - 0.2);           // ghế đẩu
-  box(0.34, 0.22, 0.34, 0xb03a30, fx - 0.5, fy + 0.17, fz + 0.35); // hộp đựng quẻ
-  const ft = makePerson(0x5a3a6a, 0x3a3430, 'none');
-  ft.position.set(fx, fy + 0.28, fz - 0.2); ft.rotation.y = 0.25;
-  const FL = ft.userData.limbs;
-  if(FL){ FL.lLeg.rotation.x = -1.45; FL.rLeg.rotation.x = -1.45; FL.rArm.rotation.x = -0.9; }
-  worldGroup.add(ft);
-  const fs = signMesh('COI BÓI — CHÚ BA', 2.3, 0.55, '#4a2a4a', '#ffd98a', 'Xem quẻ vui — 20 Xu một quẻ');
-  fs.position.set(fx, fy + 2.2, fz + 0.72); worldGroup.add(fs);
-  box(0.08, 2.0, 0.08, 0x555049, fx - 1.1, fy + 1.0, fz + 0.72);
-  box(0.08, 2.0, 0.08, 0x555049, fx + 1.1, fy + 1.0, fz + 0.72);
-  solid(fx, fz, 0.85, 0.8);
+{ // HẠNG MỤC B: Không gian chiếu nghỉ Chú Ba coi bói (-50.4, 11.33, -19.6) + người bán hàng ngồi bậc + xe máy đậu chân thang
+  const fx = -50.4, fz = -19.6, fy = 11.33;
+  box(2.2, 0.04, 1.8, 0x8c2f2f, fx - 0.15, fy + 0.02, fz + 0.15, worldGroup, false);   // chiếu/thảm đỏ trải chiếu nghỉ
+  box(0.86, 0.42, 0.56, 0x5a3a22, fx - 0.1, fy + 0.21, fz + 0.62, worldGroup, false);  // bàn gỗ thấp xem quẻ
+  box(0.90, 0.03, 0.60, 0xa82424, fx - 0.1, fy + 0.43, fz + 0.62, worldGroup, false);  // khăn trải bàn đỏ
+  cyl(0.08, 0.07, 0.22, 0xc29b61, fx - 0.32, fy + 0.54, fz + 0.62, worldGroup, 8);     // ống xăm tre
+  box(0.22, 0.04, 0.16, 0xf5ecd8, fx + 0.12, fy + 0.46, fz + 0.62, worldGroup, false); // xấp bài tây / sách tướng
+  stoolWorld(fx - 0.1, fz + 1.18, 0x6a4a30);                                           // ghế đẩu cho khách ngồi coi bói
+  // Trụ treo đèn lồng đỏ & biển hiệu Coi Bói Chú Ba ngay chiếu nghỉ
+  box(0.07, 2.25, 0.07, 0x4a3b2c, fx + 0.85, fy + 1.12, fz - 0.25, worldGroup, false);
+  box(0.55, 0.06, 0.06, 0x4a3b2c, fx + 0.62, fy + 2.18, fz - 0.25, worldGroup, false);
+  ball(0.16, 0xd62828, fx + 0.42, fy + 1.98, fz - 0.25, worldGroup, 0.9);
+  const fs = signMesh('COI BÓI — CHÚ BA', 2.4, 0.58, '#4a202a', '#ffd98a', 'Xem bài • Tướng mặt • Chỉ tay (20 Xu)');
+  fs.position.set(fx + 0.1, fy + 2.15, fz - 0.35); worldGroup.add(fs);
+
+  // HẠNG MỤC B: 4 tiểu thương đội nón lá ngồi bán hàng trên bậc tam cấp (mẹt dâu, bơ, khoai nướng, hoa)
+  const stepVendors = [
+    { x:-63.3, z:-6.2,  ry:0.35,  shirt:0x8c3b2e, goods:[0xd62828, 0x4f772d, 0xfcbf49] },
+    { x:-48.7, z:-7.1,  ry:-0.35, shirt:0x2e6da4, goods:[0xef6c00, 0x558b2f, 0xf5f5f0] },
+    { x:-63.3, z:-15.6, ry:0.32,  shirt:0x68804f, goods:[0x9b5de5, 0xe05780, 0xffd166] },
+    { x:-48.7, z:-25.4, ry:-0.32, shirt:0xc06c44, goods:[0xc8372d, 0xe8c33c, 0x2e6da4] },
+  ];
+  for(const sv of stepVendors){
+    const sy = stairH(sv.z);
+    stoolWorld(sv.x, sv.z, 0x6a4a30);
+    const vp = makePerson(sv.shirt, 0x3a3430, 'nonla');
+    const sc = vp.getObjectByName('Scarf'); if(sc){ sc.visible = true; recolor(vp, 'Scarf', 0xc8372d); }
+    vp.position.set(sv.x, sy + 0.28, sv.z); vp.rotation.y = sv.ry;
+    const VL = vp.userData.limbs;
+    if(VL){ VL.lLeg.rotation.x = -1.45; VL.rLeg.rotation.x = -1.45; VL.rArm.rotation.x = -0.85; VL.lArm.rotation.x = -0.65; }
+    addStatic(vp, 'all', 'sit');
+    // 2 mẹt tre đan bày nông sản/hoa ngay bậc dưới trước mặt người bán
+    for(const [ox, oz, ci] of [[-0.38, 0.55, 0], [0.38, 0.55, 1]]){
+      const by = stairH(sv.z + oz);
+      cyl(0.34, 0.30, 0.08, 0xc29b61, sv.x + ox, by + 0.05, sv.z + oz, worldGroup, 10);
+      for(let k = 0; k < 4; k++){
+        const a = k * 1.57;
+        ball(0.09, sv.goods[(ci + k) % 3], sv.x + ox + Math.cos(a) * 0.14, by + 0.13, sv.z + oz + Math.sin(a) * 0.14, worldGroup, 0.85);
+      }
+    }
+  }
+
+  // HẠNG MỤC B: Dãy xe máy đậu sát chân bậc tam cấp (ngoài luồng đi bộ AW x=-56..-58 và ngoài làn xe)
+  for(const [mx, mz, mry, mcol] of [
+    [-65.4, -1.35, 0.22, 0xc8372d],
+    [-63.8, -1.35, 0.15, 0x2e6da4],
+    [-62.2, -1.35, 0.28, 0x3a3f45],
+    [-49.8, -1.35, -0.20, 0xd97c2e],
+    [-48.2, -1.35, -0.14, 0x2e6b46],
+  ]){
+    const m = makeMoto(mcol, false).g;
+    m.position.set(mx, groundH(mx, mz), mz);
+    m.rotation.y = mry;
+    worldGroup.add(m);
+  }
 }
 const FORTUNES = [
   { t:'Đại Cát — Trúng mánh sữa nóng', x:'Hôm nay ăn gì cũng ngon, mua gì cũng hời. Vận may đang mỉm cười với bạn ở mọi quầy hàng trong chợ!', fx:() => giveBuff('luck', 300) },
@@ -7626,10 +7984,19 @@ function collide(px, pz){
       else if(m === dzl) pz = c.minZ - r; else pz = c.maxZ + r;
     }
   }
-  px = THREE.MathUtils.clamp(px, -566, 90);   // XH-3R (giu tu vong XH-3+ bi huy — sua loi hoan chinh, khong phai tinh nang nua voi):
-  pz = THREE.MathUtils.clamp(pz, -86, 226);   // clamp cu (-74..74 / -80..36) la bien thoi V4 — spawn -206 va toan bo truc tay + ho
-                                              // nam NGOAI clamp -> collide() ap len playerState moi frame lam nguoi choi khong bao gio
-                                              // toi duoc ho. Bien moi = khung minimap XH-1.5 (x -568..92, z -88..228) lui 2u.
+  // HẠNG MỤC D (XH-4): Chặn đi bộ xuống mặt nước Hồ Xuân Hương khi không ở trên thuyền thiên nga (cầu/đảo/bến có groundH >= 5.2 vẫn đi bình thường)
+  if(!window.__BOAT_ACTIVE && px <= -223.8 && pz >= 35.8 && pz <= 196.2 && groundH(px, pz) < 5.2){
+    const ox = playerState.x, oz = playerState.z;
+    if(groundH(ox, oz) >= 5.2){
+      if(groundH(px, oz) >= 5.2) pz = oz;
+      else if(groundH(ox, pz) >= 5.2) px = ox;
+      else { px = ox; pz = oz; }
+    } else {
+      pz = Math.min(pz, 35.6);
+    }
+  }
+  px = THREE.MathUtils.clamp(px, -566, 90);
+  pz = THREE.MathUtils.clamp(pz, -86, 226);
   return [px, pz];
 }
 function angLerp(a, b, t){
@@ -8720,12 +9087,14 @@ xh3Couple(31.7, 1.02, 0); xh3Couple(29.3, 0.98, 1); xh3Couple(31.7, 1.06, 1); xh
 function xh3Photographer(x, z, ry){
   const p = crowdPerson(1.0, 'crowd'); dressWarmXH3(p); npcHoldPhone(p);
   p.position.set(x, groundH(x, z), z); p.rotation.y = ry;
-  regSpecial('xh3photo' + x, p, (t, s) => {
+  const st = addStatic(p, 'all', 'special');
+  st.rank = 0;
+  st.spIdle = (t, s) => {
     const L = s.limbs; if(!L) return;
     L.rArm.rotation.x = -1.5 + Math.sin(t * 0.8 + s.ph) * 0.05;
     L.lArm.rotation.x = -1.25 + Math.cos(t * 0.6 + s.ph) * 0.05;
     if(s.head) s.head.rotation.x = 0.12;
-  });
+  };
 }
 xh3Photographer(-245.6, 34.7, 0.35);   // đầu cầu đảo, chụp đảo/thuyền
 xh3Photographer(-317.2, 40.6, -0.15);  // trên thân cầu Y -318, chụp ra hồ
@@ -9032,6 +9401,293 @@ tickWater = function(t){
   XH4C_TT_LIGHT.intensity = isNight ? 55 : 0;
   XH4C_LAMP_STREAK_MAT.opacity = isNight ? 0.32 + Math.sin(t * 1.7) * 0.04 : 0;
 };
+
+// ================= HẠNG MỤC D (XH-4): VÒNG CHƠI ĐẠP VỊT THIÊN NGA TRÊN HỒ XUÂN HƯƠNG + CHI TIẾT NHÀ THỦY TẠ =================
+{
+  // Làm giàu kiến trúc Nhà Thủy Tạ trên đảo (-262, 5.47, 58): lan can boong tàu trắng, phao cứu sinh, bàn dù cà phê nhìn ra mặt hồ
+  const ttDeco = new THREE.Group(); ttDeco.position.set(-262, 5.47, 58); worldGroup.add(ttDeco);
+  for(const dz of [-4.2, -2.1, 0, 2.1, 4.2]){
+    box(0.06, 0.85, 0.06, 0xf5f5f0, -4.1, 0.42, dz, ttDeco, false);
+    if(Math.abs(dz) > 1.5){
+      cyl(0.65, 0.65, 0.06, 0xf5f5f0, -3.2, 0.72, dz, ttDeco, 10);
+      cyl(0.06, 0.08, 0.72, 0x4a4640, -3.2, 0.36, dz, ttDeco, 6);
+      cyl(0.05, 1.15, 0.45, 0x8c2f6e, -3.2, 1.85, dz, ttDeco, 8); // dù tím hồng Thủy Tạ
+    }
+  }
+  box(0.06, 0.06, 8.6, 0xf5f5f0, -4.1, 0.84, 0, ttDeco, false);
+  const ttFrontSign = signMesh('NHÀ HÀNG THỦY TẠ', 4.6, 0.72, '#4a154b', '#ffd98a', 'ĐẢO THỦY TẠ • HỒ XUÂN HƯƠNG');
+  ttFrontSign.position.set(3.85, 3.85, 0); ttFrontSign.rotation.y = Math.PI / 2; ttDeco.add(ttFrontSign);
+
+  // Mở khóa ma trận động cho thuyền người chơi (được tạo trước khối đóng băng V5.4-D)
+  if(LAKE_PLAYER_BOAT){
+    LAKE_PLAYER_BOAT.traverse(o => { o.matrixAutoUpdate = true; });
+  }
+  // 2 thuyền thiên nga của khách du lịch đang đạp dạo chậm trên mặt hồ (tạo sức sống mặt nước)
+  const npcCruisers = [
+    { boat: LAKE_BOATS[0], cx: -292, cz: 78, rx: 18, rz: 14, sp: 0.14, ph: 0.0 },
+    { boat: LAKE_BOATS[2], cx: -332, cz: 94, rx: 22, rz: 18, sp: 0.11, ph: 2.1 },
+  ];
+  for(const nc of npcCruisers){
+    if(nc.boat) nc.boat.traverse(o => { o.matrixAutoUpdate = true; });
+  }
+
+  // Vệt sóng rẽ nước (wake rings) sau đuôi thuyền người chơi (zero-GC preallocated pool)
+  const WAKE_N = 6;
+  const wakeRings = [];
+  const wakeMatBase = new THREE.MeshBasicMaterial({ color: 0xe2ecef, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+  for(let i = 0; i < WAKE_N; i++){
+    const wm = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.68, 20), wakeMatBase.clone());
+    wm.rotation.x = -Math.PI / 2; wm.position.set(-259, 4.93, 39.3); wm.visible = false;
+    worldGroup.add(wm);
+    wakeRings.push({ m: wm, x: -259, z: 39.3, age: i / WAKE_N });
+  }
+
+  const BOAT_DOCK = { x: -259, y: 4.9, z: 39.3, rotY: Math.PI };
+  const KIOSK_PT = { x: -258.5, z: 30.3 };
+  const PIER_PT  = { x: -259.0, z: 36.8 };
+  let boatTime = 0, boatHeading = Math.PI, boatSpeed = 0, boatLastT = -1;
+  window.__BOAT_ACTIVE = false;
+
+  // Kiểm tra vị trí (x, z) có nằm trong vùng nước cho phép thuyền bơi (không leo bờ, không xuyên đảo Thủy Tạ / cầu / đập Ông Đạo)
+  function boatWaterValid(x, z){
+    if(x < -548 || x > -226.5 || z < 38.2 || z > 192.5) return false;
+    // Tránh đảo Thủy Tạ tâm (-250, 58) bán kính 16.5 + hành lang cầu ra đảo (x -253.5..-246.5, z 36..44)
+    if(Math.hypot(x + 250, z - 58) < 17.2) return false;
+    if(x > -254.2 && x < -245.8 && z < 44.5) return false;
+    // Tránh 2 cầu chữ Y tại x = -282 và x = -318 (z 36..44.5)
+    if(z < 44.8 && (Math.abs(x + 282) < 3.8 || Math.abs(x + 318) < 3.8)) return false;
+    // Tránh 2 ngón gỗ cầu bến ngoài lồng slip (khi z < 43.2, chỉ cho phép trong lồng slip x -261.5..-256.5)
+    if(z < 43.2 && (x < -261.3 || x > -256.7)) return false;
+    return true;
+  }
+
+  function startSwanBoat(){
+    if(window.__BOAT_ACTIVE){ stopSwanBoat(false); return; }
+    if(riding > 0) parkBike();
+    if(singing) stopSing(true);
+    if(sitting > 0) sitting = 0;
+    const free = levelFromXp(G.xp) >= 5;
+    if(!free && state.xu < 30){
+      toast('🦢 Thuê thuyền thiên nga cần 30 Xu — hãy bán đồ trong Giỏ hoặc làm nhiệm vụ nhé!');
+      return;
+    }
+    if(!free) state.xu -= 30;
+    window.__BOAT_ACTIVE = true;
+    boatTime = 300; // 5 phút (300 giây) đúng biển giá 30 XU / 5 PHÚT
+    boatHeading = Math.PI; // hướng mũi ra mặt hồ (+z / nam)
+    boatSpeed = 0;
+    if(LAKE_PLAYER_BOAT){
+      LAKE_PLAYER_BOAT.position.set(BOAT_DOCK.x, BOAT_DOCK.y, 41.2);
+      LAKE_PLAYER_BOAT.rotation.set(0, boatHeading, 0);
+    }
+    playerState.x = BOAT_DOCK.x;
+    playerState.z = 41.2;
+    playerState.y = 5.15;
+    playerState.face = 0;
+    const rb = document.getElementById('btnReturnBoat');
+    if(rb) rb.style.display = '';
+    sfxCoin(); save(); updateHUD();
+    checkZone();
+    toast(free ? '🦢 Lên thuyền thiên nga! (Cấp 5 miễn phí) Dùng W/A/S/D hoặc phím mũi tên để đạp vịt dạo Hồ Xuân Hương — bấm E gần bến hoặc nút 🦢 Về bến để trả thuyền.' : '🦢 Đã thuê thuyền thiên nga (-30 Xu / 5 phút)! Dùng W/A/S/D để đạp vịt dạo Hồ Xuân Hương, bấm E hoặc nút 🦢 Về bến để lên bờ.');
+  }
+
+  function stopSwanBoat(expired){
+    if(!window.__BOAT_ACTIVE) return;
+    window.__BOAT_ACTIVE = false;
+    boatTime = 0; boatSpeed = 0;
+    for(const wr of wakeRings) wr.m.visible = false;
+    if(LAKE_PLAYER_BOAT){
+      LAKE_PLAYER_BOAT.position.set(BOAT_DOCK.x, BOAT_DOCK.y, BOAT_DOCK.z);
+      LAKE_PLAYER_BOAT.rotation.set(0, BOAT_DOCK.rotY, 0);
+      LAKE_PLAYER_BOAT.updateMatrix();
+    }
+    // Đưa người chơi lên mặt cầu bến an toàn
+    playerState.x = -259.0;
+    playerState.z = 36.6;
+    playerState.y = groundH(-259.0, 36.6);
+    playerState.face = Math.PI;
+    player.position.set(playerState.x, playerState.y, playerState.z);
+    const L = player.userData.limbs;
+    if(L){ L.lLeg.rotation.x = 0; L.rLeg.rotation.x = 0; L.lArm.rotation.x = 0; L.rArm.rotation.x = 0; }
+    const rb = document.getElementById('btnReturnBoat');
+    if(rb) rb.style.display = 'none';
+    toast(expired ? '⏰ Hết 5 phút thuê thuyền thiên nga — thuyền đã cập bến Hồ Xuân Hương!' : '🦢 Đã cập bến trả thuyền thiên nga — cảm ơn bạn!');
+  }
+
+  const btnRB = document.getElementById('btnReturnBoat');
+  if(btnRB) btnRB.addEventListener('click', () => stopSwanBoat(false));
+
+  // Tích hợp phím E tại ki-ốt vé (-258.5, 30.3) hoặc đầu cầu bến (-259, 36.8)
+  window.addEventListener('keydown', e => {
+    if(e.code !== 'KeyE' || anyModalOpen()) return;
+    if(window.__BOAT_ACTIVE){
+      const dDock = Math.hypot(playerState.x - BOAT_DOCK.x, playerState.z - BOAT_DOCK.z);
+      if(dDock < 9.5){ e.stopImmediatePropagation(); stopSwanBoat(false); }
+      return;
+    }
+    const dK = Math.hypot(playerState.x - KIOSK_PT.x, playerState.z - KIOSK_PT.z);
+    const dP = Math.hypot(playerState.x - PIER_PT.x, playerState.z - PIER_PT.z);
+    if(Math.min(dK, dP) < 4.2){
+      e.stopImmediatePropagation();
+      startSwanBoat();
+    }
+  }, true);
+
+  // Hỗ trợ chạm vào ctxPrompt hoặc nút hành động cảm ứng khi đứng ở bến thuyền
+  const _origInteract = interact;
+  ctxEl.addEventListener('click', () => {
+    if(window.__BOAT_ACTIVE){ stopSwanBoat(false); return; }
+    const dK = Math.hypot(playerState.x - KIOSK_PT.x, playerState.z - KIOSK_PT.z);
+    const dP = Math.hypot(playerState.x - PIER_PT.x, playerState.z - PIER_PT.z);
+    if(Math.min(dK, dP) < 4.2) startSwanBoat();
+  });
+
+  // Thanh Đi Nhanh Địa Danh (#quickNav): dịch chuyển tức thì đến 6 mốc lớn để dễ chơi & khám phá
+  document.querySelectorAll('#quickNav .qnBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const parts = (btn.getAttribute('data-tp') || '').split(',').map(Number);
+      if(parts.length < 2) return;
+      if(window.__BOAT_ACTIVE) stopSwanBoat(false);
+      if(riding > 0) parkBike();
+      if(sitting > 0) sitting = 0;
+      autoWalk.active = false;
+      const [tx, tz, tf] = parts;
+      playerState.x = tx; playerState.z = tz;
+      playerState.y = groundH(tx, tz);
+      if(!Number.isNaN(tf)) playerState.face = tf;
+      player.position.set(playerState.x, playerState.y, playerState.z);
+      checkZone();
+      toast('📍 Đã di chuyển tới: ' + btn.textContent.trim());
+    });
+  });
+
+  // Bọc tickWater để cập nhật chuyển động thuyền người chơi + thuyền NPC + sóng rẽ nước + HUD
+  const _xh4BoatTW = tickWater;
+  tickWater = function(t){
+    _xh4BoatTW(t);
+    const dt = boatLastT < 0 ? 0.016 : Math.min(0.05, Math.max(0.001, t - boatLastT));
+    boatLastT = t;
+
+    // Cập nhật 2 thuyền thiên nga NPC dạo trên mặt hồ
+    for(let i = 0; i < npcCruisers.length; i++){
+      const nc = npcCruisers[i];
+      if(!nc.boat) continue;
+      const ang = t * nc.sp + nc.ph;
+      const nx = nc.cx + Math.cos(ang) * nc.rx;
+      const nz = nc.cz + Math.sin(ang) * nc.rz;
+      const vx = -Math.sin(ang) * nc.rx * nc.sp;
+      const vz =  Math.cos(ang) * nc.rz * nc.sp;
+      nc.boat.position.set(nx, 4.9 + Math.sin(t * 2.1 + nc.ph) * 0.025, nz);
+      nc.boat.rotation.y = Math.atan2(-vx, -vz);
+      nc.boat.rotation.z = Math.sin(t * 1.8 + nc.ph) * 0.02;
+    }
+
+    if(!window.__BOAT_ACTIVE){
+      const dK = Math.hypot(playerState.x - KIOSK_PT.x, playerState.z - KIOSK_PT.z);
+      const dP = Math.hypot(playerState.x - PIER_PT.x, playerState.z - PIER_PT.z);
+      if(Math.min(dK, dP) < 4.2 && !anyModalOpen()){
+        ctxEl.style.display = 'block';
+        ctxEl.innerHTML = '🦢 <b>E</b> Thuê thuyền thiên nga đạp vịt Hồ Xuân Hương — ' + (levelFromXp(G.xp) >= 5 ? 'MIỄN PHÍ (Cấp 5)' : '30 Xu / 5 phút');
+      }
+      return;
+    }
+
+    // Đếm ngược thời gian thuê thuyền
+    boatTime -= dt;
+    if(boatTime <= 0){
+      stopSwanBoat(true);
+      return;
+    }
+
+    // Điều khiển thuyền thiên nga theo hướng camera / phím W,A,S,D + bập bềnh sóng nước
+    let ix = 0, iy = 0;
+    if(!anyModalOpen()){
+      if(keys['KeyW'] || keys['ArrowUp']) iy += 1;
+      if(keys['KeyS'] || keys['ArrowDown']) iy -= 1;
+      if(keys['KeyD'] || keys['ArrowRight']) ix += 1;
+      if(keys['KeyA'] || keys['ArrowLeft']) ix -= 1;
+      ix += joyVec.x; iy += -joyVec.y;
+    }
+    const ilen = Math.hypot(ix, iy);
+    if(ilen > 1){ ix /= ilen; iy /= ilen; }
+    const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw);
+    const rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
+    const mx = fx * iy + rx * ix, mz = fz * iy + rz * ix;
+    const pedaling = ilen > 0.08;
+    const targetSp = pedaling ? 5.8 : 0;
+    boatSpeed += (targetSp - boatSpeed) * Math.min(1, dt * 4.5);
+
+    if(pedaling){
+      const wantYaw = Math.atan2(-mx, -mz); // SwanBoat trong lake.glb hướng mũi về -Z khi rotY = 0 (rotY = PI hướng về +Z)
+      boatHeading = angLerp(boatHeading, wantYaw, Math.min(1, dt * 4.2));
+    }
+    const moveDirX = -Math.sin(boatHeading), moveDirZ = -Math.cos(boatHeading);
+    let bx = LAKE_PLAYER_BOAT ? LAKE_PLAYER_BOAT.position.x : playerState.x;
+    let bz = LAKE_PLAYER_BOAT ? LAKE_PLAYER_BOAT.position.z : playerState.z;
+    const nx = bx + moveDirX * boatSpeed * dt;
+    const nz = bz + moveDirZ * boatSpeed * dt;
+    if(boatWaterValid(nx, nz)){ bx = nx; bz = nz; }
+    else if(boatWaterValid(nx, bz)){ bx = nx; }
+    else if(boatWaterValid(bx, nz)){ bz = nz; }
+    else { boatSpeed *= 0.3; }
+
+    const bob = Math.sin(t * 2.4) * 0.032;
+    const roll = Math.sin(t * 1.9) * 0.022 - ix * 0.05;
+    if(LAKE_PLAYER_BOAT){
+      LAKE_PLAYER_BOAT.position.set(bx, 4.9 + bob, bz);
+      LAKE_PLAYER_BOAT.rotation.set(pedaling ? 0.025 : 0, boatHeading, roll);
+    }
+    // Đặt nhân vật ngồi trong khoang thuyền thiên nga, chân đạp nhịp nhàng
+    playerState.x = bx;
+    playerState.z = bz;
+    playerState.y = 5.12 + bob;
+    playerState.face = boatHeading + Math.PI;
+    player.position.set(bx, playerState.y, bz);
+    player.rotation.y = playerState.face;
+    const L = player.userData.limbs;
+    if(L){
+      const cyc = t * (pedaling ? 7.5 : 2.0);
+      L.lLeg.rotation.x = -1.15 + Math.sin(cyc) * (pedaling ? 0.42 : 0.08);
+      L.rLeg.rotation.x = -1.15 - Math.sin(cyc) * (pedaling ? 0.42 : 0.08);
+      L.lArm.rotation.x = -0.75; L.rArm.rotation.x = -0.75;
+    }
+
+    // Cập nhật vòng sóng rẽ nước sau đuôi thuyền
+    for(let i = 0; i < WAKE_N; i++){
+      const wr = wakeRings[i];
+      wr.age += dt * (pedaling ? 0.65 : 0.28);
+      if(wr.age >= 1){
+        wr.age -= 1;
+        wr.x = bx - moveDirX * 1.15;
+        wr.z = bz - moveDirZ * 1.15;
+      }
+      wr.m.visible = true;
+      wr.m.position.set(wr.x, 4.93, wr.z);
+      const sc = 0.7 + wr.age * (pedaling ? 2.8 : 1.5);
+      wr.m.scale.set(sc, sc, 1);
+      wr.m.material.opacity = (1 - wr.age) * (pedaling ? 0.42 : 0.18);
+    }
+
+    // Hiển thị đồng hồ thuê thuyền & nhắc trả thuyền khi gần bến
+    const mins = Math.floor(boatTime / 60), secs = Math.floor(boatTime % 60);
+    const timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    eventChipEl.style.display = 'block';
+    eventChipEl.innerHTML = '🦢 <b>Đang đạp vịt Hồ Xuân Hương</b> — còn <b>' + timeStr + '</b> (bấm nút <b>🦢 Về bến</b> trên góc phải để lên bờ bất cứ lúc nào)';
+    const dDock = Math.hypot(bx - BOAT_DOCK.x, bz - BOAT_DOCK.z);
+    if(dDock < 9.5 && !anyModalOpen()){
+      ctxEl.style.display = 'block';
+      ctxEl.innerHTML = '🦢 <b>E</b> Cập bến trả thuyền thiên nga (lên bờ)';
+    }
+  };
+
+  window.__BOAT_SYS = {
+    start: startSwanBoat,
+    stop: stopSwanBoat,
+    isValidWater: boatWaterValid,
+    isActive: () => window.__BOAT_ACTIVE,
+    timeLeft: () => boatTime,
+  };
+}
 
 animate();
 setTimeout(() => toast('👋 Chào mừng tới Chợ Hòa Bình 3D! Đi dạo, đóng dấu hộ chiếu (P) và ăn hết chợ đêm Đà Lạt nhé'), 700);
