@@ -104,8 +104,45 @@ Mục tiêu: người chơi chụp selfie trong game và **chia sẻ ra ngoài**
 
 ---
 
+## PHASE 7 — KHÍ QUYỂN, SƯƠNG MÙ & GÓC NHÌN (phần "nghề" làm game 3D)
+
+Các phase trước dựng vật và việc; phase này là thứ biến "mô phỏng" thành "có hồn": không khí Đà Lạt + cách người chơi NHÌN thế giới.
+
+### 7.1 Sương mù — chữ ký của Đà Lạt (quan trọng nhất phase này)
+- **Sương theo giờ thật của Đà Lạt**: 5:00–7:30 sương dày nhất (tầm nhìn 60–90u, hồ chỉ còn bóng đảo mờ), tan dần tới 9:00; chiều tối sau 17:30 sương quay lại mỏng trên mặt nước trước, rồi lan lên bờ; đêm khuya sương nhẹ quanh đèn (mỗi bóng đèn có quầng halo trong sương).
+- **Kỹ thuật 3 lớp chồng nhau** (không chỉ FogExp2 trơn): (1) sương xa theo FogExp2 đổi màu theo bầu trời (sáng: xám bạc `#c9ced2`, hoàng hôn: hồng chàm, đêm: chàm tối); (2) **cuộn sương thấp trôi** — các mảng alpha mềm lớn trôi chậm trên mặt hồ + **cuộn xuống từ đỉnh đồi qua mái chợ** vào sáng sớm (dùng lại idiom mảng sương của hồ, mở rộng lên sườn đồi); (3) sương cục bộ ở hẻm/thung nhỏ sau mưa.
+- **Đồi xa xếp lớp**: dựng 2–3 dải silhouette đồi thông bao quanh phía hồ + sau đồi chợ, màu nhạt dần theo khoảng cách (aerial perspective) — nhìn từ đỉnh Hoa Sữa và bờ hồ phải thấy "núi đồi Đà Lạt trong sương", không phải chân trời trống.
+- Sương phải là GAMEPLAY: điểm selfie "săn sương" (Phase 6) chỉ mở khung đặc biệt khi chụp trong sương sớm; NPC thưa hẳn khi sương dày; đèn xe máy xuyên sương có vệt sáng.
+
+### 7.2 Thời tiết Đà Lạt (xoay vòng nhẹ, không cực đoan)
+- 4 trạng thái: **Nắng sớm trong** / **Sương mù** / **Mưa phùn chiều** (mưa nhỏ hạt mịn: mặt đường + lát chuyển sẫm và bóng loáng phản chiếu đèn, NPC che ô + áo mưa, hàng rong che bạt, mặt hồ lăn tăn dày) / **Hoàng hôn hồng** (bầu trời gradient cam–hồng–chàm 20 phút game trước khi đêm hẳn).
+- Chuyển trạng thái mềm trong vài phút game, có dấu hiệu báo trước (gió mạnh lên, mây kéo). Thời tiết ghi vào "quẻ ngày" (Phase 5.6) cho có liên kết hệ thống.
+
+### 7.3 Camera & góc nhìn — đạo diễn như game thật
+- **4 chế độ camera**: (1) Diorama (mặc định hiện tại, góc ~45°); (2) **Tản bộ** — camera ngang vai sau lưng, FOV hẹp hơn, lia mềm khi rẽ, dành cho đi dạo/chợ đông; (3) **Ngắm cảnh** — tại các điểm ngắm (đỉnh Hoa Sữa, giữa tam cấp, cầu đảo, bờ hồ) bấm tương tác là camera tự về **góc postcard đã đạo diễn sẵn** của điểm đó, người chơi chỉ việc ngắm/chụp; (4) **Ảnh** — camera của Phase 6.
+- **Chống kẹt camera**: camera không xuyên mái chợ/tường/thân cây lớn (va chạm mềm + tự nâng khi leo thang), leo tam cấp camera tự lùi để thấy cả người lẫn quảng trường phía dưới; vào nhà lồng camera tự hạ trần ảo (không quay qua mái).
+- **Tầm nhìn có chủ đích (vista design)**: kiểm tra và dọn 5 khung nhìn vàng — spawn nhìn dọc trục lên chợ; giữa thang nhìn xuống quảng trường + mặt tiền cong; cầu đảo nhìn về Thủy Tạ; đỉnh Hoa Sữa nhìn xuống mái chợ + hồ xa trong sương; bờ bắc nhìn chéo mặt hồ về đảo lúc hoàng hôn. Không vật lạ nào được mọc chắn 5 khung này.
+- Chuyển cảnh mềm giữa các chế độ (0,6–1s ease), không cắt cụt gây chóng mặt; FOV thay đổi nhẹ theo tốc độ khi chạy xe.
+
+### 7.4 Ánh sáng & màu — phần còn lại của "giống thật"
+- Chu kỳ ngày: bình minh (sương + nắng xiên vàng qua hàng thông, bóng dài), trưa (sáng phẳng, ít dùng), **giờ vàng 17:00–18:30** (ấm, bóng dài, hồ lấp lánh), chạng vạng (đèn lên dần theo từng khu: chợ trước, hồ sau), đêm (vũng sáng đèn + tối lạnh xung quanh, Thủy Tạ magenta là điểm sáng chủ đạo phía hồ).
+- Mặt nước có **lấp lánh nắng** (specular glint theo hướng mặt trời/trăng) — thiếu cái này nước sẽ mãi trông như nhựa.
+- Ướt sau mưa phùn: lát + nhựa đường sẫm + phản chiếu vệt đèn (idiom vệt sáng sẵn có), mái quầy đọng sáng.
+
+### 7.5 Chuyển động nhỏ & âm thanh không gian (thế giới thở)
+- Cây đu theo gió (đỉnh tán lệch nhịp ngẫu nhiên, mạnh khi sắp mưa), khăn/áo NPC bay nhẹ, khói hàng ăn cuộn lên và tan theo gió, pano LED nhấp nháy rất nhẹ, đàn chim bay qua hồ buổi sáng + bóng chim trên mặt nước.
+- Âm thanh theo khoảng cách thật: đứng gần fountain nghe nước, gần góc hát nghe nhạc rõ, trong chợ nghe ồn ào người + tiếng rao, bờ hồ nghe gió thông + nước vỗ bờ nhỏ; xe máy chạy qua có tiếng lớn dần rồi xa dần. (Hệ ambience 5 lớp sẵn có — mở rộng theo vị trí, không thay mới.)
+
+### 7.6 CHỢ ĐÊM cuối tuần (biến hình theo lịch — cảnh đêm Hòa Bình nổi tiếng nhất)
+- Tối thứ 6–Chủ nhật (ngày game): khu quảng trường + chân tam cấp + đường trước chợ **biến thành chợ đêm**: hàng quán sáng đèn dựng thêm theo hàng, dây đèn vàng chăng ngang, đông người gấp đôi, hàng ăn khói nghi ngút, có gian đồ len/đặc sản; sữa đậu nành (Phase 4) đông nhất giờ này.
+- Biến hình phải MƯỢT: quán dựng dần từ 17:30, dọn dần sau 22:00, NPC tiểu thương chợ đêm là nhóm riêng. Đây là "sự kiện" để người chơi quay lại game đúng giờ — ghi vào lịch trong hộ chiếu.
+
+### 7.7 Đẹp nhưng phải nhẹ (ràng buộc kỹ thuật cho Argon)
+- Mọi vật lặp (ghế, đèn, quầy, cây) dùng InstancedMesh hoặc merge hình học; cây xa dùng bản LOD ít đa giác; bóng đổ chỉ từ 1 nguồn sáng chính + đèn điểm không đổ bóng; sương dùng mảng alpha rẻ tiền, cấm volumetric thật.
+- Ngân sách: giữ 60fps trên máy yếu và standalone ≤ trần byte đã khóa; phase này xong mà tụt hiệu năng là CHƯA ĐẠT dù đẹp.
+
 ## THỨ TỰ & NGHIỆM THU
 
-- Làm lần lượt Phase 1 → 6, mỗi phase xong phải: chạy đủ bộ test scripts của repo và báo số thật; mô tả thay đổi trong CHANGELOG kèm **ảnh chụp màn hình preview** của từng khu ở góc tầm mắt người chơi (nếu môi trường của bạn render được) hoặc mô tả chính xác những gì đã thay để người kiểm chứng đối chiếu.
+- Làm lần lượt Phase 1 → 7, mỗi phase xong phải: chạy đủ bộ test scripts của repo và báo số thật; mô tả thay đổi trong CHANGELOG kèm **ảnh chụp màn hình preview** của từng khu ở góc tầm mắt người chơi (nếu môi trường của bạn render được) hoặc mô tả chính xác những gì đã thay để người kiểm chứng đối chiếu.
 - Tiêu chí đạt của mỗi khu: (1) đủ "nhận diện bắt buộc"; (2) có đủ 3 lớp chi tiết; (3) có tương tác chạy được; (4) không phá luật khóa + không đen màn hình + save cũ nguyên vẹn.
 - Sync về GitHub vào **nhánh `aistudio-v1`**, không ghi đè `main`. Bên dự án sẽ kéo về chạy kiểm chứng độc lập rồi mới hợp nhất — vì vậy CHANGELOG phải trung thực tuyệt đối: làm được tới đâu ghi tới đó, mục chưa xong ghi "CHƯA XONG", cấm nhận bừa.
