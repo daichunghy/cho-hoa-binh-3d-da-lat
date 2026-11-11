@@ -1521,21 +1521,76 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   solid(x, z, w / 2, 2.9);
   return g;
 }
-{ // XH-0 (11/11): KHUNG DAT HO XUAN HUONG — mat dat TRONG de kiem chung khung/cao do/duong di.
-  // Nuoc that + ke da + lat dao + taluy day du o XH-1; thuyen/Thuy Ta o XH-2; trang tri bo o XH-3.
-  // So lieu khoa theo KE_HOACH_HO_XUAN_HUONG §2/§11 S1: bo 5.5, day ho tam 4.86 (mat nuoc 4.9 o XH-1).
+{ // XH-1 (11/11): NUOC & BO HO XUAN HUONG — ke da + lat dao + ven dao + bo dong sach + bo xa (thuyen/Thuy Ta/den/ghe o XH-2/XH-3).
+  // Khung khoa XH-0 GIU NGUYEN: bo 5.5 / nuoc 4.9; nuoc x -352..-224, z 36..116; dao R15 (-250,58) + dai cau; solid ke nhu XH-0.
+  // Mat nuoc that dang ky WATER_FX/waterMats o khoi rieng ngay truoc khoi dai phun (WATER_FX khai bao ~3481, SAU khoi nay — TDZ).
   box(144, 0.06, 61, 0x5f8547, -288, 5.45, 5.5, worldGroup, false);              // nen co them bo bac (x -360..-216, z -25..36) — 0x5f8547 duoc REALISM-1 phu TEX_GRASS
-  box(144, 0.04, 8, 0xdde2e2, -288, 5.47, 32, worldGroup, false);                // nen duong dao phang (z 28..36) — lat that o XH-1
-  const _xhBasin = new THREE.Mesh(new THREE.PlaneGeometry(128, 80), mat(0x46545a)); // day ho tam trung tinh (x -352..-224, z 36..116)
-  _xhBasin.rotation.x = -Math.PI/2; _xhBasin.position.set(-288, 4.86, 76); worldGroup.add(_xhBasin);
-  cyl(15, 15, 0.06, 0x5f8547, -250, 5.45, 58, worldGroup, 28);                   // dia dao Thuy Ta R15 (S1) — nha + cay o XH-2
-  box(3, 0.08, 7, 0xdde2e2, -250, 5.46, 39.5, worldGroup, false);                // dai cau bo -> dao (z 36..43) — cau that o XH-3
+  // --- Lat duong dao + loi noi: canvas o 2u + o accent #b98a7a thua (do PIL anh 03); bake mau vao canvas nhu WATER-1 ---
+  const promC = document.createElement('canvas'); promC.width = promC.height = 256;
+  const pg = promC.getContext('2d'); pg.fillStyle = '#dde2e2'; pg.fillRect(0, 0, 256, 256);
+  for(let pi = 0; pi < 700; pi++){
+    const px = Math.abs((Math.sin(pi * 12.9) * 43758.5) % 1) * 256, py = Math.abs((Math.sin(pi * 78.2) * 23741.3) % 1) * 256;
+    pg.fillStyle = pi % 2 ? 'rgba(60,70,80,0.05)' : 'rgba(255,255,255,0.06)'; pg.fillRect(px, py, 2, 2);
+  }
+  for(const ac of [[1,0],[3,2],[0,3],[2,1]]){ pg.fillStyle = 'rgba(185,138,122,0.85)'; pg.fillRect(ac[0] * 64 + 2, ac[1] * 64 + 2, 60, 60); }
+  pg.strokeStyle = 'rgba(88,96,102,0.55)'; pg.lineWidth = 2;
+  for(let p = 0; p <= 256; p += 64){ pg.beginPath(); pg.moveTo(p, 0); pg.lineTo(p, 256); pg.stroke(); pg.beginPath(); pg.moveTo(0, p); pg.lineTo(256, p); pg.stroke(); }
+  const promTex = new THREE.CanvasTexture(promC); promTex.wrapS = promTex.wrapT = THREE.RepeatWrapping; promTex.colorSpace = THREE.SRGBColorSpace; promTex.repeat.set(18, 1);
+  const _xhProm = box(144, 0.04, 8, 0xdde2e2, -288, 5.47, 32, worldGroup, false); _xhProm.material = new THREE.MeshStandardMaterial({ map: promTex, roughness: 0.92 }); // mat duong dao z 28..36 (tile 8u -> o con 2u)
+  const pathTex = promTex.clone(); pathTex.needsUpdate = true; pathTex.repeat.set(0.75, 4);
+  const _xhPath = box(6, 0.05, 31.6, 0xdde2e2, -219, 5.515, 17, worldGroup, false); _xhPath.rotation.y = Math.atan2(-26, 18); _xhPath.material = new THREE.MeshStandardMaterial({ map: pathTex, roughness: 0.92 }); // loi noi lat da (-206,8)->(-232,26) §2
+  // --- Day ho sau + ke da (texture khoi da canvas, idiom makeGroundTex + clone repeat nhu stoneMat) ---
+  const _xhBasin = new THREE.Mesh(new THREE.PlaneGeometry(128, 80), mat(0x14425c)); // XH-1: day ho 0x14425c @4.82 (XH-0 tam 0x46545a @4.86) — nhu dia day bon WATER-1; nuoc bob min 4.88 nen khong z-fight
+  _xhBasin.rotation.x = -Math.PI/2; _xhBasin.position.set(-288, 4.82, 76); worldGroup.add(_xhBasin);
+  const keTex = makeGroundTex(g2 => {
+    g2.fillStyle = '#7e776c'; g2.fillRect(0, 0, 256, 256);
+    for(let bi = 0; bi < 16; bi++){
+      const bx = (bi % 4) * 64 + (Math.floor(bi / 4) % 2) * 32 - 32, by = Math.floor(bi / 4) * 64;
+      g2.fillStyle = 'rgba(' + (bi % 3 ? '255,255,255' : '40,36,32') + ',' + (0.04 + (bi % 4) * 0.02) + ')'; g2.fillRect(bx, by, 128, 64);
+    }
+    for(let ni = 0; ni < 900; ni++){ g2.fillStyle = ni % 2 ? 'rgba(40,36,32,0.06)' : 'rgba(255,255,255,0.05)'; g2.fillRect(Math.abs((Math.sin(ni * 12.9) * 43758.5) % 1) * 256, Math.abs((Math.sin(ni * 78.2) * 23741.3) % 1) * 256, 2, 2); }
+    g2.strokeStyle = 'rgba(48,44,40,0.65)'; g2.lineWidth = 3;
+    for(let p = 0; p <= 256; p += 64){ g2.beginPath(); g2.moveTo(0, p); g2.lineTo(256, p); g2.stroke(); }
+    for(let r = 0; r < 4; r++) for(let cx = 0; cx < 3; cx++){ const vx = cx * 128 + (r % 2) * 64; g2.beginPath(); g2.moveTo(vx, r * 64); g2.lineTo(vx, r * 64 + 64); g2.stroke(); }
+  });
+  const keMat = rx => { const t = keTex.clone(); t.needsUpdate = true; t.repeat.set(rx, 1); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 }); };
+  const _keN1 = box(100.8, 1.3, 0.7, 0x7e776c, -301.6, 4.98, 36, worldGroup, false); _keN1.material = keMat(25);   // ke bac doan tay x -352..-251.2 (mat nuoc 4.9 -> dinh 5.63)
+  const _keN2 = box(24.8, 1.3, 0.7, 0x7e776c, -236.4, 4.98, 36, worldGroup, false); _keN2.material = keMat(6);     // ke bac doan dong x -248.8..-224 — o giua la khe cau dao nhu solid XH-0
+  box(100.8, 0.09, 0.9, 0xd8d2c2, -301.6, 5.6, 36, worldGroup, false);                                             // bo via sang tren ke bac (idiom vanh bon WATER-1 0xd8d2c2)
+  box(24.8, 0.09, 0.9, 0xd8d2c2, -236.4, 5.6, 36, worldGroup, false);
+  const _keS = box(128, 1.15, 0.7, 0x7e776c, -288, 4.95, 116, worldGroup, false); _keS.material = keMat(32);       // tuong chan mep nam — khep khe sang duoi chan taluy (verdict XH-0)
+  const _keW = box(0.7, 1.15, 80, 0x7e776c, -352, 4.95, 76, worldGroup, false); _keW.material = keMat(20);          // mep nuoc tay
+  const _keE = box(0.7, 1.15, 80, 0x7e776c, -224, 4.95, 76, worldGroup, false); _keE.material = keMat(20);          // mep nuoc dong
+  // --- Dao Thuy Ta: ven ke da + vong duong lat quanh dao (S1; nha + cay o XH-2) ---
+  cyl(15, 15, 0.06, 0x5f8547, -250, 5.45, 58, worldGroup, 28);                   // dia dao Thuy Ta R15 (XH-0)
+  const _xhSkirt = cyl(15.7, 16.6, 1.2, 0x7e776c, -250, 4.84, 58, worldGroup, 28); _xhSkirt.material = keMat(24);  // ven ke da quanh dao: nap tru o 5.44 — DUOI dia co 5.48/vong lat 5.5 (nap o 5.52 se che kin mat dao, bat bang render xh1 top-down)
+  const _xhRing = new THREE.Mesh(new THREE.RingGeometry(9.0, 13.8, 40), new THREE.MeshStandardMaterial({ color: 0xdde2e2, roughness: 0.95 }));
+  _xhRing.rotation.x = -Math.PI/2; _xhRing.position.set(-250, 5.5, 58); _xhRing.receiveShadow = true; worldGroup.add(_xhRing); // vong duong lat quanh dao — tam co de nha Thuy Ta (XH-2)
+  box(3, 0.08, 7, 0xdde2e2, -250, 5.46, 39.5, worldGroup, false);                // dai cau bo -> dao (XH-0; cau that o XH-3)
   box(8, 0.06, 80, 0x5f8547, -356, 5.45, 76, worldGroup, false);                 // bo tay (x -360..-352)
-  box(8, 0.06, 80, 0x5f8547, -220, 5.45, 76, worldGroup, false);                 // bo dong (x -224..-216; de len chan khoi suon nam cu — XH-1 xu ly hinh khoi)
+  box(17, 0.06, 80, 0x5f8547, -215.5, 5.45, 76, worldGroup, false);              // bo dong XH-1 noi rong x -224..-207 — cham chan khoi suon nam da thu ve -207 (XH-0: dai 8u de len chan khoi cu o -220)
   const _xhTal = box(128, 0.08, 16.6, 0x5f8547, -288, 7.22, 124, worldGroup, false); _xhTal.rotation.x = -0.219; // taluy bo nam doc 5.5 -> 9 (z 116..132)
   box(128, 0.06, 10, 0x5f8547, -288, 8.94, 137, worldGroup, false);              // them sau taluy (z 132..142)
-  box(128, 0.55, 0.5, 0x5e5852, -288, 5.17, 36, worldGroup, false);              // ke tam doc z 36 (ke da that o XH-1)
   solid(-301.6, 36, 50.4, 0.4); solid(-236.4, 36, 12.4, 0.4);                    // XH-0: solid ke z 36 — chua doan cau dao x -251.25..-248.75; doan ben mo o XH-3 khi co cau ben
+  // --- CAU ONG DAO (S4): dap da 1934 — khoi nen xa mep tay, than dap + mat duong + lan can coc trang phia ho; khong tuong tac ---
+  const _xhDam = box(8, 1.9, 36, 0x7e776c, -353, 5.15, 78, worldGroup, false); _xhDam.material = keMat(9);
+  box(8.4, 0.12, 36, 0x4a4a4a, -353, 6.16, 78, worldGroup, false);               // mat duong tren mat dap
+  for(let dz = 62; dz <= 94; dz += 4) box(0.09, 0.55, 0.09, 0xe8e4da, -349.3, 6.5, dz, worldGroup, false); // coc lan can phia ho
+  box(0.07, 0.07, 34, 0xe8e4da, -349.3, 6.74, 78, worldGroup, false);            // thanh ngang tren
+  box(0.07, 0.07, 34, 0xe8e4da, -349.3, 6.47, 78, worldGroup, false);            // thanh ngang duoi
+  solid(-353, 78, 4.2, 18);                                                      // chan khoi dap — khong di xuyen (vung nuoc ven dap de XH-4 tu dinh bien thuyen)
+  // --- Bo xa: thong silhouette taluy/them nam + thong bo dong + 2 villa mo tren them (ke hoach §2) ---
+  pine(-338, 124, 1.25); pine(-322, 130, 1.1); pine(-306, 122, 1.3); pine(-292, 128, 1.0);
+  pine(-276, 124, 1.2); pine(-260, 131, 1.05); pine(-244, 123, 1.28); pine(-230, 129, 1.12);
+  pine(-212, 100, 1.15); pine(-213, 48, 1.05);                                   // thong dai bo dong
+  for(const vil of [[-318, 135], [-262, 136]]){
+    box(9, 4.2, 6.5, 0xcfc4b2, vil[0], 11.0, vil[1], worldGroup, false);         // than villa
+    box(10, 0.5, 7.5, 0x74584a, vil[0], 13.3, vil[1], worldGroup, false);        // mai
+    box(1.2, 1.6, 0.3, 0x5a4632, vil[0] - 2, 10.2, vil[1] - 3.3, worldGroup, false);      // cua chinh huong ho (mat bac)
+    box(1.1, 1.0, 0.15, 0x3a4450, vil[0] + 2.5, 11.3, vil[1] - 3.28, worldGroup, false);  // cua so
+    box(1.1, 1.0, 0.15, 0x3a4450, vil[0] - 3.2, 11.3, vil[1] - 3.28, worldGroup, false);
+    solid(vil[0], vil[1], 4.5, 3.25);
+  }
 }
 { // --- dựng trục đường vào: mặt dốc + vỉa hè + vạch qua đường + cổng chào ---
   const rampMat = new THREE.MeshStandardMaterial({ color:0x34302c, map:TEX_ASPHALT, bumpMap:TEX_ASPHALT, bumpScale:0.035, roughness:0.42, metalness:0.18 }); // Nhựa ướt đêm Đà Lạt phản chiếu ánh đèn
@@ -1548,7 +1603,7 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   const _wg = box(82, 0.06, 100, 0x978a78, -93, entryRampY(-93) - 0.05, 0, worldGroup, false); _wg.rotation.z = -0.0699; // V5.5: nen doc phia tay (duoi nha nam + le bac, bam entryRampY)
   box(88, 0.06, 100, 0x978a78, -172, 5.44, 0, worldGroup, false); // GEOMETRY-2: nen doan keo dai phang
   box(90, 22, 60, 0x6b6257, -175, 10.9, -57, worldGroup, false); // GEOMETRY-2: khoi doi sau day nha bac doan keo dai
-  box(90, 14, 55, 0x6b6257, -175, 3.0, 62, worldGroup, false); // GEOMETRY-2: suon nam doan keo dai
+  box(76, 14, 55, 0x6b6257, -169, 3.0, 62, worldGroup, false); // GEOMETRY-2: suon nam doan keo dai — XH-1: mat tay thu ve x -207 (ban cu vuon toi -220, nuot dai bo dong ho -224..-216)
   box(70, 20, 60, 0x6b6257, -118, 9.9, -56, worldGroup, false); // V5.5: khoi doi sau day nha bac doan keo dai
   const _sh = box(82, 0.06, 13, 0x978a78, -93, entryRampY(-93) + 0.03, -18.5, worldGroup, false); _sh.rotation.z = -0.0699;
   box(88, 0.06, 13, 0x978a78, -172, 5.53, -18.5, worldGroup, false);
@@ -3500,6 +3555,22 @@ function tickWater(t){
   for(const sf of WATER_FX.surfs){ sf.m.position.y = sf.y + Math.sin(t * 1.7) * 0.02; if(sf.tex){ sf.tex.offset.x = (t * 0.008) % 1; sf.tex.offset.y = (t * 0.005) % 1; } } // WATER-1: bỏ dao động opacity (làm rửa màu) — cảm giác nước bằng texture gợn trôi chéo chậm trong tickWater
   for(const rg of WATER_FX.rings){ const f = (t * 0.32 + rg.ph) % 1; const sc = 0.7 + f * 1.7; rg.m.scale.set(sc, sc, 1); rg.m.material.opacity = 0.5 * (1 - f); } // WATER-1: đỉnh opacity 0.38 -> 0.5 (trên nền teal tối CR gợn = 5.43 thay vì 1.71)
   for(const jt of WATER_FX.jets){ const pu = 1 + Math.sin(t * 5.2 + jt.userData.ph) * 0.07; jt.scale.set(1, pu, 1); jt.material.opacity = 0.7 + Math.sin(t * 5.2 + jt.userData.ph) * 0.05; } // WATER-1: tia 0.55 -> quanh 0.7
+}
+{ // XH-1: MAT NUOC HO XUAN HUONG — idiom WATER-1 (teal 0x276a8a bake vao canvas + vet gon #bfe6f5 troi trong tickWater;
+  // dem emissive teal 0x1d4e5f x0.55 qua waterMats/applyDayNight). Khoi nay nam SAU khai bao WATER_FX/waterMats —
+  // khoi dat XH-1 o ~1508 chay TRUOC nen khong dang ky duoc tai do (TDZ ReferenceError — luat man hinh den 08/11).
+  const lkC = document.createElement('canvas'); lkC.width = lkC.height = 256;
+  const lg = lkC.getContext('2d'); lg.fillStyle = '#276a8a'; lg.fillRect(0, 0, 256, 256);
+  for(let gi = 0; gi < 64; gi++){
+    const gx = Math.abs((Math.sin(gi * 12.9) * 43758.5) % 1) * 256, gy = Math.abs((Math.sin(gi * 78.2) * 23741.3) % 1) * 256, gr = 6 + Math.abs((Math.sin(gi * 5.7) * 9876.5) % 1) * 16;
+    lg.strokeStyle = 'rgba(191,230,245,' + (0.30 + (gi % 5) * 0.10) + ')'; lg.lineWidth = 2 + (gi % 3);
+    lg.beginPath(); lg.arc(gx, gy, gr, gi * 1.7, gi * 1.7 + 1.1 + (gi % 4) * 0.5); lg.stroke();
+  }
+  const lkTex = new THREE.CanvasTexture(lkC); lkTex.wrapS = lkTex.wrapT = THREE.RepeatWrapping; lkTex.repeat.set(24, 15); lkTex.colorSpace = THREE.SRGBColorSpace; // tile ~5.3u — gon cung co dai phun
+  const _xhWater = new THREE.Mesh(new THREE.PlaneGeometry(128, 80), new THREE.MeshStandardMaterial({ map: lkTex, roughness: 0.15, transparent: true, opacity: 0.93, emissive: 0x1d4e5f, emissiveIntensity: 0 }));
+  _xhWater.rotation.x = -Math.PI/2; _xhWater.position.set(-288, 4.9, 76); worldGroup.add(_xhWater);
+  WATER_FX.surfs.push({ m: _xhWater, y: 4.9, tex: lkTex }); // tickWater: bob ±0.02 (min 4.88 > day ho 4.82) + troi offset gon cheo cham
+  waterMats.push(_xhWater.material); // dem -> emissive teal qua applyDayNight nhu bon dai phun
 }
 { // ================= V5.5: ĐÀI PHUN NƯỚC + KHU QUẦN ÁO + BÀN GHẾ HOA SỮA =================
   // Neo (research/21): sân trước chợ phía ĐÔNG bậc thang, đối diện quảng trường bậc cấp —
