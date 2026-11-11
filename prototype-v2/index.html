@@ -624,7 +624,7 @@ function groundH(x,z){
   }
   // V5.4 (research/20): THỀM BẮC — cắt sườn thành thềm đặt hàng sạp bắc quay mặt vào đường;
   // đoạn tây x -58..-52 bám dốc đường (+0.11 như vỉa hè, mỗi sạp một cao độ theo dốc), đoạn đông là sân 0.
-  if(x >= -58 && x <= -35 && z >= -21.5 && z <= -2) return x < -52 ? entryRampY(x) + 0.11 : 0; // BLENDER-DEEP-2: them bac noi toi -21.5 cho hang sap bac moi -19.7 // V5.5: them bac noi sau toi z -16.5 cho hang sap bac doi len -15.7 (mat sap -13.6) — GEOMETRY-2: GIỮ -16.5 (đã thử -18: lệch groundH <-> mặt sườn thị giác sau lưng sạp, audit bắt)
+  if(x >= -58 && x <= -35 && z >= -21.5 && z <= -2) return x < -52 ? entryRampY(x) + 0.11 : 0; // BD2: them bac noi
   // V5.4: vỉa hè hai bên đường dốc vào — cao hơn mặt đường 0.11, nghiêng cùng dốc (bản cũ phẳng gây lệch tới 3.3 tại cổng chào)
   if(x >= -208 && x <= -59 && z >= -18.4 && z <= -15.6) return entryRampY(x) + 0.11; // BLENDER-DEEP-2: via he bac theo line moi z -17.0, dai toi bung binh dau cho // V5.5: via he bac theo line moi z -12.5, keo dai toi cong
   if(x >= -82.5 && x <= -51.5 && z >= 10.5 && z <= 13.9) return entryRampY(x) + 0.11;
@@ -658,7 +658,7 @@ function vehBumpE(x){
   return s(-44, -33) * (1 - s(-27, -16)); // GEOMETRY-2: doi theo tam dao -30
 }
 function laneZE(x){ return -1.5 + 7.05 * vehBumpE(x); }   // V5.4: đỉnh 5.55 — cách tâm đảo 11.55 (vành RING_IN 11.9), khe đĩa 0.7
-function laneZW(x){ // V5.4 (research/20): gốc 1.9 (giữa đường, thẳng hàng vạch chia mới z~0.2 với làn E ở -1.5); đỉnh lượn đảo 7.15 cách tâm đảo 13.15 — khe 2 làn tại đảo 1.6 tâm-tâm (hở 0.9, đạt T3); bỏ lõm sạp sữa vì hàng chờ dãy nam đã chuyển dọc mặt tiền + dãy nam lùi về z 11.0
+function laneZW(x){ // V5.4: goc lan theo research/20
   const s = (a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   return 1.9 + 5.25 * s(-46, -36) * (1 - s(-25, -17)); // GEOMETRY-2: doi theo tam dao -30
 }
@@ -952,6 +952,61 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
   solid(-34, 20, 0.8, 8.4); solid(34, 20, 0.8, 8.4); solid(0, 27.8, 34, 0.8);
   for(let x=-32; x<=32; x+=8) solid(x, 12.2, 0.65, 0.65);
   solid(17.5, 9.5, 3.6, 2.6); // khối sân thượng tầng 2
+}
+{ // FRONTAGE-1 (11/11): pano quảng cáo + LED đỏ tầng trệt theo ảnh 01. GLB đã có dải AdBand
+  // PHẲNG 7.5x1.2 màu clamp nhạt không họa tiết -> tầng trệt "thưa". Đo ảnh 01 (crop phóng
+  // to dải trệt): pano ~0.43 chiều cao tầng trệt, nền trắng + logo xanh Cozy + túi/chai sản
+  // phẩm xanh-vàng-cam, LED giữa nền gần đen chữ đỏ tươi trên cửa chính. Phủ pano canvas
+  // đúng 9 nhịp AdBand: tâm x -32..32 bước 8, 7.5 x 1.15 (y 3.98..5.13), z theo cung V9
+  // z=11.71+d(x) R=142.28, yaw=PI-asin(x/R). Dán trên tường, không thêm solid.
+  const R9 = 142.28;
+  function adTex(kind){
+    const c = document.createElement('canvas'); c.width = 512; c.height = 80;
+    const g = c.getContext('2d');
+    if(kind === 'L'){
+      g.fillStyle = '#120608'; g.fillRect(0, 0, 512, 152);
+      g.fillStyle = '#ff2418'; g.textAlign = 'center'; g.font = 'bold 27px Arial, sans-serif';
+      g.fillText('TOÀN ĐẢNG, TOÀN DÂN, TOÀN QUÂN', 256, 32);
+      g.font = 'bold 23px Arial, sans-serif';
+      g.fillText('THI ĐUA LẬP THÀNH TÍCH CHÀO MỪNG ĐẠI HỘI XIV', 256, 64);
+    } else {
+      g.fillStyle = kind === 'Y' ? '#f6c90e' : '#f4f6f1'; g.fillRect(0, 0, 512, 152);
+      g.fillStyle = '#2e7d32'; g.fillRect(20, 10, 130, 60);
+      g.fillStyle = '#ffffff'; g.font = 'italic bold 34px Arial, sans-serif'; g.textAlign = 'center';
+      g.fillText('Cozy', 85, 52);
+      if(kind === 'B'){
+        const bc = ['#69a83c', '#f2b705', '#e07b2a', '#69a83c'];
+        for(let i = 0; i < 4; i++){
+          const bx = 196 + i * 76;
+          g.fillStyle = '#37503a'; g.fillRect(bx + 14, 6, 16, 10);
+          g.fillStyle = bc[i]; g.fillRect(bx, 16, 44, 58);
+          g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(bx + 7, 30, 30, 26);
+        }
+      } else {
+        g.fillStyle = '#57a639'; g.fillRect(200, 8, 100, 64);
+        g.fillStyle = '#f2b705'; g.fillRect(330, 8, 100, 64);
+        g.fillStyle = '#2e7d32'; g.fillRect(200, 8, 100, 24);
+        g.fillStyle = '#e07b2a'; g.fillRect(330, 8, 100, 24);
+        g.fillStyle = '#ffffff'; g.font = 'bold 19px Arial, sans-serif';
+        g.fillText('TRÀ', 250, 29); g.fillText('MẬT', 380, 29);
+      }
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    return t;
+  }
+  const adMats = {};
+  for(const k of ['G', 'Y', 'B']) adMats[k] = new THREE.MeshStandardMaterial({ map: adTex(k), roughness: 0.85 });
+  const lt = adTex('L');
+  adMats.L = new THREE.MeshStandardMaterial({ map: lt, emissive: 0xffffff, emissiveMap: lt, emissiveIntensity: 0.5, roughness: 0.85 });
+  const seq = ['B', 'G', 'Y', 'G', 'L', 'G', 'G', 'Y', 'B'];
+  const geoP = new THREE.PlaneGeometry(7.5, 1.15);
+  for(let i = 0; i < 9; i++){
+    const x = -32 + i * 8, d = R9 - Math.sqrt(R9 * R9 - x * x);
+    const m = new THREE.Mesh(geoP, adMats[seq[i]]);
+    m.position.set(x, 4.55, 11.71 + d);
+    m.rotation.y = Math.PI - Math.asin(x / R9);
+    worldGroup.add(m);
+  }
 }
 { // SWEEP-NIGHT-1: biển MARCHÉ trên mái nhà lồng (ảnh thật 01: chữ xanh dương + chấm tròn vàng,
   // dựng sau lan can mái, lệch phải tâm — trước đây THIẾU hẳn, verdict V8 điểm (5)). Canvas trong
@@ -1295,7 +1350,7 @@ function brandShop(x, z, rotY, kind){ // BLENDER-DEEP-2 + V6: kiến trúc cao n
   placeHotel('HotelB', 38, -77, 17, 0, 6.5, 4.5);
   placeHotel('HotelD', -70, 36.5, groundH(-70, 36.5), Math.PI, 8, 5); // lùi hẳn về sau dãy hàng quán nam (z=36.5), không chắn giữa lòng đường vào
   placeHotel('HotelB', 66, 8, 0, -Math.PI / 2, 4.5, 6.5);
-  placeHotel('HotelB', 47, 23.5, 0, Math.PI, 6.5, 4.5); // SWEEP-NIGHT-1: lấp trống phía ĐÔNG mặt tiền chợ (verdict V8: phải mặt tiền trống, ảnh thật 01 có khối khách sạn 5-6 tầng trắng/ban công ôm sát góc đông chợ). HotelB 13x9, 5 tầng; x 40.5..53.5 (cách mép đông chợ x34 là 6.5), z 19..28 thẳng hàng khối chợ; mặt tiền quay -z (rotY PI) cùng hướng mặt chợ; groundH(47,23.5)=0; cách shop (46,12.5) 6.5 theo z — không chồng.
+  placeHotel('HotelB', 47, 23.5, 0, Math.PI, 6.5, 4.5); // SWEEP-NIGHT-1: HotelB lap dong mat tien
   placeHotel('HotelA', -28, 52, 0, Math.PI, 8, 5);
   placeHotel('HotelD', 30, 54, 0, Math.PI, 5.5, 4);
 }
@@ -3144,7 +3199,7 @@ function addWanderer(route, shirt, opts={}){
   applyLook(p, look, 'wanderer');
   worldGroup.add(p);
   const jx = (Math.random() - 0.5) * 1.4, jz = (Math.random() - 0.5) * 1.4;
-  const rt = route.map(pt => [pt[0] + jx, pt[1] + jz, pt.length > 2 ? pt[2] : groundH(pt[0] + jx, pt[1] + jz)]); // GEOMETRY-2 SỬA LỖI LỚN: bản cũ chép pt[2]=undefined cho tuyến 2 tọa độ -> routeY trả undefined -> y=NaN VĨNH VIỄN (lerp từ NaN) -> 55/59 người đi bộ VÔ HÌNH trên trình duyệt (đo bằng audit_crowd_geo2). Đây là gốc phàn nàn "đám đông bị lỗi" — người chơi chỉ thấy người tĩnh đứng cụm.
+  const rt = route.map(pt => [pt[0] + jx, pt[1] + jz, pt.length > 2 ? pt[2] : groundH(pt[0] + jx, pt[1] + jz)]); // GEO2: sua loi routeY NaN
   const browsePts = [];
   for(const s of stalls){
     if(s.nightOnly && opts.sched !== 'night') continue;
@@ -3179,7 +3234,7 @@ addWanderer([[17.5,7],[17.5,-12],[17.5,-25],[19,-16],[19,-1],[23,4]], 0xa87a4a, 
 addWanderer([[16,5],[16,-14],[16,-25],[18,-18],[18,0],[21,4]], 0x74566b, { speed:1.1, hat:'beanie', sched:'night' });
 addWanderer([[-52,6.2],[-38,5.2],[-24,4.7],[10,3.4],[44,3.4],[52,-3.4],[21,-3.3],[18,-3.3],[16,-0.7],[-9,-0.7],[-12.5,-0.9],[-14.5,-0.2],[-16.5,3.8],[-27,5.2]], 0x9c4034, { speed:1.5, sched:'night' });
 addWanderer([[52,3.2],[24,3.6],[-6,3.6],[-16.5,3.8],[-24,4.7],[-38,5.2],[-52,6.2],[-56,-0.6],[-53,-3.3],[-44,-3.2],[-41,-1.0],[-38,3.4],[-30,5.5]], 0x5d7a9c, { speed:1.4, hat:'beanie', sched:'night' }); // GEOMETRY-2: điểm [-36,-3.4] cũ nay LỌT TRONG đĩa đảo tâm -30 (d=6.5 < R10.5) — vòng qua tây đảo, cắt làn DỐC (audit: bản [-42,4.2] cắt nông làn W)
-addWanderer([[-52,5.9],[-16,6.35],[8,5.9],[30,5.9],[46,3.2],[26,3.6],[24,0.2],[12,-0.7],[-9,-0.7],[-12.5,-0.9],[-14.5,-0.2],[-16.5,3.8],[-30,4.9]], 0x7a6a4a, { speed:1.3, hat:'none', sched:'night' }); // GEOMETRY-2: đầu tây [-44,3.2] cũ chạy dọc làn W sau khi profile làn dời + bản [-44,1.2] cắt vào đĩa đảo mới (audit) — ra hẳn đầu trục -52, đi dải nam đảo z 5.9-6.35
+addWanderer([[-52,5.9],[-16,6.35],[8,5.9],[30,5.9],[46,3.2],[26,3.6],[24,0.2],[12,-0.7],[-9,-0.7],[-12.5,-0.9],[-14.5,-0.2],[-16.5,3.8],[-30,4.9]], 0x7a6a4a, { speed:1.3, hat:'none', sched:'night' }); // GEO2
 addWanderer([[-31.6,17.6],[-31.6,25.7],[-14,25.7],[-5.2,22.6],[-5.2,17.6],[-20.8,17.6]], 0x8c5040, { speed:1.0, hat:'nonla', sched:'day' });
 addWanderer([[26,25.7],[10,25.7],[-10,25.7],[-26,25.7],[-26,17.6],[10,17.6],[26,17.6]], 0x5f8c6a, { speed:0.95, hat:'beanie', sched:'night' });
 addWanderer([[6,-52],[16,-56],[22,-50],[12,-44],[2,-48]], 0xb08a5a, { speed:0.9, sched:'day' });
@@ -3188,7 +3243,7 @@ addWanderer([[-50,-58],[-30,-66],[0,-68],[30,-62],[48,-54],[20,-46],[-20,-44],[-
 addWanderer([[30,-46],[12,-42],[-8,-44],[-26,-50],[-12,-58],[16,-58]], 0x4a5a6a, { speed:1.15, hat:'none', sched:'night' });
 addWanderer([[-17,4.2],[-8,6.3],[4,6.35],[13,6.3],[8,6.4],[-6,6.35]], 0xc07a4a, { speed:0.95, hat:'beanie', sched:'day' });
 addWanderer([[-52,6.2],[-40,8.0],[-24,8.15],[-6,8.15],[10,8.2],[24,8.15],[38,8.15],[46,5.2],[30,6.35],[12,6.35],[-14,8.3],[-20,8.3],[-20,6.35],[-28,6.35],[-28,8.0],[-40,8.0]], 0x5a7a5a, { speed:1.25 });
-addWanderer([[-58,-3.2],[-54,-3.2],[-46,4.4],[-38,4.9],[-27,5.2],[-16.5,3.8],[-19.5,7.9],[-20,6.9],[-20,8.3],[-14,8.3],[12,8.3],[30,5.9],[48,5.6],[56,-3.2],[30,-3.4],[20,-3.3],[15,-3.3],[15,-0.7],[13,-0.7],[-9,-0.7],[-12.5,-0.9],[-14.5,-0.2],[-16.5,3.8],[-27,5.2],[-38,4.9],[-50,4.4],[-54,-3.2]], 0x9c8a6a, { speed:1.55, hat:'none' }); // GEOMETRY-2: khúc [-24,6.35] cũ chạy dọc làn W sau khi profile làn dời (audit, 5.2u) — cắt DỐC lên 7.9 rồi về 6.9 (bản vòng -25,7.6 vẫn song song làn)
+addWanderer([[-58,-3.2],[-54,-3.2],[-46,4.4],[-38,4.9],[-27,5.2],[-16.5,3.8],[-19.5,7.9],[-20,6.9],[-20,8.3],[-14,8.3],[12,8.3],[30,5.9],[48,5.6],[56,-3.2],[30,-3.4],[20,-3.3],[15,-3.3],[15,-0.7],[13,-0.7],[-9,-0.7],[-12.5,-0.9],[-14.5,-0.2],[-16.5,3.8],[-27,5.2],[-38,4.9],[-50,4.4],[-54,-3.2]], 0x9c8a6a, { speed:1.55, hat:'none' }); // GEO2
 addWanderer([[34,14],[36,6],[28,3.4],[12,4],[10,8.3],[26,8.3],[33,8.6],[34.3,10]], 0x7a5a7a, { speed:1.05, sched:'day' });
 addWanderer([[-59,4],[-59,-14],[-59,-26],[-54,-38],[-61,-48],[-56,-38],[-59,-26],[-59,-14]], 0xa85a6a, { speed:1.05, hat:'beanie', sched:'day' });
 addWanderer([[-46,-52],[-28,-46],[-6,-50],[8,-56],[26,-50],[38,-56],[16,-64],[-24,-62]], 0x6a8c7a, { speed:1.2 });
@@ -3226,7 +3281,7 @@ addWanderer([[-14,5],[8,6.5],[26,5.5],[8,4.2]], 0x7a9a4a, { speed:1.1, hat:'cap'
 addWanderer([[30,8.2],[4,9],[-16,7.8]], 0xc95d7e, { speed:1.0, sched:'night', hat:'beanie' });
 addWanderer([[-36,4.9],[-26,5.4],[-16.5,3.8],[0,3.6],[26,3.4],[22,0.2],[20,-0.7],[12,-0.7],[-9,-0.7],[-12.5,-0.9],[-14.5,-0.2],[-16.5,3.8],[-27,5.2]], 0x35507a, { speed:1.15, sched:'night' });
 addWanderer([[10.2,-3.5],[-2,-4.8],[-10.2,-3.5]], 0xe8862e, { speed:1.0, hat:'nonla' });
-const CROWD_SHIRTS = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x8d9287, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a]; // BẢNG 14 MÀU ÁO CỐ ĐỊNH (research/13): đỏ đô, cam đất, vàng mù tạt, kem bơ, xám rêu (research/22: đo ảnh 30), xanh thông, teal, dương, oải hương, hồng đào, hồng sen, nâu cà phê, nâu đất, navy ấm
+const CROWD_SHIRTS = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x8d9287, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a]; // bang mau ao co dinh (research/13)
 const CROWD_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26];
 const CROWD_HATS = ['beanie','beanie','cap','none','beanie','cap','nonla'];
 function pickA(a){ return a[Math.floor(Math.random() * a.length)]; }
@@ -3912,7 +3967,7 @@ const ROUTE_RING_OUT = buildRoute(ringPts(14.2, 12.9, 16.2), false); // V5.2: cu
 const ROUTE_RING_IN = buildRoute(ringPts(12.7, 11.9, 0), false);
 const ROUTE_ROAD_E = buildRoute((() => { const p = []; for(let x = -188; x <= 86; x += 4) p.push([x, laneZE(x)]); return p; })(), false); // GEOMETRY-2: kéo tới bùng binh đầu chợ
 const ROUTE_ROAD_W = buildRoute((() => { const p = []; for(let x = 86; x >= -188; x -= 4) p.push([x, laneZW(x)]); return p; })(), false); // GEOMETRY-2: kéo tới bùng binh đầu chợ
-const ROUTE_HILL = buildRoute([[54,12.9],[20,12.9],[-16,12.9],[-45.5,12.9],[-70,13.5],[-100,13.8],[-126,14.2],[-160,13.9],[-186,12.5],[-190,9.2],[-189,4.5],[-182,6.5],[-160,7.0],[-126,7.2],[-100,7.0],[-70,6.8],[-45.5,0.9],[-40,1.1],[-34,3.6],[-31,5.6],[-30,6.1],[-17,3.4],[-13.5,2.6],[-9,0.2],[2,0.2],[16,0.2],[30,0.2],[54,0.2]], true); // GEOMETRY-2: vòng tây ôm bùng binh ĐẦU CHỢ (-196,2) thay vòng cổng cũ; điểm giao HILL×RING nam đảo -24,6.1 -> -30,6.1 theo đảo mới // V5.5: thêm vòng tây tới cổng Tăng Bạt Hổ (đi z 13.5..14.2, về z 6.8..7.2) — harness giao thông kiểm lại // R-10: chân bắc 12.9 = hành lang trong nhà lồng (giữa hàng cột 12.2 và lưng quầy lưới 13.85 sau khi hàng quầy bắc sảnh dời lên z 14.55 ở V5.4), kèm bỏ hàng xe đậu 11.75. V5.4: chân tây x -45.5 né thân sạp sữa tươi (bản -48.5 xuyên sạp); chân về phía đông vào DẢI GIỮA đường z 0.2 (giữa làn E -1.5 và làn W 1.9, cách mỗi làn 1.7 — bản z 1.2..1.55 đè làn W sau khi laneZW hạ gốc 4.1->1.9); chân tây đi hành lang giữa rồi mới vòng lên hành lang nam đảo
+const ROUTE_HILL = buildRoute([[54,12.9],[20,12.9],[-16,12.9],[-45.5,12.9],[-70,13.5],[-100,13.8],[-126,14.2],[-160,13.9],[-186,12.5],[-190,9.2],[-189,4.5],[-182,6.5],[-160,7.0],[-126,7.2],[-100,7.0],[-70,6.8],[-45.5,0.9],[-40,1.1],[-34,3.6],[-31,5.6],[-30,6.1],[-17,3.4],[-13.5,2.6],[-9,0.2],[2,0.2],[16,0.2],[30,0.2],[54,0.2]], true); // GEO2: vong tay om bung binh dau cho
 const TRAFFIC = [];
 function spinWheels(v, dt, spd){ for(const w of v.wheels) if(w) w.rotation.x += spd * dt / v.wr; }
 function steerTo(v, tx, tz, speed, dt){
@@ -3962,7 +4017,7 @@ addRouteVehicle(ROUTE_HILL, { speed:7.0, u: ROUTE_HILL.L * 0.45 });
 addRouteVehicle(ROUTE_HILL, { speed:6.2, u: ROUTE_HILL.L * 0.75 });
 // 2 xe TẤP LỀ MUA HÀNG (chu trình khép kín, research/19 mục 2.4) — tổng 14 xe
 addRouteVehicle(ROUTE_ROAD_E, { speed:7.2, u:55, pull:{ stallId:'sua', trigX:12, park:[19.6,4.4], path:[[16,2.2],[19.6,4.4]] } });
-addRouteVehicle(ROUTE_ROAD_E, { speed:7.4, u:150, pull:{ stallId:'khoai', trigX:-44, park:[-29,8.4], path:[[-40,0.2],[-34,4.8],[-30.5,7.0],[-29,8.4]] } }); // V5.5: pull-over chuyển banhtrang -> khoai. GEOMETRY-2: điểm đỗ cũ (-33.2,4.5) bị làn E mới phủ (đỉnh laneZE 5.55 tại x -33, d 1.03 — harness T8 bắt) — dời vào dải đỗ giữa làn W (7.15) và mặt sạp (8.9) tại (-29,8.4), đường tấp vòng nam đảo ngoài đĩa (min d 11.0)
+addRouteVehicle(ROUTE_ROAD_E, { speed:7.4, u:150, pull:{ stallId:'khoai', trigX:-44, park:[-29,8.4], path:[[-40,0.2],[-34,4.8],[-30.5,7.0],[-29,8.4]] } }); // V5.5+GEO2: pull-over khoai
 function slowCapFor(v, pos){ // SLOW_ZONES của harness tuyến B (19b mục 5) + nút nhường giao tuyến nam đảo (R-11)
   let cap = Infinity;
   if(v.rt === ROUTE_ROAD_E || v.rt === ROUTE_ROAD_W){
@@ -6642,7 +6697,7 @@ const AW_NODES = [
 ];
 const AW_EDGES = [];
 for(let i = 0; i < 15; i++){ if(i === 7) continue; AW_EDGES.push([i, i + 1]); } // LAYOUT-FIX-1: bo mat xich 7->8 (chan thang da doi sang tay — canh thang 7-8 se cat qua dia dao); chan thang noi qua [7,19] + [8,48],[48,2]
-AW_EDGES.push([7,16],[16,17],[17,18],[7,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46],[8,48],[48,2]); // GEOMETRY-2 + V6: chuỗi trục từ bùng binh đầu chợ (47->46->45..39); LAYOUT-FIX-1: +[8,48],[48,2] noi chan thang tay ve truc
+AW_EDGES.push([7,16],[16,17],[17,18],[7,19],[19,20],[20,21],[14,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29],[10,30],[30,31],[11,32],[32,33],[13,34],[34,35],[36,0],[37,36],[38,37],[39,38],[27,41],[41,40],[42,39],[43,42],[44,43],[45,44],[46,45],[47,46],[8,48],[48,2]); // GEO2+V6: chuoi truc bung binh
 const AW_ADJ = AW_NODES.map(() => []);
 for(const e of AW_EDGES){ AW_ADJ[e[0]].push(e[1]); AW_ADJ[e[1]].push(e[0]); }
 function awNearest(x, z){ let bi = 0, bd = 1e18; for(let i = 0; i < AW_NODES.length; i++){ const d = Math.hypot(AW_NODES[i][0] - x, AW_NODES[i][1] - z); if(d < bd){ bd = d; bi = i; } } return bi; }
@@ -7206,7 +7261,7 @@ for(const s of stalls) npcZoneOf(s.x, s.z);
   console.log('[V4.7] Số người theo khu:', window.NPC_STATS); }
 
 const keys = {};
-let camYaw = new URLSearchParams(location.search).get('at') ? -playerState.face : -Math.PI / 2, camPitch = 0.38; // V5.5-POLISH: pitch 0.8 (V5.4) -> 0.55 -> 0.38 (~22°): render doi chieu cho thay o 0.55 mat nhua chiem ~70% khung, vista nen thanh dai mong phia tren; 0.38 ha camera xuong 11.73, khung mo dau doc truc thanh 'buu thiep' (cong nang cao o mep tren, tuong + mat tien cho cuoi duong)
+let camYaw = new URLSearchParams(location.search).get('at') ? -playerState.face : -Math.PI / 2, camPitch = 0.38; // V5.5-POLISH: pitch 0.38
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(e.code === 'KeyE'){ autoWalk.active = false; interact(); } // V4.7: thao tác khác hủy tự đi
