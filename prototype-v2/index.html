@@ -1536,20 +1536,35 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   box(144, 0.06, 61, 0x5f8547, -288, 5.45, 5.5, worldGroup, false);              // nen co them bo bac (x -360..-216, z -25..36) — 0x5f8547 duoc REALISM-1 phu TEX_GRASS
   // --- Lat duong dao + loi noi: canvas o 2u + o accent #b98a7a thua (do PIL anh 03); bake mau vao canvas nhu WATER-1 ---
   const promC = document.createElement('canvas'); promC.width = promC.height = 256;
-  const pg = promC.getContext('2d'); pg.fillStyle = '#dde2e2'; pg.fillRect(0, 0, 256, 256);
+  const pg = promC.getContext('2d'); pg.fillStyle = '#a9aba8'; pg.fillRect(0, 0, 256, 256); // XH-4C: nen lat #dde2e2 (gan trang) -> #a9aba8 do tu video that (research/28)
+// XH-4C+: PHA PHANG LAT — moi o lech tong theo hash o + theo mang 2 o (anh 03: o lat lech tong ro kieu ban co mang, ±10%)
+for(let cy2 = 0; cy2 < 4; cy2++) for(let cx2 = 0; cx2 < 4; cx2++){
+  const hv = Math.sin(cx2 * 127.1 + cy2 * 311.7) * 43758.5453, hf = hv - Math.floor(hv);
+  const pv = Math.sin((cx2 >> 1) * 74.7 + cy2 * 157.3) * 24634.6345, pf = pv - Math.floor(pv);
+  const dl = (hf - 0.5) * 0.13 + (pf - 0.5) * 0.10;
+  pg.fillStyle = dl > 0 ? 'rgba(255,255,252,' + dl.toFixed(3) + ')' : 'rgba(52,52,50,' + (-dl).toFixed(3) + ')';
+  pg.fillRect(cx2 * 64, cy2 * 64, 64, 64);
+}
   for(let pi = 0; pi < 700; pi++){
     const px = Math.abs((Math.sin(pi * 12.9) * 43758.5) % 1) * 256, py = Math.abs((Math.sin(pi * 78.2) * 23741.3) % 1) * 256;
     pg.fillStyle = pi % 2 ? 'rgba(60,70,80,0.05)' : 'rgba(255,255,255,0.06)'; pg.fillRect(px, py, 2, 2);
   }
-  for(const ac of [[1,0],[3,2],[0,3],[2,1]]){ pg.fillStyle = 'rgba(185,138,122,0.85)'; pg.fillRect(ac[0] * 64 + 2, ac[1] * 64 + 2, 60, 60); }
-  pg.strokeStyle = 'rgba(88,96,102,0.55)'; pg.lineWidth = 2;
+  for(const ac of [[1,0]]){ pg.fillStyle = 'rgba(185,138,122,0.55)'; pg.fillRect(ac[0] * 64 + 2, ac[1] * 64 + 2, 60, 60); } // XH-4C: accent hong 4/16 o deu nhip -> 1/16 + alpha 0.55 (video that: rat thua; research/28)
+  pg.strokeStyle = 'rgba(72,76,80,0.55)'; pg.lineWidth = 2; // XH-4C: mach gach sam hon theo nen moi
   for(let p = 0; p <= 256; p += 64){ pg.beginPath(); pg.moveTo(p, 0); pg.lineTo(p, 256); pg.stroke(); pg.beginPath(); pg.moveTo(0, p); pg.lineTo(256, p); pg.stroke(); }
   const promTex = new THREE.CanvasTexture(promC); promTex.wrapS = promTex.wrapT = THREE.RepeatWrapping; promTex.colorSpace = THREE.SRGBColorSpace; promTex.repeat.set(36, 3); // XH-3R: o gach 1u (XH-1: repeat 18x1 -> o 2u)
   const _xhProm = box(144, 0.04, 12, 0xdde2e2, -288, 5.47, 30, worldGroup, false); _xhProm.material = new THREE.MeshStandardMaterial({ map: promTex, roughness: 0.92 }); // XH-3R: mat duong dao z 24..36 RONG 12u (XH-1: 8u z 28..36) — bang ti le muc a: tiet dien di bo hoa 6,6 H, 12 o gach ngang nhu anh 03
-  const pathTex = promTex.clone(); pathTex.needsUpdate = true; pathTex.repeat.set(0.75, 4);
-  const _xhPath = box(6, 0.05, 31.6, 0xdde2e2, -219, 5.515, 17, worldGroup, false); _xhPath.rotation.y = Math.atan2(-26, 18); _xhPath.material = new THREE.MeshStandardMaterial({ map: pathTex, roughness: 0.92 }); // loi noi lat da (-206,8)->(-232,26) §2
+  // XH-4C: loi noi dung rieng texture DA PHIEN TO ONG sam (video that v1 f054: loi noi doan dau ho/cong vien lat da phien #5f574f, khac han lat sang duong dao — research/28 muc 5)
+  const slateC = document.createElement('canvas'); slateC.width = slateC.height = 256;
+  const slg = slateC.getContext('2d'); slg.fillStyle = '#5f574f'; slg.fillRect(0, 0, 256, 256);
+  for(let sy = 0; sy < 4; sy++) for(let sx = 0; sx < 2; sx++){ slg.fillStyle = (sx + sy) % 2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)'; slg.fillRect(sx * 128 + 3, sy * 64 + 3, 122, 58); }
+  for(let i = 0; i < 500; i++){ const sxx = (Math.sin(i * 91.7) * 0.5 + 0.5) * 256, syy = (Math.sin(i * 47.3 + 2) * 0.5 + 0.5) * 256; slg.fillStyle = i % 5 ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'; slg.fillRect(sxx, syy, 3, 3); }
+  slg.strokeStyle = 'rgba(52,45,39,0.8)'; slg.lineWidth = 3; slg.strokeRect(0, 0, 256, 256);
+  slg.beginPath(); slg.moveTo(128, 0); slg.lineTo(128, 256); slg.moveTo(0, 64); slg.lineTo(256, 64); slg.moveTo(0, 128); slg.lineTo(256, 128); slg.moveTo(0, 192); slg.lineTo(256, 192); slg.stroke();
+  const pathTex = new THREE.CanvasTexture(slateC); pathTex.wrapS = pathTex.wrapT = THREE.RepeatWrapping; pathTex.colorSpace = THREE.SRGBColorSpace; pathTex.repeat.set(1.5, 8);
+  const _xhPath = box(6, 0.05, 31.6, 0x5f574f, -219, 5.515, 17, worldGroup, false); _xhPath.rotation.y = Math.atan2(-26, 18); _xhPath.material = new THREE.MeshStandardMaterial({ map: pathTex, roughness: 0.95 }); // loi noi lat da (-206,8)->(-232,26) §2
   // --- Day ho sau + ke da (texture khoi da canvas, idiom makeGroundTex + clone repeat nhu stoneMat) ---
-  const _xhBasin = new THREE.Mesh(new THREE.PlaneGeometry(336, 160), mat(0x14425c)); // XH-1.5: day ho 0x14425c @4.82 MO RONG 336x160 (XH-1: 128x80) — nhu dia day bon WATER-1; nuoc bob min 4.88 nen khong z-fight
+  const _xhBasin = new THREE.Mesh(new THREE.PlaneGeometry(336, 160), mat(0x4c5a5e)); // XH-1.5: day ho @4.82 MO RONG 336x160 (XH-1: 128x80); XH-4C: mau day 0x14425c -> 0x4c5a5e (xam xanh do tu video that, research/28) — nuoc bob min 4.88 nen khong z-fight
   _xhBasin.rotation.x = -Math.PI/2; _xhBasin.position.set(-392, 4.82, 116); worldGroup.add(_xhBasin);
   const keTex = makeGroundTex(g2 => {
     g2.fillStyle = '#7e776c'; g2.fillRect(0, 0, 256, 256);
@@ -1563,24 +1578,27 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
     for(let r = 0; r < 4; r++) for(let cx = 0; cx < 3; cx++){ const vx = cx * 128 + (r % 2) * 64; g2.beginPath(); g2.moveTo(vx, r * 64); g2.lineTo(vx, r * 64 + 64); g2.stroke(); }
   });
   const keMat = rx => { const t = keTex.clone(); t.needsUpdate = true; t.repeat.set(rx, 1); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 }); };
-  const _keN1a = box(32.8, 1.14, 0.7, 0x7e776c, -335.6, 4.93, 36, worldGroup, false); _keN1a.material = keMat(9);   // XH-3S: ke bac doan -352..-319,2 (XH-3R: 1 doan -352..-251,6) — chua khe cau Y tai -318
-  const _keN1b = box(33.6, 1.14, 0.7, 0x7e776c, -300.0, 4.93, 36, worldGroup, false); _keN1b.material = keMat(9);   // XH-3S: doan -316,8..-283,2
-  const _keN1c = box(14.8, 1.14, 0.7, 0x7e776c, -273.4, 4.93, 36, worldGroup, false); _keN1c.material = keMat(4);   // XH-3S: doan -280,8..-266 — chua khe cau Y tai -282 + KHE BEN §7 x -266..-252 (cau ben o khoi XH-3S)
-  const _keN2 = box(24.4, 1.14, 0.7, 0x7e776c, -236.2, 4.93, 36, worldGroup, false); _keN2.material = keMat(6);     // XH-3R: ke bac doan dong x -248.4..-224, dinh 5.50 nhu doan tay
-  box(32.8, 0.09, 0.9, 0xd8d2c2, -335.6, 5.6, 36, worldGroup, false);                                             // bo via sang tren ke bac (idiom vanh bon WATER-1 0xd8d2c2) — XH-3S: tach 3 doan theo ke
-  box(33.6, 0.09, 0.9, 0xd8d2c2, -300.0, 5.6, 36, worldGroup, false);
-  box(14.8, 0.09, 0.9, 0xd8d2c2, -273.4, 5.6, 36, worldGroup, false);
-  box(24.4, 0.09, 0.9, 0xd8d2c2, -236.2, 5.6, 36, worldGroup, false);
+  // XH-4C (research/28): doan ke nay ha thanh CO DOC — xem _xhSlopeN ngay duoi   // XH-3S: ke bac doan -352..-319,2 (XH-3R: 1 doan -352..-251,6) — chua khe cau Y tai -318
+  // XH-4C: ha thanh co doc (slope)   // XH-3S: doan -316,8..-283,2
+  // XH-4C: ha thanh co doc (slope)   // XH-3S: doan -280,8..-266 — chua khe cau Y tai -282 + KHE BEN §7 x -266..-252 (cau ben o khoi XH-3S)
+  // XH-4C (research/28 muc 4.1/7.1): 3 doan ke TAY+TRUNG bo bac ha thanh CO DOC THAP cham nuoc (video that: mep nuoc phan lon la co doc, ke da chi o doan dong/gan ben) — slope box nghieng 0,23 rad: canh bac z~35,7 flush them lat 5,48, canh nam z~38,7 cham nuoc 4,80; solid chan nguoi o z36 GIU NGUYEN (vo hinh)
+  const _xhSlopeN = (len, cx) => { const s = box(len, 0.1, 3.0, 0x5f8547, cx, 5.14, 37.2, worldGroup, false); s.rotation.x = 0.23; return s; };
+  _xhSlopeN(32.8, -335.6); _xhSlopeN(33.6, -300.0); _xhSlopeN(14.8, -273.4);
+  const _keN2 = box(24.4, 1.14, 0.7, 0x7e776c, -236.2, 4.93, 36, worldGroup, false); _keN2.material = keMat(6); // doan DONG giu ke da (gan ben + cau Y nhu frame that)     // XH-3R: ke bac doan dong x -248.4..-224, dinh 5.50 nhu doan tay
+  // XH-4C: bo via doan nay GO (da ha thanh co doc)                                             // bo via sang tren ke bac (idiom vanh bon WATER-1 0xd8d2c2) — XH-3S: tach 3 doan theo ke
+  // XH-4C: bo via go
+  // XH-4C: bo via go
+  box(24.4, 0.09, 0.9, 0xb9bcba, -236.2, 5.6, 36, worldGroup, false); // XH-4C: bo via chi con doan DONG khop ke da; mau 0xd8d2c2 -> 0xb9bcba xam do video
   const _keS = box(336, 1.15, 0.7, 0x7e776c, -392, 4.95, 196, worldGroup, false); _keS.material = keMat(84);       // XH-1.5: tuong chan chan taluy BO NAM XA tai z 196 (XH-1 o z 116 — nay la giua mat nuoc, da go)
-  const _keW1 = box(0.7, 1.15, 24, 0x7e776c, -560, 4.95, 48, worldGroup, false); _keW1.material = keMat(6);        // XH-1.5: mep nuoc tay doan bac z 36..60 (doan giua z 60..130 la dap Ong Dao)
-  const _keW2 = box(0.7, 1.15, 66, 0x7e776c, -560, 4.95, 163, worldGroup, false); _keW2.material = keMat(17);      // XH-1.5: mep nuoc tay doan nam z 130..196
+  const _keW1 = box(3.0, 0.1, 24, 0x5f8547, -558.8, 5.14, 48, worldGroup, false); _keW1.rotation.z = -0.23; // XH-4C: bo tay ha thanh CO DOC cham nuoc (canh dong xuong nuoc), bo tuong ke        // XH-1.5: mep nuoc tay doan bac z 36..60 (doan giua z 60..130 la dap Ong Dao)
+  const _keW2 = box(3.0, 0.1, 66, 0x5f8547, -558.8, 5.14, 163, worldGroup, false); _keW2.rotation.z = -0.23; // XH-4C: co doc nhu _keW1      // XH-1.5: mep nuoc tay doan nam z 130..196
   const _keE = box(0.7, 1.15, 160, 0x7e776c, -224, 4.95, 116, worldGroup, false); _keE.material = keMat(40);       // XH-1.5: mep nuoc dong keo dai z 36..196 (XH-1: 80 tai z 76)
   // --- Dao Thuy Ta: ven ke da + vong duong lat quanh dao (S1; nha + cay o XH-2) ---
   cyl(15, 15, 0.06, 0x5f8547, -250, 5.45, 58, worldGroup, 28);                   // dia dao Thuy Ta R15 (XH-0)
   const _xhSkirt = cyl(15.7, 16.6, 1.2, 0x7e776c, -250, 4.84, 58, worldGroup, 28); _xhSkirt.material = keMat(24);  // ven ke da quanh dao: nap tru o 5.44 — DUOI dia co 5.48/vong lat 5.5 (nap o 5.52 se che kin mat dao, bat bang render xh1 top-down)
-  const _xhRing = new THREE.Mesh(new THREE.RingGeometry(9.8, 14.3, 40), new THREE.MeshStandardMaterial({ color: 0xdde2e2, roughness: 0.95 })); // XH-3R: vong duong rong 4.5 sat vanh ke (XH-1: 9.0-13.8)
+  const _xhRing = new THREE.Mesh(new THREE.RingGeometry(9.8, 14.3, 40), new THREE.MeshStandardMaterial({ color: 0xa9aba8, roughness: 0.95 })); // XH-4C: 0xdde2e2 -> 0xa9aba8 khop lat moi; XH-3R: vong duong rong 4.5 sat vanh ke (XH-1: 9.0-13.8)
   _xhRing.rotation.x = -Math.PI/2; _xhRing.position.set(-250, 5.5, 58); _xhRing.receiveShadow = true; worldGroup.add(_xhRing); // vong duong lat quanh dao — tam co de nha Thuy Ta (XH-2)
-  box(3.8, 0.08, 7, 0xdde2e2, -250, 5.30, 39.5, worldGroup, false);                // dai cau bo -> dao (XH-0) — XH-2: hạ 5.46 -> 5.30 làm nền dưới cầu GLB thật (tránh z-fight mặt deck 5.50); XH-3R: rong 3 -> 3.8 theo deck 3.2
+  box(3.8, 0.08, 7, 0xa9aba8, -250, 5.30, 39.5, worldGroup, false); // XH-4C: mau khop lat moi                // dai cau bo -> dao (XH-0) — XH-2: hạ 5.46 -> 5.30 làm nền dưới cầu GLB thật (tránh z-fight mặt deck 5.50); XH-3R: rong 3 -> 3.8 theo deck 3.2
   box(12, 0.06, 160, 0x5f8547, -566, 5.45, 116, worldGroup, false);              // XH-1.5: dai nen bo tay sau dap (x -572..-560, z 36..196) — nen canh don gian (XH-1: dai 8x80 tai -356)
   box(17, 0.06, 80, 0x5f8547, -215.5, 5.45, 76, worldGroup, false);              // bo dong XH-1 noi rong x -224..-207 — cham chan khoi suon nam da thu ve -207 (XH-0: dai 8u de len chan khoi cu o -220)
   const _xhTal = box(344, 0.08, 28.4, 0x5f8547, -390, 7.22, 210, worldGroup, false); _xhTal.rotation.x = -0.1244; // XH-1.5: taluy BO NAM XA doc 5.5 -> 9 (z 196..224, x -562..-218) — XH-1 o z 116..132 nay nam giua nuoc, da thay
@@ -1600,7 +1618,7 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   const _umb = (x, z, s, near) => { const g = ASSETS.lake.getObjectByName('PineUmbrella').clone(true);
     g.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
     g.position.set(x, groundH(x, z) - 0.05, z); g.scale.setScalar(s); g.rotation.y = (x * 7 + z * 13) % 3.14; worldGroup.add(g);
-    if(near){ cyl(0.20 * s, 0.23 * s, 0.8, 0xe8e2d4, x, groundH(x, z) + 0.4, z, worldGroup, 8); solid(x, z, 0.38, 0.38); } };
+    if(near){ cyl(0.20 * s, 0.23 * s, 0.8, 0xcfcfc8, x, groundH(x, z) + 0.4, z, worldGroup, 8); solid(x, z, 0.38, 0.38); } }; // XH-4C: voi goc 0xe8e2d4 qua trang -> 0xcfcfc8 trang nga xam do video (research/28)
   _umb(-545, 209, 1.80); _umb(-528, 217, 1.65); _umb(-512, 206, 1.85); _umb(-497, 215, 1.60);
   _umb(-481, 208, 1.75); _umb(-466, 218, 1.82); _umb(-450, 207, 1.68); _umb(-435, 214, 1.78);
   _umb(-419, 206, 1.63); _umb(-404, 216, 1.81); _umb(-388, 209, 1.70); _umb(-373, 217, 1.58);
@@ -1610,7 +1628,9 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   _umb(-212, 100, 1.70); _umb(-213, 48, 1.70);                                   // thong dai bo dong — doi sang tan o nhu bo nam
   // XH-3R: HANG THONG TAN O BO BAC — mep bac duong dao z 25.2 (anh 03/18: thong trong sat mep duong, tan trum xuong duong dao);
   // scale ~1.7 -> cao ~11.7u (6,4 H), tan O~7.7 (4,2 H); goc quet voi trang 0.8u (chi tiet that anh 25) + solid than.
-  for(const [px, ps] of [[-344, 1.74], [-330, 1.66], [-316, 1.78], [-302, 1.70], [-288, 1.76], [-274, 1.64], [-260, 1.79], [-246, 1.68], [-220, 1.72]])
+  // XH-4C+ (research/29): PHA HANG DEU — chi giu 5 thong (-344/-330/-302/-274/-246); bo -316/-288/-260/-220:
+  // -316/-260 thay bang LA RONG THANG o khoi XH-4C, -288 thanh khoang trong xen phuong tim, -220 mo goc nhin dau dong.
+  for(const [px, ps] of [[-344, 1.74], [-330, 1.66], [-302, 1.70], [-274, 1.64], [-246, 1.68]])
     _umb(px, 25.2, ps, true);
   for(const vil of [[-505, 228], [-430, 229], [-352, 228], [-272, 229]]){        // XH-1.5: 4 villa mo tren them nam xa (XH-1: 2 villa o z 135/136 — nay giua nuoc, da doi)
     box(9, 4.2, 6.5, 0xcfc4b2, vil[0], 11.0, vil[1], worldGroup, false);         // than villa
@@ -3666,17 +3686,38 @@ function tickWater(t){
   // dem emissive teal 0x1d4e5f x0.55 qua waterMats/applyDayNight). Khoi nay nam SAU khai bao WATER_FX/waterMats —
   // khoi dat XH-1 o ~1508 chay TRUOC nen khong dang ky duoc tai do (TDZ ReferenceError — luat man hinh den 08/11).
   const lkC = document.createElement('canvas'); lkC.width = lkC.height = 256;
-  const lg = lkC.getContext('2d'); lg.fillStyle = '#276a8a'; lg.fillRect(0, 0, 256, 256);
+  const lg = lkC.getContext('2d'); lg.fillStyle = '#8b979c'; lg.fillRect(0, 0, 256, 256); // XH-4C: bo teal bao hoa #276a8a (goc cam giac "be boi") -> XAM BAC #8b979c do tu video that (research/28: nuoc ngay #8f9595-#9ba1a5); mau theo gio do tick XH-4C nhan tint len ban ngay nay
+  // XH-4C+: PHA PHANG NUOC lop 1 — mang sang/toi lon mem (anh troi phan chieu khong deu, ±6% tong, van trong dai xam 28)
+  for(let bi = 0; bi < 14; bi++){
+    const bx = Math.abs((Math.sin(bi * 31.7) * 12345.6) % 1) * 256, by = Math.abs((Math.sin(bi * 17.3 + 2) * 9876.5) % 1) * 256, br = 34 + Math.abs((Math.sin(bi * 7.9) * 100) % 60);
+    const bg2 = lg.createRadialGradient(bx, by, 2, bx, by, br);
+    const lite = bi % 2 === 0;
+    bg2.addColorStop(0, lite ? 'rgba(196,206,208,0.10)' : 'rgba(96,110,114,0.10)'); bg2.addColorStop(1, 'rgba(0,0,0,0)');
+    lg.fillStyle = bg2; lg.fillRect(bx - br, by - br, br * 2, br * 2);
+  }
   for(let gi = 0; gi < 64; gi++){
     const gx = Math.abs((Math.sin(gi * 12.9) * 43758.5) % 1) * 256, gy = Math.abs((Math.sin(gi * 78.2) * 23741.3) % 1) * 256, gr = 6 + Math.abs((Math.sin(gi * 5.7) * 9876.5) % 1) * 16;
-    lg.strokeStyle = 'rgba(191,230,245,' + (0.30 + (gi % 5) * 0.10) + ')'; lg.lineWidth = 2 + (gi % 3);
+    lg.strokeStyle = 'rgba(207,216,218,' + (0.22 + (gi % 5) * 0.07) + ')'; lg.lineWidth = 2 + (gi % 3); // XH-4C: gon sang xam bac, alpha ha (video that: gon rat mo)
     lg.beginPath(); lg.arc(gx, gy, gr, gi * 1.7, gi * 1.7 + 1.1 + (gi % 4) * 0.5); lg.stroke();
   }
+  // XH-4C+: lop 2 — 96 gon NHO day hon (r 2-5, alpha thap) + 26 vet sang DAI ngang (anh phan chieu troi nhu anh 25/36) — tong 150+ vet, khong lap deu
+  for(let gi = 64; gi < 160; gi++){
+    const gx = Math.abs((Math.sin(gi * 26.3 + 7) * 31249.7) % 1) * 256, gy = Math.abs((Math.sin(gi * 41.9 + 3) * 17893.1) % 1) * 256, gr = 2 + Math.abs((Math.sin(gi * 3.7) * 10) % 3.5);
+    lg.strokeStyle = 'rgba(214,222,224,' + (0.10 + (gi % 4) * 0.045) + ')'; lg.lineWidth = 1;
+    lg.beginPath(); lg.arc(gx, gy, gr, gi * 2.3, gi * 2.3 + 1.4); lg.stroke();
+  }
+  for(let si = 0; si < 26; si++){
+    const sx = Math.abs((Math.sin(si * 53.1 + 5) * 22147.9) % 1) * 220, sy = Math.abs((Math.sin(si * 19.7 + 1) * 30123.4) % 1) * 256, sl = 18 + Math.abs((Math.sin(si * 9.3) * 100) % 42);
+    lg.strokeStyle = 'rgba(226,233,235,' + (0.07 + (si % 3) * 0.035) + ')'; lg.lineWidth = 1.5;
+    lg.beginPath(); lg.moveTo(sx, sy); lg.lineTo(sx + sl, sy + (si % 3 - 1)); lg.stroke();
+  }
   const lkTex = new THREE.CanvasTexture(lkC); lkTex.wrapS = lkTex.wrapT = THREE.RepeatWrapping; lkTex.repeat.set(63, 30); lkTex.colorSpace = THREE.SRGBColorSpace; // XH-1.5: repeat ti le dien tich moi (XH-1: 24,15) — tile van ~5.3u, gon cung co dai phun
-  const _xhWater = new THREE.Mesh(new THREE.PlaneGeometry(336, 160), new THREE.MeshStandardMaterial({ map: lkTex, roughness: 0.15, transparent: true, opacity: 0.93, emissive: 0x1d4e5f, emissiveIntensity: 0 }));
+  const _xhWater = new THREE.Mesh(new THREE.PlaneGeometry(336, 160), new THREE.MeshStandardMaterial({ map: lkTex, roughness: 0.38, roughnessMap: lkTex, transparent: true, opacity: 0.93, emissive: 0x4a5a86, emissiveIntensity: 0 })); // XH-4C: emissive dem 0x1d4e5f (teal) -> 0x4a5a86 CHAM (nuoc dem video that #434d66-#899bd3); applyDayNight van set 0.55 dem / 0 ngay cho ca waterMats. XH-4C+: roughnessMap = chinh canvas gon -> do nham thay doi theo gon (0,38 x 0,55..1,0) pha phang khi co nang/den chieu
   _xhWater.rotation.x = -Math.PI/2; _xhWater.position.set(-392, 4.9, 116); worldGroup.add(_xhWater); // XH-1.5: tam (-392, 4.9, 116), 336x160 (XH-1: (-288,4.9,76), 128x80)
   WATER_FX.surfs.push({ m: _xhWater, y: 4.9, tex: lkTex }); // tickWater: bob ±0.02 (min 4.88 > day ho 4.82) + troi offset gon cheo cham
-  waterMats.push(_xhWater.material); // dem -> emissive teal qua applyDayNight nhu bon dai phun
+  waterMats.push(_xhWater.material); // dem -> emissive qua applyDayNight nhu bon dai phun
+  window.__XH4C_LAKE_MAT = _xhWater.material; // XH-4C: tick cuoi file doi mau nuoc theo gio (tint nhan tren canvas ngay)
+  _xhWater.material.color.setRGB(0.26, 0.32, 0.50); // XH-4C: khoi tao DEM (game bat dau 19:00) — tick se cap nhat lien tuc
 }
 { // ================= V5.5: ĐÀI PHUN NƯỚC + KHU QUẦN ÁO + BÀN GHẾ HOA SỮA =================
   // Neo (research/21): sân trước chợ phía ĐÔNG bậc thang, đối diện quảng trường bậc cấp —
@@ -8787,6 +8828,209 @@ tickWater = function(t){
   // biển nhiệt độ: vẽ lại khi nhiệt nguyên đổi (kiểm tra 1 lần/giây)
   _xh3TempT += dt;
   if(_xh3TempT > 1){ _xh3TempT = 0; xh3DrawTemp(); }
+};
+
+// ================= XH-4C: PHOI MAU LAI + TIET DIEN BO BAC THEO VIDEO THAT (research/28) =================
+// Nuoc xam bac theo gio (tint tick o duoi), palette vung ho tram xuong, them DUONG NHUA + DAI TACTILE,
+// CAY LA RONG NGHIENG ra ho + HOA GIAY tim, dem Thuy Ta len den HONG MAGENTA. Khong doi groundH/save.
+{ // XH-4C-A: tint thong + than + lieu lake.glb (material dung chung moi clone nen doi 1 lan ap ca vung ho; chay SAU clampSat nen la lop mau cuoi)
+  const XH4C_TINT = { PineDark: 0x3a4f38, PineMid: 0x46604c, PineLight: 0x5a7263, Trunk: 0x6f655c, LeafGreen: 0x3d5231 };
+  const _xh4TintWalk = (root) => { if(!root) return; root.traverse(o => { if(!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; for(const m of ms){ const hx = XH4C_TINT[m.name]; if(hx !== undefined && m.color) m.color.setHex(hx); } }); };
+  _xh4TintWalk(ASSETS.lake.getObjectByName('PineUmbrella'));
+  _xh4TintWalk(ASSETS.lake.getObjectByName('Willow'));
+}
+{ // XH-4C-B: co VUNG HO -> OLIVE texture rieng (chi mesh mau 0x5f8547 co tam trong khung ho; vung cho dung material chung 0x5f8547 nen KHONG bi dung)
+  const lgC2 = document.createElement('canvas'); lgC2.width = lgC2.height = 256;
+  const gg2 = lgC2.getContext('2d'); gg2.fillStyle = '#66702f'; gg2.fillRect(0, 0, 256, 256);
+  // XH-4C+: mang co LON 3 tong xen ke (research/29: #55662c / #66702f / #6e6d29 — trong dai olive do 28)
+  for(let i = 0; i < 9; i++){ const bx = (Math.sin(i * 47.9) * 0.5 + 0.5) * 256, by = (Math.sin(i * 83.1 + 2) * 0.5 + 0.5) * 256, br = 44 + Math.abs(Math.sin(i * 5.3)) * 52; gg2.fillStyle = ['rgba(85,102,44,0.20)', 'rgba(110,109,41,0.18)', 'rgba(70,81,42,0.16)'][i % 3]; gg2.beginPath(); gg2.arc(bx, by, br, 0, 6.29); gg2.fill(); }
+  for(let i = 0; i < 24; i++){ const bx = (Math.sin(i * 37.7) * 0.5 + 0.5) * 256, by = (Math.sin(i * 91.3 + 1) * 0.5 + 0.5) * 256, br = 16 + Math.abs(Math.sin(i * 7.1)) * 30; gg2.fillStyle = 'rgba(70,81,42,0.20)'; gg2.beginPath(); gg2.arc(bx, by, br, 0, 6.29); gg2.fill(); }
+  for(let i = 0; i < 900; i++){ const sx2 = (Math.sin(i * 53.3) * 0.5 + 0.5) * 256, sy2 = (Math.sin(i * 29.7 + 4) * 0.5 + 0.5) * 256; gg2.fillStyle = i % 3 === 0 ? 'rgba(70,81,42,0.25)' : (i % 3 === 1 ? 'rgba(125,127,54,0.22)' : 'rgba(140,146,80,0.15)'); gg2.fillRect(sx2, sy2, 2, 2); }
+  const lgTexBase = new THREE.CanvasTexture(lgC2); lgTexBase.wrapS = lgTexBase.wrapT = THREE.RepeatWrapping; lgTexBase.colorSpace = THREE.SRGBColorSpace;
+  const _bb3 = new THREE.Box3(), _v3 = new THREE.Vector3();
+  worldGroup.traverse(o => {
+    if(!o.isMesh || !o.material || Array.isArray(o.material) || !o.material.color) return;
+    if(o.material.color.getHex() !== 0x5f8547) return;
+    o.getWorldPosition(_v3);
+    if(_v3.x < -580 || _v3.x > -200 || _v3.z < 20 || _v3.z > 240) return;
+    _bb3.setFromObject(o);
+    const t = lgTexBase.clone(); t.needsUpdate = true;
+    t.repeat.set(Math.max(1, Math.round((_bb3.max.x - _bb3.min.x) / 4)), Math.max(1, Math.round((_bb3.max.z - _bb3.min.z) / 4)));
+    o.material = new THREE.MeshStandardMaterial({ map: t, roughness: 1 });
+  });
+}
+{ // XH-4C-C: lop 4 tiet dien — DUONG NHUA song song (z 17,4..23,0, dinh 5,50 flush san) + DAI TACTILE toi chay doc tren mat lat (z 30,0)
+  // Traffic KHONG mo rong vao duong nay (rui ro pha test 26/26): duong tinh + vach ke nhu brief cho phep.
+  const rdC = document.createElement('canvas'); rdC.width = rdC.height = 256;
+  const rg4 = rdC.getContext('2d'); rg4.fillStyle = '#545c63'; rg4.fillRect(0, 0, 256, 256);
+  for(let i = 0; i < 1100; i++){ const ax = (Math.sin(i * 67.9) * 0.5 + 0.5) * 256, ay = (Math.sin(i * 41.3 + 3) * 0.5 + 0.5) * 256; rg4.fillStyle = i % 2 ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)'; rg4.fillRect(ax, ay, 2, 2); }
+  rg4.fillStyle = 'rgba(28,32,36,0.16)'; rg4.fillRect(0, 56, 256, 26); rg4.fillRect(0, 174, 256, 26); // 2 vet banh xe (doi xung nen flip V van dung)
+  rg4.fillStyle = 'rgba(235,233,220,0.20)'; rg4.fillRect(0, 5, 256, 4); rg4.fillRect(0, 247, 256, 4);  // vach mep
+  rg4.fillStyle = 'rgba(235,233,220,0.55)'; rg4.fillRect(14, 124, 104, 7);                              // vach dut giua (moi o 4u: dut 1,6u)
+  const rdTex = new THREE.CanvasTexture(rdC); rdTex.wrapS = rdTex.wrapT = THREE.RepeatWrapping; rdTex.colorSpace = THREE.SRGBColorSpace; rdTex.repeat.set(36, 1);
+  const _xhRoad = box(144, 0.05, 5.6, 0x545c63, -288, 5.475, 20.2, worldGroup, false);
+  _xhRoad.material = new THREE.MeshStandardMaterial({ map: rdTex, roughness: 0.97 });
+  const tcC = document.createElement('canvas'); tcC.width = 128; tcC.height = 32;
+  const tg = tcC.getContext('2d'); tg.fillStyle = '#8f9296'; tg.fillRect(0, 0, 128, 32);
+  tg.fillStyle = 'rgba(58,61,65,0.6)'; tg.fillRect(0, 2, 128, 3.5); tg.fillRect(0, 8.5, 128, 3.5); tg.fillRect(0, 15, 128, 3.5); tg.fillRect(0, 21.5, 128, 3.5); tg.fillRect(0, 28, 128, 3); // XH-4C+: 5 vach doc sam nhu anh 03/25 (dai tactile doc rat sam, nhieu vach song song)
+  tg.fillStyle = 'rgba(255,255,255,0.10)'; tg.fillRect(0, 0, 128, 2);
+  const tcTex = new THREE.CanvasTexture(tcC); tcTex.wrapS = tcTex.wrapT = THREE.RepeatWrapping; tcTex.colorSpace = THREE.SRGBColorSpace; tcTex.repeat.set(72, 1);
+  const _xhTact = box(144, 0.012, 0.45, 0x8f9296, -288, 5.5, 30.0, worldGroup, false);
+  _xhTact.material = new THREE.MeshStandardMaterial({ map: tcTex, roughness: 0.9 });
+}
+// XH-4C-D: CAY LA RONG NGHIENG 25-45 DO ra mat ho (dau an manh nhat cua video that, research/28 muc 4.3) + HOA GIAY tim lon ven duong
+function xh4cTube(parent, ax, ay, az, bx, by, bz, r, material){
+  const a = new THREE.Vector3(ax, ay, az), b = new THREE.Vector3(bx, by, bz);
+  const d = new THREE.Vector3().subVectors(b, a), len = d.length();
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, len, 7), material);
+  m.position.copy(a).addScaledVector(d, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+  m.castShadow = true; parent.add(m); return m;
+}
+function xh4cLeanTree(x, z, baseY, dx, dz, ang, s){
+  const g = new THREE.Group(); g.position.set(x, baseY, z); worldGroup.add(g);
+  const trunkM = mat(0x6f655c, 0.95), leafM = mat(0x2f3d2b, 1.0), washM = mat(0xcfcfc8, 0.95);
+  const ux = dx * Math.sin(ang), uy = Math.cos(ang), uz = dz * Math.sin(ang);
+  const p1x = ux * 2.1 * s, p1y = uy * 2.1 * s, p1z = uz * 2.1 * s;
+  const a2 = ang * 0.78, vx = dx * Math.sin(a2), vy = Math.cos(a2), vz = dz * Math.sin(a2);
+  const p2x = p1x + vx * 2.3 * s, p2y = p1y + vy * 2.3 * s, p2z = p1z + vz * 2.3 * s;
+  xh4cTube(g, 0, -0.2, 0, p1x, p1y, p1z, 0.17 * s, trunkM);
+  xh4cTube(g, 0, -0.2, 0, ux * 1.0 * s, uy * 1.0 * s, uz * 1.0 * s, 0.19 * s, washM); // voi goc ~1,0u doc than nghieng (do video: voi cao 1-1,2m)
+  xh4cTube(g, p1x, p1y, p1z, p2x, p2y, p2z, 0.115 * s, trunkM);
+  const blobs = [[0, 0.55, 0, 2.0], [-1.25, 0.1, -0.35, 1.5], [1.25, 0.15, 0.3, 1.55], [-0.4, 0.25, 1.15, 1.4], [0.5, 0.3, 1.05, 1.45], [0.05, -0.3, 0.65, 1.25]];
+  for(const bo of blobs){
+    const b = new THREE.Mesh(new THREE.SphereGeometry(bo[3] * s, 10, 8), leafM);
+    b.position.set(p2x + (bo[0] + dx * 0.5) * s, p2y + bo[1] * s, p2z + (bo[2] + dz * 0.5) * s);
+    b.scale.y = 0.58; b.castShadow = true; g.add(b);
+  }
+  if(dx === 0) solid(x, z, 0.35, 0.35); // cay bo bac co solid; cay bo tay la nen xa ngoai loi di
+}
+// XH-4C+: thong TAN O clone truc tiep (dung cho thong NGHIENG + hang hau canh + dao) — tint XH-4C-A da ap tren material goc nen clone ke thua
+function xh4cPine(x, z, baseY, s, tiltX, tiltZ, solidIt){
+  const g = ASSETS.lake.getObjectByName('PineUmbrella').clone(true);
+  g.traverse(o => { if(o.isMesh) o.castShadow = true; });
+  g.position.set(x, baseY, z);
+  g.rotation.set(tiltX, (x * 7 + z * 13) % 3.14, tiltZ);
+  g.scale.setScalar(s);
+  worldGroup.add(g);
+  if(Math.abs(tiltX) > 0.05 || Math.abs(tiltZ) > 0.05){ // voi goc chay doc huong nghieng cua than
+    const mx = Math.max(Math.abs(tiltX), Math.abs(tiltZ));
+    xh4cTube(worldGroup, x, baseY - 0.12, z, x - Math.sin(tiltZ) * 0.95, baseY + 0.95 * Math.cos(mx), z + Math.sin(tiltX) * 0.95, 0.20 * s, mat(0xcfcfc8, 0.95));
+  } else if(solidIt){
+    cyl(0.20 * s, 0.23 * s, 0.8, 0xcfcfc8, x, baseY + 0.4, z, worldGroup, 8);
+  }
+  if(solidIt) solid(x, z, 0.38, 0.38);
+  return g;
+}
+// XH-4C+ TRONG THEO BANG PHAN PHOI research/29 — HANG MEP NUOC BO BAC (z 35,3): nhip CUM 2-3 cay cach 6-7u, giua cum trong 14-24u;
+// ~40% la THONG NGHIENG (anh 25), con lai la rong nghieng; trong chu dich: cum ghe -316..-302, ben -266..-252, cau dao -250±3, cau Y -282
+xh4cLeanTree(-349, 35.3, 5.42, 0, 1, 0.62, 1.05);
+xh4cLeanTree(-343, 35.3, 5.42, 0, 1, 0.55, 0.95);
+xh4cPine(-335, 35.3, 5.30, 1.55, 0.50, 0, true);
+xh4cLeanTree(-324, 35.3, 5.42, 0, 1, 0.52, 1.10);
+xh4cLeanTree(-298, 35.3, 5.42, 0, 1, 0.68, 0.98);
+xh4cLeanTree(-291, 35.3, 5.42, 0, 1, 0.50, 1.08);
+xh4cPine(-272, 35.3, 5.30, 1.48, 0.55, 0, true);
+xh4cLeanTree(-240, 35.3, 5.42, 0, 1, 0.60, 1.00);
+xh4cPine(-233, 35.3, 5.30, 1.42, 0.50, 0, true);
+xh4cLeanTree(-226, 35.3, 5.42, 0, 1, 0.58, 0.96);
+// HANG TRONG BO BAC (z 25,2): la rong THANG thay 2 thong da bo (nghieng nhe 0,10-0,14 nhu cay thang trong anh 03)
+xh4cLeanTree(-316, 25.2, 5.47, 0, 1, 0.14, 1.12);
+xh4cLeanTree(-260, 25.2, 5.47, 0, 1, 0.10, 1.05);
+// HANG HAU CANH sau duong nhua (z 14, tren tham co phia bac): thong + la rong thang (f017/f018 + anh 01: lop cay sau duong)
+xh4cPine(-312, 14, 5.42, 1.70, 0, 0, true);
+xh4cPine(-228, 14, 5.42, 1.80, 0, 0, true);
+xh4cLeanTree(-335, 14, 5.44, 0, 1, 0.12, 1.15);
+xh4cLeanTree(-283, 14, 5.44, 0, 1, 0.16, 1.05);
+xh4cLeanTree(-252, 14, 5.44, 0, 1, 0.10, 1.10);
+// BO TAY: doi sang THONG NGHIENG chu dao (anh 18 duong Tran Quoc Toan) + giu 1 la rong nghieng
+xh4cPine(-560.2, 80, 5.30, 1.60, 0, -0.50, false);
+xh4cPine(-560.2, 122, 5.30, 1.52, 0, -0.44, false);
+xh4cPine(-560.2, 163, 5.30, 1.66, 0, -0.54, false);
+xh4cLeanTree(-560.4, 100, 5.38, 1, 0, 0.58, 1.02);
+// DAO THUY TA (anh 36/01): them thong cao #2 + phuong tim + la rong nghieng mep dong dao
+xh4cPine(-245, 51, 5.44, 1.60, 0, 0, false);
+{ const _ct = ASSETS.lake.getObjectByName('CherryTree').clone(true); _ct.traverse(o => { if(o.isMesh) o.castShadow = true; }); _ct.position.set(-254, 5.47, 65); _ct.rotation.y = 1.3; _ct.scale.setScalar(1.3); worldGroup.add(_ct); }
+xh4cLeanTree(-236, 58, 5.44, 1, 0, 0.50, 0.92); solid(-236, 58, 0.35, 0.35);
+function xh4cBougain(x, z){
+  const g = new THREE.Group(); g.position.set(x, 5.49, z); worldGroup.add(g);
+  const leafM = mat(0x33502e, 1.0), flM = mat(0x9c2b8c, 0.9);
+  const blobs = [[0, 0.95, 0, 1.5, 0], [-1.15, 0.7, 0.25, 1.1, 0], [1.15, 0.75, -0.2, 1.15, 0],
+                 [-0.6, 1.55, 0.35, 0.72, 1], [0.45, 1.7, -0.3, 0.78, 1], [1.35, 1.25, 0.3, 0.6, 1],
+                 [-1.4, 1.15, -0.35, 0.62, 1], [0.05, 1.3, 0.75, 0.66, 1], [0.9, 0.95, 0.65, 0.55, 1]];
+  for(const bo of blobs){
+    const b = new THREE.Mesh(new THREE.SphereGeometry(bo[3], 10, 8), bo[4] ? flM : leafM);
+    b.position.set(bo[0], bo[1], bo[2]); b.scale.y = 0.72; b.castShadow = true; g.add(b);
+  }
+  solid(x, z, 0.55, 0.55);
+}
+xh4cBougain(-240, 24.9); xh4cBougain(-296, 24.7); xh4cBougain(-323, 24.8); // mep bac duong dao, xen giua cac thong (ne thong -246/-288/-302/-316/-330 + den -290)
+// XH-4C-E: DEM THUY TA HONG MAGENTA (video v3: nha len den hong + phan chieu xuong nuoc). KHONG dang ky PointLight vao lampLights (applyDayNight set cung mau 0xff9a3d) — glow panel qua lampGlows (chi set intensity), PointLight tu quan trong tick XH-4C
+const XH4C_TT_GLOW = new THREE.MeshStandardMaterial({ color: 0x2a0a26, emissive: 0xd94fd0, emissiveIntensity: isNight ? 2.2 : 0, roughness: 0.5 });
+lampGlows.push(XH4C_TT_GLOW);
+const _ttWin = box(0.14, 1.15, 7.6, 0xd94fd0, -265.85, 7.55, 58, worldGroup, false); _ttWin.material = XH4C_TT_GLOW;  // dai kinh mat tay nha (huong ra ho)
+const _ttSign = box(0.14, 0.5, 5.2, 0xd94fd0, -265.85, 9.75, 58, worldGroup, false); _ttSign.material = XH4C_TT_GLOW; // dai bien duoi mai
+const XH4C_TT_LIGHT = new THREE.PointLight(0xd94fd0, isNight ? 55 : 0, 36, 1.8);
+XH4C_TT_LIGHT.position.set(-269.5, 8.6, 58); worldGroup.add(XH4C_TT_LIGHT);
+const stC = document.createElement('canvas'); stC.width = 64; stC.height = 256;
+const sg4 = stC.getContext('2d');
+const sgr = sg4.createLinearGradient(0, 0, 0, 256);
+sgr.addColorStop(0, 'rgba(217,79,208,0)'); sgr.addColorStop(0.5, 'rgba(217,79,208,0.20)'); sgr.addColorStop(1, 'rgba(217,79,208,0.60)'); // manh nhat o day canvas = dau sat dao (plane xoay -90 do: v0 nam phia +z)
+sg4.fillStyle = sgr; sg4.fillRect(0, 0, 64, 256);
+sg4.globalCompositeOperation = 'destination-out';
+const sgr2 = sg4.createLinearGradient(0, 0, 64, 0);
+sgr2.addColorStop(0, 'rgba(0,0,0,1)'); sgr2.addColorStop(0.3, 'rgba(0,0,0,0)'); sgr2.addColorStop(0.7, 'rgba(0,0,0,0)'); sgr2.addColorStop(1, 'rgba(0,0,0,1)'); // mem 2 mep ngang
+sg4.fillStyle = sgr2; sg4.fillRect(0, 0, 64, 256); sg4.globalCompositeOperation = 'source-over';
+const stTex = new THREE.CanvasTexture(stC); stTex.colorSpace = THREE.SRGBColorSpace;
+const XH4C_STREAK = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 26), new THREE.MeshBasicMaterial({ map: stTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+XH4C_STREAK.rotation.x = -Math.PI / 2; XH4C_STREAK.position.set(-260, 4.94, 31); XH4C_STREAK.renderOrder = 4; worldGroup.add(XH4C_STREAK); // vet phan chieu keo tu chan dao (z 44) ve phia bac (z 18)
+// XH-4C+: DAI MEP NUOC SAM (wet edge: nuoc nong sam + bong cay/bo phan chieu o mep — pha cam giac "tam phang" o ria nuoc) — gradient alpha mem dan ra xa bo
+function xh4cWetEdge(w, cx, cz, flip){
+  const wc = document.createElement('canvas'); wc.width = 256; wc.height = 32;
+  const wg = wc.getContext('2d');
+  const gr = wg.createLinearGradient(0, 0, 0, 32);
+  gr.addColorStop(0, 'rgba(52,66,70,0.52)'); gr.addColorStop(0.5, 'rgba(52,66,70,0.26)'); gr.addColorStop(1, 'rgba(52,66,70,0)');
+  wg.fillStyle = gr; wg.fillRect(0, 0, 256, 32);
+  const wt = new THREE.CanvasTexture(wc); wt.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, 3.6), new THREE.MeshBasicMaterial({ map: wt, transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; if(flip) m.rotation.z = Math.PI; // bo bac: dau manh (top canvas) vao sat bo z 36; bo nam phai lat
+  m.position.set(cx, 4.935, cz); m.renderOrder = 3; worldGroup.add(m); return m;
+}
+xh4cWetEdge(336, -392, 37.9, false);
+xh4cWetEdge(336, -392, 194.1, true);
+{ // vong mep nuoc sam quanh DAO (RingGeometry: UV map theo hinh vuong bao nen gradient tam khop vong)
+  const rc = document.createElement('canvas'); rc.width = rc.height = 128;
+  const rg5 = rc.getContext('2d');
+  const rr = rg5.createRadialGradient(64, 64, 30, 64, 64, 64);
+  rr.addColorStop(0, 'rgba(52,66,70,0.50)'); rr.addColorStop(0.55, 'rgba(52,66,70,0.28)'); rr.addColorStop(1, 'rgba(52,66,70,0)');
+  rg5.fillStyle = rr; rg5.fillRect(0, 0, 128, 128);
+  const rt = new THREE.CanvasTexture(rc); rt.colorSpace = THREE.SRGBColorSpace;
+  const rm = new THREE.Mesh(new THREE.RingGeometry(14.6, 21.5, 40), new THREE.MeshBasicMaterial({ map: rt, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+  rm.rotation.x = -Math.PI / 2; rm.position.set(-250, 4.935, 58); rm.renderOrder = 3; worldGroup.add(rm);
+}
+// XH-4C+: VET PHAN CHIEU DEN BUOM tren nuoc duoi bo bac (chi dem) — additive, dung chung texture gradient cua vet magenta, dau manh sat bo (rotation.z PI de lat dau gradient)
+const XH4C_LAMP_STREAK_MAT = new THREE.MeshBasicMaterial({ map: stTex, color: 0xff9a3d, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+for(const lx of [-344, -326, -308, -290, -272, -254, -236]){
+  const sp = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 9), XH4C_LAMP_STREAK_MAT);
+  sp.rotation.x = -Math.PI / 2; sp.rotation.z = Math.PI; sp.position.set(lx, 4.945, 40.5); sp.renderOrder = 4; worldGroup.add(sp);
+}
+// XH-4C-F: tick — mau nuoc theo GIO (tint tuyen tinh nhan tren canvas ngay #8b979c; khoa dem tu ti le tuyen tinh cua so do 28: dem #4a5872, chieu #7e8cb4), den magenta + vet sang theo isNight. Boc SAU wrapper XH-3S
+const XH4C_TINT_KEYS = [[0, [0.26, 0.32, 0.50]], [5, [0.26, 0.32, 0.50]], [6.5, [0.68, 0.74, 0.92]], [8, [1, 1, 1]], [15.5, [1, 1, 1]], [17.5, [0.79, 0.85, 1.36]], [19.5, [0.26, 0.32, 0.50]], [24, [0.26, 0.32, 0.50]]];
+function xh4cTintAt(h){
+  for(let i = 0; i < XH4C_TINT_KEYS.length - 1; i++){
+    const a = XH4C_TINT_KEYS[i], b = XH4C_TINT_KEYS[i + 1];
+    if(h >= a[0] && h <= b[0]){ const f = (h - a[0]) / (b[0] - a[0]); return [a[1][0] + (b[1][0] - a[1][0]) * f, a[1][1] + (b[1][1] - a[1][1]) * f, a[1][2] + (b[1][2] - a[1][2]) * f]; }
+  }
+  return [1, 1, 1];
+}
+const _xh4TW = tickWater;
+tickWater = function(t){
+  _xh4TW(t);
+  const lm = window.__XH4C_LAKE_MAT;
+  if(lm){ const c = xh4cTintAt(gameHourF); lm.color.setRGB(c[0], c[1], c[2]); }
+  XH4C_STREAK.material.opacity = isNight ? 0.5 + Math.sin(t * 1.25) * 0.07 : 0;
+  XH4C_TT_LIGHT.intensity = isNight ? 55 : 0;
+  XH4C_LAMP_STREAK_MAT.opacity = isNight ? 0.32 + Math.sin(t * 1.7) * 0.04 : 0;
 };
 
 animate();
