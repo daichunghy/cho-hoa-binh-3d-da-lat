@@ -794,7 +794,7 @@ def build_market():
     # mái hiên sọc từng ô (dưới dải pano, dốc xuống phía phố) — gộp 1 mesh
     awn_parts = []
     for bi, x in enumerate(range(-28, 29, 8)):
-        awn = box("tmpAwn", (5.9, 1.15, 0.06), (x, 8.62, 3.62),
+        awn = box("tmpAwn", (5.9, 1.15, 0.06), (x, 8.62, 3.52),
                   MATS["StripeA"] if bi % 2 == 0 else MATS["StripeB"], 0.0)
         awn.rotation_euler = (-0.40, 0, 0)
         awn_parts.append(awn)
@@ -818,8 +818,8 @@ def build_market():
     box("AdTrimB", (67, 0.2, 0.14), (0, 8.18, 3.86), trim, 0.0)
     # Dải ZIGZAG trắng — chi tiết nhận diện mạnh nhất (ảnh 01 + chợ 1937)
     # V4.1: nền cao hơn (1.42) + xám đậm, chevron cao/dày hơn -> tương phản mạnh
-    box("ZigzagBack", (66.5, 0.18, 1.42), (0, 8.04, 5.48), MATS["ZigBack"], 0.0)
-    join_into(chevron_row(-33, 33, 8.30, 5.48, M("ZigWhite", (0.96, 0.94, 0.89), 0.9),
+    box("ZigzagBack", (66.5, 0.18, 1.42), (0, 8.04, 5.72), MATS["ZigBack"], 0.0)
+    join_into(chevron_row(-33, 33, 8.30, 5.72, M("ZigWhite", (0.96, 0.94, 0.89), 0.9),
                           step=2.0, arm=1.42, thick=0.42, tall=0.62), "Zigzag")
     # Băng HỒNG ĐÀO + cửa sổ tầng 2 (kính MarketWin để web phát sáng đêm)
     # V4.1: băng đậm màu + 3 rãnh ngang tối mô phỏng lam sọc của băng thật

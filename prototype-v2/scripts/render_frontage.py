@@ -193,6 +193,11 @@ for o in bpy.data.objects:
 
 
 # ---------- FRONTAGE-1: mo phong pano canvas cua game (dung thong so code) ----------
+# FASCIA-GEO-2 (11/11): market.glb NAP TU assets/ DA CO fascia moi — zigzag
+# nang +0.24 (chevron 5.06..6.38, ZigzagBack 5.01..6.43), canopy ha -0.10
+# (ShopAwnings wpos 3.52, khoang 3.27..3.77). AdBand/pano KHONG doi thong so
+# (van y 3.95..5.15) nen khoi mo phong duoi giu nguyen; cua so thay duoc cua
+# pano do chinh hinh khoi GLB quyet dinh. Xuat mac dinh: fascia-after.png.
 # 9 pano 7.5x1.15 tai y=4.55, z=11.71+d(x) theo cung R=142.28, rotY=PI-asin(x/R).
 # Day la MO PHONG dung thong so code (texture PIL ve lai bo cuc canvas), KHONG
 # phai mesh game — game ve bang CanvasTexture trong index.html.
@@ -237,6 +242,6 @@ scene.render.resolution_x = 900
 scene.render.resolution_y = 600
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = 'PNG'
-scene.render.filepath = os.path.join(OUT, os.environ.get('FC_OUT', 'frontage-after.png'))
+scene.render.filepath = os.path.join(OUT, os.environ.get('FC_OUT', 'fascia-after.png'))
 bpy.ops.render.render(write_still=True)
 print("[v8] DA RENDER XONG ->", scene.render.filepath)

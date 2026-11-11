@@ -429,7 +429,7 @@ const TEX_GRIME = makeGroundTex(x2 => {
 window.__REAL1 = { texMeshes: 0, facadeTex: 0 };
 const worldGroup = new THREE.Group(); scene.add(worldGroup);
 let _haloShared = null; // FIX MÀN HÌNH ĐEN (08/11): phải khai báo TRƯỚC mọi lệnh dựng gọi lamp()/addHalo() — trước đây nằm ở ~dòng 1360, sau điểm gọi lamp() đầu tiên (khối sườn tây) nên biến rơi vào TDZ → ReferenceError giết toàn bộ module ngay khi nạp.
-// FIX MÀN HÌNH ĐEN (08/11): bảng trang phục V5.1 dời lên đầu — crowdPerson() gọi top-level trước vị trí cũ, const rơi TDZ. Hàm giữ nguyên (hoist).
+// FIX MÀN HÌNH ĐEN (08/11): bảng trang phục V5.1
 const NPC_PANTS = [0x4a4640, 0x3a3f4a, 0x5c4633, 0x2e2a26, 0x2e4a6b, 0x6b5a44, 0xd8d2c2, 0x24303c];
 const NPC_KNIT = [0xa62b25, 0xd97a30, 0xd9a62e, 0xe8c87e, 0x6b8f3e, 0x2e6b46, 0x2f8f83, 0x3a6bc2, 0x8668c4, 0xe58e6b, 0xc95d7e, 0x7a4a2e, 0x96683f, 0x35507a, 0xf0ead8, 0x2e2a26];
 const NPC_PUFFER = [0xf0ead8, 0xe8e2d4, 0xf0ead8, 0x2e2a26, 0x232120, 0x2e2a26, 0xa62b25, 0x35507a, 0xd9a62e];
@@ -449,11 +449,11 @@ let NPC_PART_MESHES = 0;
 // FIX MÀN HÌNH ĐEN (08/11): smokeMat/smokePts dời lên đầu — addSmoke() gọi top-level trước vị trí cũ. Cùng họ TDZ.
 const smokePts = [];     // hệ khói bếp các quầy ăn
 const smokeMat = new THREE.PointsMaterial({ color:0xcccccc, size:0.55, transparent:true, opacity:0.32, depthWrite:false });
-// FIX MÀN HÌNH ĐEN (08/11): SCARF_COLS dời lên đầu — crowdPerson() đọc trực tiếp, vị trí cũ sau điểm gọi sớm. Cùng họ TDZ.
+// FIX MÀN HÌNH ĐEN (08/11): SCARF_COLS dời lên đầu
 const SCARF_COLS = [0xd9a62e, 0xa62b25, 0x3a6bc2, 0x8668c4, 0xd97a30]; // lấy từ bảng 14 màu
 // FIX MÀN HÌNH ĐEN (08/11): bộ đếm addStatic() dời lên đầu — gọi top-level trước vị trí cũ. Cùng họ TDZ.
 let _staticSeq = 0;
-// FIX MÀN HÌNH ĐEN (08/11): geometry + material dùng chung của đồ cầm tay/trang phục V5.1 dời lên đầu — cùng lý do TDZ như trên.
+// FIX MÀN HÌNH ĐEN (08/11): geometry + material dùng
 const GEO_CUP = new THREE.CylinderGeometry(0.05, 0.042, 0.13, 8);
 const GEO_STRAW = new THREE.BoxGeometry(0.018, 0.11, 0.018);
 const GEO_BAG = new THREE.BoxGeometry(0.26, 0.32, 0.16);
@@ -478,7 +478,7 @@ function box(w,h,d,color,x,y,z,parent=worldGroup,shadow=true){
   parent.add(m); return m;
 }
 function cyl(rt,rb,h,color,x,y,z,parent=worldGroup,seg=10){
-  // PROPS-OPT-1: trụ nhỏ + seg mặc định -> giảm (r<0.06: 6, r<0.12: 8); seg truyền rõ giữ nguyên (nồi, đĩa, cột đã tính tay)
+  // PROPS-OPT-1: trụ nhỏ + seg mặc định -> giảm
   const s = seg === 10 ? (Math.max(rt,rb) < 0.06 ? 6 : Math.max(rt,rb) < 0.12 ? 8 : 10) : seg;
   const m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s), mat(color));
   m.position.set(x,y,z); m.castShadow = Math.hypot(Math.max(rt, rb), h / 2) >= 0.32; m.receiveShadow = true; // V5.4-D: trụ nhỏ không đổ bóng
@@ -625,7 +625,7 @@ function groundH(x,z){
   // V5.4 (research/20): THỀM BẮC — cắt sườn thành thềm đặt hàng sạp bắc quay mặt vào đường;
   // đoạn tây x -58..-52 bám dốc đường (+0.11 như vỉa hè, mỗi sạp một cao độ theo dốc), đoạn đông là sân 0.
   if(x >= -58 && x <= -35 && z >= -21.5 && z <= -2) return x < -52 ? entryRampY(x) + 0.11 : 0; // BD2: them bac noi
-  // V5.4: vỉa hè hai bên đường dốc vào — cao hơn mặt đường 0.11, nghiêng cùng dốc (bản cũ phẳng gây lệch tới 3.3 tại cổng chào)
+  // V5.4: vỉa hè hai bên đường dốc vào — cao
   if(x >= -208 && x <= -59 && z >= -18.4 && z <= -15.6) return entryRampY(x) + 0.11; // BLENDER-DEEP-2: via he bac theo line moi z -17.0, dai toi bung binh dau cho // V5.5: via he bac theo line moi z -12.5, keo dai toi cong
   if(x >= -82.5 && x <= -51.5 && z >= 10.5 && z <= 13.9) return entryRampY(x) + 0.11;
   if(x >= -208 && x < -58 && z >= -25 && z <= 34){ const r = entryRampY(x); return (z < -18 || (z > 25.5 && z <= 32)) ? r + 0.11 : r; } // BLENDER-DEEP-2: hanh lang theo hang sap moi (bac -19.7 / nam 30) // GEOMETRY-2: hanh lang KEO DAI toi bung binh dau cho (-196) — them bac z<-16 + them an nam 16.5..24 (+0.11); day nha nam lui toi z 30.5
@@ -742,7 +742,7 @@ const HYDRA_COLS = [0x7a9cc6, 0x9a7ab8, 0xd89ab8, 0xe8e4da, 0x86b8d8];
 {
   const slopeLen = Math.sqrt(28*28 + 17*17);
   const ang = Math.atan2(17, 28);
-  // Sườn đồi phía bắc lùi hẳn về sau z -21 với kè đá chẻ Đà Lạt + hoa, giải phóng toàn bộ lòng đường & vỉa hè
+  // Sườn đồi phía bắc lùi hẳn về sau z -21
   const segs = [
     { x0:-195, x1:-45, len:Math.sqrt(9*9 + 11.5*11.5), a:Math.atan2(11.5, 9), cz:-25.5, cy:11.25, strip:null },
     { x0:-52, x1:-14.5, len:Math.hypot(9, 14.8), a:Math.atan2(14.8, 9), cz:-25.5, cy:9.6, strip:-21.0 }, // kè đá lùi về z=-21
@@ -764,7 +764,7 @@ const HYDRA_COLS = [0x7a9cc6, 0x9a7ab8, 0xd89ab8, 0xe8e4da, 0x86b8d8];
     box(3.2, 0.28, 0.35, 0x5a4a38, fx, 2.38, -20.85);
     for(let fi = 0; fi < 4; fi++) ball(0.16, HYDRA_COLS[((fi + Math.floor(fx)) % HYDRA_COLS.length + HYDRA_COLS.length) % HYDRA_COLS.length], fx - 1.1 + fi * 0.75, 2.62, -20.85, worldGroup, 0.85); // V7-2: sửa modulo âm (fx<0 -> index âm -> màu undefined, hoa trắng + warning THREE)
   }
-  // thềm 3 vùng/bên: đối xứng 3.5u mỗi bên (-14.5..-11 và 11..14.5), tạo khoảng cách thoáng 5u từ đảo vòng xoay tới thềm bậc tam cấp
+  // thềm 3 vùng/bên: đối xứng 3.5u mỗi bên
   const TERR = [ { top:14.2, zc:-24.375, d:11.25 }, { top:8.5, zc:-13.5, d:10.5 }, { top:2.8, zc:-5.125, d:6.25 } ];
   for(const band of [ { x0:-70.5, x1:-67 }, { x0:-45, x1:-43.5, noLow:true } ]){ // LAYOUT-FIX-1: them theo thang tam -56 (dong thu hep 1.5, bo dai thap khop groundH)
     const w = band.x1 - band.x0, cx = (band.x0 + band.x1) / 2;
@@ -1066,7 +1066,7 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
   const ringRoad = new THREE.Mesh(new THREE.CircleGeometry(11.8, 36), mat(0x383430));
   ringRoad.rotation.x = -Math.PI/2; ringRoad.position.set(-30, 0.045, -6);
   ringRoad.receiveShadow = true; worldGroup.add(ringRoad);
-  // QUẢNG TRƯỜNG THỀM CHÂN THANG (x -18.2..-11.0, z -18..6) — khoảng cách thông thoáng 7.2m giữa bùng binh và bậc tam cấp
+  // QUẢNG TRƯỜNG THỀM CHÂN THANG (x -18.2..-11.0, z
   const plazaBuffer = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 24), mat(0x8e8272));
   plazaBuffer.rotation.x = -Math.PI / 2; plazaBuffer.position.set(-14.6, 0.05, -6);
   plazaBuffer.receiveShadow = true; worldGroup.add(plazaBuffer);
@@ -1265,7 +1265,7 @@ function brandShop(x, z, rotY, kind){ // BLENDER-DEEP-2 + V6: kiến trúc cao n
   }
   buildLaTulipe(-73.5, -36.4, 17);
 
-  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH THANG (2 tầng, ốp gạch nung ấm, biển xanh lá, thông Đà Lạt - ảnh 08 & 10)
+  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH
   function buildLangfarmStairs(x, z, y){
     const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
     box(8.8, 6.4, 6.2, 0xd4a373, 0, 3.2, 0, g);
@@ -1549,14 +1549,14 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   const swN = box(72, 0.1, 2.8, 0x84796a, -95, entryRampY(-95) + 0.06, -17.0); swN.rotation.z = -0.0699;
   const shelfW = box(8, 0.1, 22, 0x978a78, -54, entryRampY(-54) + 0.06, -12.25); shelfW.rotation.z = -0.0699;
   box(15, 0.1, 22, 0x978a78, -42.5, 0.0, -12.25, worldGroup, false);
-  // Tường chắn đất lùi về z -21.8..-22.4 (SAU lưng hàng sạp bắc z -19.7) để không che khuất hàng quán bên trái người chơi
+  // Tường chắn đất lùi về z -21.8..-22.4 (SAU
   box(13.5, 5.0, 0.6, 0x6e6257, -51.5, 2.8, -21.8);
   box(13.5, 4.5, 0.6, 0x6e6257, -51.5, 7.3, -22.4);
   box(13.5, 0.35, 0.9, 0x7c766b, -51.5, 9.6, -22.4);
   box(10, 0.5, 0.5, 0x7c766b, -40, 0.25, -21.8, worldGroup, false);
   const shelfS = box(31, 0.1, 20, 0x978a78, -67, entryRampY(-67) + 0.06, 23.5); shelfS.rotation.z = -0.0699;
   box(24, 0.1, 20, 0x978a78, -46, 0.0, 23.5, worldGroup, false);
-  // --- PHỐ ẨM THỰC ĐÊM PHÍA NAM (Hàng quán bên trái người chơi — Bánh tráng nướng, Sữa đậu nành, Bắp khoai nướng, Xiên que, Bánh ướt lòng gà) ---
+  // --- PHỐ ẨM THỰC ĐÊM PHÍA NAM (Hàng quán bên
   const southFoodStalls = [
     { x: -36.5, z: 18.8, name: 'BÁNH TRÁNG NƯỚNG CÔ HOA', bgCol: '#8a1e18', fgCol: '#ffe9b0', roofCol: 0xc0392b, type: 'banhtrang' },
     { x: -41.8, z: 18.8, name: 'SỮA ĐẬU NÀNH & BÁNH SU', bgCol: '#1e5a2e', fgCol: '#ffe9b0', roofCol: 0x2e6d44, type: 'suadaunanh' },
@@ -1681,7 +1681,7 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   shophouse(-140, -28.5, 7.5, 5, 0xd8c8ae, 'PHỞ Nóng ĐÀ LẠT', '#7a2e22', 0xb03a30, Math.PI);
   shophouse(-154, -28.5, 7, 4, 0xe0d0b4, 'TRÀ SỮA & ĂN VẶT', '#33502e', 0x68804f, Math.PI);
   shophouse(-168, -28.5, 7, 5, 0xe8dcc4, 'NHÀ NGHỈ HÒA BÌNH', '#3a2e24', 0x51624a, Math.PI);
-  // V7-2: BIỂN DỌC HỘP ĐÈN mặt tiền nhà phố 2 bên đường vào (research/25; đêm phát sáng ấm, ngày tắt qua applyDayNight)
+  // V7-2: BIỂN DỌC HỘP ĐÈN mặt tiền nhà phố 2
   window.__vSignMats = []; // material mặt chữ của biển dọc — applyDayNight chỉnh emissiveIntensity đêm/ngày (để ở window vì khối trục đường vào là bare block, const không thoát scope — theo tiền lệ window.__REAL1)
   function vSignTex(text, bg, fg){
     const c = document.createElement('canvas'); c.width = 256; c.height = 448;
@@ -1735,7 +1735,7 @@ function shophouse(x, z, w, floors, color, signText, signBg, awnCol, rotY=0){
   addSmoke(-70, 12.6, 36.5, 4.5);
   addSmoke(-52, groundH(-52, -24.5) + 16.2, -24.5, 3.2);
 
-  // --- XE ĐẨY ĐẶC TRƯNG CHỢ ĐÊM ĐÀ LẠT (Bánh tráng nướng, sữa đậu nành, bắp nướng, xiên que, dâu tây, đồ len) ---
+  // --- XE ĐẨY ĐẶC TRƯNG CHỢ ĐÊM ĐÀ LẠT
   function makeDalatPushCart(type, x, z, rotY=0){
     const y = groundH(x, z);
     const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY; worldGroup.add(g);
@@ -2153,7 +2153,7 @@ function faceGlasses(g, frame=0x23272e){ // kính: 2 gọng + cầu + 2 gọng t
   headProp(g, new THREE.BoxGeometry(0.02, 0.02, 0.38), frame, -0.29, 0.06, 0.25); // gọng tai: đầu trước chạm sát mép gọng chính (bản đầu x ±0.315 để lại khe 0.06 — soi render sp1 thấy rời)
   headProp(g, new THREE.BoxGeometry(0.02, 0.02, 0.38), frame, 0.29, 0.06, 0.25);
 }
-// Tiểu thương ĐẶC BIỆT của 7 sạp: áo/quần/mũ/tông da/tạp dề CỐ ĐỊNH riêng từng sạp (không rollLook random như 24 sạp thường)
+// Tiểu thương ĐẶC BIỆT của 7 sạp:
 const SPECIAL_VENDOR = {
   banhtrang: { shirt:0x7a4a2e, pants:0x3a3f4a, hat:'beanie', hatColor:0xd97c2e, skin:0xc68a5e, apron:0x4a6741 },
   banhcan:   { shirt:0x6b8f3e, pants:0x4a4640, hat:'nonla',  skin:0xa96f42, apron:0x5c4633 },
@@ -3146,7 +3146,7 @@ const INDOOR_COUNTERS = { shutters: [], people: [] }; // BLENDER-DEEP-2 (mục 1
     new THREE.MeshStandardMaterial({ color:0x8fb6c9, transparent:true, opacity:0.4, roughness:0.15, metalness:0.1 }));
   glass.position.set(0, 4.35, 26.55); worldGroup.add(glass);
   box(56, 0.09, 0.09, 0x6a4a30, 0, 4.95, 26.55, worldGroup);
-  // V4.9 MỤC 7: dải len GRADIENT treo mặt lan can lửng + dây bóng dọc lan can + sàn kim cương (plan/A4 — đa dạng chiều dọc)
+  // V4.9 MỤC 7: dải len GRADIENT treo mặt lan can
   const knitCols = [0xb03a30, 0xe07b2a, 0xe8c33c, 0x3f7a44, 0x2e6da4, 0x74566b, 0xd66a8c, 0x8c6a3a];
   for(const kx of [-19.5, 0, 19.5]) for(let i = 0; i < 8; i++)
     box(0.36, 0.78, 0.05, knitCols[i], kx - 1.4 + i * 0.4, 4.42, 26.42, worldGroup, false);
@@ -3504,7 +3504,7 @@ function tickWater(t){
     wb.position.set(24.02, wy + 2.85, 10); wb.rotation.y = Math.PI/2; worldGroup.add(wb);
     solid(24, 10, 0.3, 0.3); // cột biển — audit kiểm: cách cạnh AW gần nhất ~1.3u
   }
-  // --- giá treo quần áo (theo mẫu quầy CHỢ LA trong nhà lồng): trụ + thanh + áo treo dày, mặt quay về tây (đài phun/bậc)
+  // --- giá treo quần áo (theo mẫu quầy CHỢ LA
   function clothesRack(x, z){
     const g = new THREE.Group(); g.position.set(x, groundH(x, z), z); g.rotation.y = -Math.PI/2; worldGroup.add(g);
     for(const px of [-1.05, 1.05]) box(0.07, 1.55, 0.07, 0x6a5136, px, 0.78, 0, g, false);
@@ -3540,7 +3540,7 @@ function tickWater(t){
     const sp2 = crowdPerson(0.5, 'sitter'); const sy2 = stoolWorld(tx2 - 0.5, tz2 - 0.2, 0xd8402e);
     sp2.position.set(tx2 - 0.5, sy2 + 0.30, tz2 - 0.2); sp2.rotation.y = 1.9; addStatic(sp2, 'night', 'sit');
   }
-  // nồi sữa phụ + tủ bánh cạnh sạp Hoa Sữa (nồi SIÊU TO bốc hơi trong ảnh thật 41; khói lấy từ def.smoke/steam của sạp)
+  // nồi sữa phụ + tủ bánh cạnh sạp Hoa Sữa
   cyl(0.55, 0.48, 0.7, 0xb9bdc2, -125.9, groundH(-125.9, 20.6) + 0.35, 20.6, worldGroup, 14);
   box(1.1, 0.9, 0.5, 0xd8cfc0, -130.2, groundH(-130.2, 20.8) + 0.45, 20.8, worldGroup, false); // tủ kính bánh
   // cụm bàn thấp trên ĐAI THỀM 2 bên chân thang (y 2.8 — research/21: ăn uống ở chân bậc)
@@ -3734,7 +3734,7 @@ groundVendor(-35, 26.2, 'night'); groundVendor(-75, -17.2, 'night');
 }
 addWanderer([[-40,9.3],[40,9.3],[42,6],[0,5.6],[-42,6.2]], 0xc95d7e, { speed:1.15, hat:'beanie', sched:'night' }); // V4.8: dạo trước mặt tiền
 addWanderer([[-124,4.5],[-58,5.5],[-40,8.0],[-30,8.3],[-30,6.4],[-34,7.9],[-40,7.5],[-58,7],[-124,6]], 0x2e6da4, { speed:1.25, hat:'cap', sched:'night' }); // V5.5: dạo dọc TRỤC KÉO DÀI (tới cổng Tăng Bạt Hổ) <-> đảo
-// GEOMETRY-2: 3 tuyến dạo dọc đoạn kéo dài MỚI (bùng binh đầu chợ <-> cổng) — đường dài phải có người đi có đích
+// GEOMETRY-2: 3 tuyến dạo dọc đoạn kéo dài MỚI
 addWanderer([[-188,6.8],[-150,6.4],[-110,6.0],[-70,5.8],[-44,5.4],[-70,8.6],[-110,8.8],[-150,9.0],[-186,9.2]], 0x7a5a8c, { speed:1.3 });
 addWanderer([[-186,12.8],[-140,12.2],[-100,11.6],[-64,10.8],[-100,13.4],[-140,13.8],[-184,14.0]], 0x4a7a5a, { speed:1.15, hat:'nonla' });
 addWanderer([[-190,4.2],[-186,9.0],[-188,14.5],[-160,13.9],[-132,13.0],[-160,7.2],[-186,4.6]], 0x9c6a3a, { speed:1.0, hat:'beanie', sched:'night' });
@@ -4373,7 +4373,7 @@ box(0.12, 6.4, 0.12, 0x555049, -8.6, 3.2, 5.2); box(0.12, 6.4, 0.12, 0x555049, 8
   pave(96, 15, 0, 5.2, 13, 2);
 }
 
-// ================= V4.9 MỤC 7 — LỚP GỢI Ý ChatGPT ĐÃ LỌC (bỏ: trăng khổng lồ, neon tường, tượng sửa khác, người ảnh chụp) =================
+// ================= V4.9 MỤC 7 — LỚP GỢI Ý ChatGPT
 { // G1: hoa giấy phủ sườn tây — biến mảng tường phẳng ở góc bùng binh thành sườn hoa như ảnh gợi ý + ảnh thật Đà Lạt
   const bougCols = [0xd63384, 0xe75480, 0xc22e6e, 0xe88ac0];
   function bougCluster(x, z, s=1){
@@ -4777,13 +4777,13 @@ addFogPlaneV(-2, 2.4, 7, 40, 0.15); // V4.4 gốc, V4.7 chỉnh z: sương bắt
 addFogPlaneV(-30, 1.8, -5, 30, 0.13); // V4.4: sương quanh bùng binh/tượng đài — GEOMETRY-2: theo đảo mới
 addFogPlaneV(-44, 1.7, -4, 26, 0.18);
 addFogPlaneV(8, 18.8, -50, 36, 0.3);
-// V4.7: sương Đà Lạt đọc RÕ hơn — dải ngang trôi chậm ngang đường vào rộng + ôm chân thang + là là quanh bùng binh
+// V4.7: sương Đà Lạt đọc RÕ hơn — dải ngang
 addFogPlaneV(-56, 2.0, 2, 44, 0.30);
 addFogPlaneV(0, 1.5, 2, 34, 0.12);
 addFogPlaneV(-30, 1.1, -6, 34, 0.10); // GEOMETRY-2: theo đảo mới
 stringLights(-76, 12.2, -58, 12.2, 5.8, 7); stringLights(-58, 12.2, -40, 12.2, 5.8, 7); // V4.7
 stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
-// V6 chặng ①: tuyến đường chợ ban đêm — dây bóng vàng ấm (3000K) 2 bên đường vào + dây ngang kiểu chợ đêm thật
+// V6 chặng ①: tuyến đường chợ ban đêm — dây
 {
   for(let x = -196; x < -36; x += 14){
     const sag = 0.45 + ((x * 7) & 3) * 0.08, yy = 4.4 + (((x >> 1) & 1) ? 0.25 : 0);
@@ -4818,7 +4818,7 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
     glowDisc(x + 6, 17.5, 3.6, entryRampY(x + 6));
   }
 }
-// V6 chặng ②: cầu thang lớn — lan can sắt hai mép, ghế nhựa/bàn nhỏ trên chiếu nghỉ (quán ăn đêm "Chợ Âm Phủ" dọc thang)
+// V6 chặng ②: cầu thang lớn — lan can sắt hai
 {
   const rail = 0x2b2b2b;
   for(const sx of [-11.2, 11.2]){
@@ -4838,7 +4838,7 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
     twinkles.push({ mat: (()=>{ const l = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshBasicMaterial({ color:0xffc46b })); l.position.set(-9.2, y + 2.4, z); worldGroup.add(l); return l.material; })(), ph: i });
   });
 }
-// V6 chặng ②-⑤: biển cầu thang, Góc Hong Kong trên đỉnh thang, dãy Ki-ốt 28–34 Hồng Trà Hòa Bình, Hoa Sữa (3F Tăng Bạt Hổ)
+// V6 chặng ②-⑤: biển cầu thang, Góc Hong Kong
 {
   const tex = (t, w, h, bg, fg, sub) => signMesh(t, w, h, bg, fg, sub);
   // biển chân cầu thang (nguồn: KTS Ngô Viết Thụ thiết kế — research/25)
@@ -4847,7 +4847,7 @@ stringLights(-72, -8.4, -54, -8.4, 5.8, 7); // V4.7
   // mốc check-in "GÓC HONG KONG" ở đầu lan can cầu thang nhìn xuống nhà lồng chợ
   const hkSpot = tex('📸 GÓC HONG KONG — CHỢ ĐÀ LẠT', 3.4, 0.65, '#7a221c', '#ffe9b0', 'Điểm chụp hình nhìn xuống cầu thang & nhà lồng');
   hkSpot.position.set(-11.8, 17 + 1.55, -30.35); worldGroup.add(hkSpot);
-  // Hồng Trà Hòa Bình — biển ki-ốt 30–32 trên đồi + 2 ki-ốt liền kề (28–29 và 33–34) tạo thành dãy phố ki-ốt Khu Hòa Bình
+  // Hồng Trà Hòa Bình — biển ki-ốt 30–32 trên
   const hk = tex('KI-ỐT 30–32 · HỒNG TRÀ HÒA BÌNH', 3.4, 0.65, '#6b2a22', '#fff0c8', 'Khu Hòa Bình · Mở cửa 9:00–23:00');
   hk.position.set(6.0, 17 + 3.55, -34.5); worldGroup.add(hk);
   for(const [kx, kz, lbl, col] of [[1.4, -35.5, 'KI-ỐT 28–29 · BÁNH NGỌT', 0x8c4a2e], [9.4, -35.2, 'KI-ỐT 33–34 · QUÀ LƯU NIỆM', 0x3b6048]]){
@@ -5483,7 +5483,7 @@ function collectDacSan(name){
   return true;
 }
 /* V4.6-SO-END */
-// V4.6: save cũ đã có state.eaten -> lấp sẵn vào Sổ (đánh dấu "Từ trước"); mốc đã qua chỉ đánh dấu, không phát thưởng ngược.
+// V4.6: save cũ đã có state.eaten -> lấp sẵn vào
 (function backfillDacSan(){
   let changed = false;
   for(const name of Object.keys(state.eaten || {})){
@@ -7692,7 +7692,7 @@ updateHUD();
 renderBuffs();
 updateCrowdDensity();
 { // V5.4-D: ĐÓNG BĂNG ma trận vật tĩnh — three.js khỏi tính lại matrixWorld cho ~19k mesh tĩnh mỗi frame (lag do CPU, không phải GPU).
-  // Động giữ nguyên: player/rentBike/singer/beacon/mọi NPC/mọi xe + kim đồng hồ + sương trôi; vật sinh lúc chạy không bị chạm.
+  // Động giữ nguyên:
   const DYN = new Set([player, rentBike, singer, beacon]);
   for(const w of wanderers) if(w.g) DYN.add(w.g);
   for(const s of statics) if(s.g) DYN.add(s.g);
@@ -8089,7 +8089,7 @@ updateCrowdDensity();
       }
     }
   }
-  // ---------- REALISM-1 + V6: dây điện NGANG qua đường (cột nam + bó dây chằng chịt mỗi ~14m dọc phố chợ đêm) ----------
+  // ---------- REALISM-1 + V6: dây điện NGANG qua
   {
     for(const cx of [-165, -157, -149, -142, -135, -126, -118, -109, -101, -93, -86, -79, -73, -67, -61]){ // SWEEP-NIGHT-1: research/25 muc 1 — day dien that giang moi 8-10m; ban cu khoang ~15m thua. Them cot trung diem -> khoang 7-9m (chi geometry chay runtime, khong GLB moi)
       const gy = groundH(cx, 25.8);
