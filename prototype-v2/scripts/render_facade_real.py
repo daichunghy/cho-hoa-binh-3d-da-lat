@@ -90,12 +90,34 @@ import_asset('roundabout', (-30, 0, -6))
 import_asset('stairs', (-56, 0, -16))  # LAYOUT-FIX-1: thang doi ve hong tay (index.html: st.position.set(-56, 0, -16))
 import_asset('pine', (-22.5, 0, -16.8), scale=1.15, rot_y=math.fmod(-22.5 * 7 + -16.8 * 13, 3.14))
 
-# ---------- 2 chinh mau theo code web (chi tren market) ----------
+# ---------- mau hieu dung theo code web (chi tren market) ----------
+# FACADE-COLOR-1 (11/11): ap BANG MAU HIEU DUNG DAY DU cua web cho market —
+# clampSat(0.15, 0.45, warmGray) + ghi de WallCream/ColumnCream 0xeae3d5,
+# MarketWin 0x3a4c5e, bang FACADE_HEX (Peach/PeachDk/LouverWhite/ZigBack/
+# TrimBrown) + SignLetters ep 0xbf3b47. Bang duoi tai tao bang three r160
+# chay dung pipeline index.html (scripts/_fc1_tmp.mjs luc do, da xoa).
+# set_base_color PHAI chuyen sRGB -> linear (three.js ColorManagement lam
+# tuong tu) — ban V8 cu dat thang so sRGB vao o linear nen render rua sang.
+EFF_MARKET = {
+    'AdGreen': '#95cb95', 'AdLED': '#c88181', 'AdWhite': '#f6f3ec',
+    'AdYellow': '#e3d5a9', 'ColumnCream': '#eae3d5', 'Concrete': '#d1cbbd',
+    'ConcreteDk': '#b8aea0', 'ElevGlass': '#a0ceb3', 'Glass': '#bcd3d7',
+    'GlassDark': '#647073', 'GoodsA': '#ddb68f', 'GoodsB': '#ce8f85',
+    'GoodsC': '#e6d8b4', 'LouverWhite': '#e8eae9', 'MarketWin': '#3a4c5e',
+    'MetalDark': '#877e75', 'Peach': '#ecbfa7', 'PeachDk': '#d8b198',
+    'PineDark': '#81aa81', 'SignLetters': '#bf3b47', 'StatueWhite': '#f7f6f1',
+    'Stone': '#c8beaf', 'StripeA': '#83afcb', 'StripeB': '#fafaf8',
+    'TerraceMat': '#e2dacb', 'TrimBrown': '#d3a78b', 'Trunk': '#99866f',
+    'WallCream': '#eae3d5', 'WhiteConc': '#f3f2ed', 'Wood': '#c4a681',
+    'WoodDark': '#a68b6f', 'ZigBack': '#b3b9bf', 'ZigWhite': '#faf8f2',
+}
+
+def _srgb_to_linear(c):
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
 def set_base_color(mat, hexcol):
-    r = int(hexcol[1:3], 16) / 255.0
-    g = int(hexcol[3:5], 16) / 255.0
-    b = int(hexcol[5:7], 16) / 255.0
-    # linear-ish: Blender Principled nhan gia tri sRGB qua diffuse_color gan dung
+    r, g, b = (int(hexcol[i:i + 2], 16) / 255.0 for i in (1, 3, 5))
+    r, g, b = _srgb_to_linear(r), _srgb_to_linear(g), _srgb_to_linear(b)
     for node in mat.node_tree.nodes:
         if node.type == 'BSDF_PRINCIPLED':
             node.inputs['Base Color'].default_value = (r, g, b, 1.0)
@@ -111,12 +133,9 @@ for o in market_objs:
             continue
         seen_mats.add(m.name)
         base = m.name.split('.')[0]
-        if base == 'SignLetters':
-            set_base_color(m, '#c8372d')
-            print(f"[v8] mat {m.name} -> do chu 0xc8372d (theo clampSat web)")
-        elif base in ('WallCream', 'ColumnCream'):
-            set_base_color(m, '#e3d7bd')
-            print(f"[v8] mat {m.name} -> nga kem 0xe3d7bd (theo ghi de V5.5 web)")
+        if base in EFF_MARKET:
+            set_base_color(m, EFF_MARKET[base])
+            print(f"[fc1] mat {m.name} -> {EFF_MARKET[base]} (hieu dung web)")
 
 # ---------- mat dat trung tinh (chi lam nen ngu canh) ----------
 bpy.ops.mesh.primitive_plane_add(size=500, location=(0, 0, 0))
@@ -154,8 +173,12 @@ cam_data.clip_start = 0.1
 cam_data.clip_end = 600
 cam = bpy.data.objects.new('Cam', cam_data)
 bpy.context.scene.collection.objects.link(cam)
-cam.location = three_to_blender((-62, 4.5, -20))
-target = three_to_blender((4, 8, 12))
+# FACADE-COLOR-1: camera V8 goc (-62, 4.5, -20) nay nam TRONG khoi thang moi
+# (LAYOUT-FIX-1 doi thang ve (-56,0,-16): bbox x -67..-45, z -30..-2) -> render
+# DEN HOAN TOAN. Lui ve phia tay-nam ngoai khoi thang: three (-41, 6.5, -48),
+# ngam (5, 9, 12) — khoang cach mat tien ~75u nhu goc V8 cu, tuong vao khung.
+cam.location = three_to_blender((-41, 6.5, -48))
+target = three_to_blender((5, 9, 12))
 d = (target - cam.location).normalized()
 cam.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
 bpy.context.scene.camera = cam
@@ -178,6 +201,6 @@ scene.render.resolution_x = 900
 scene.render.resolution_y = 600
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = 'PNG'
-scene.render.filepath = os.path.join(OUT, 'v8-facade-real.png')
+scene.render.filepath = os.path.join(OUT, os.environ.get('FC_OUT', 'v8-facade-real.png'))
 bpy.ops.render.render(write_still=True)
 print("[v8] DA RENDER XONG ->", scene.render.filepath)

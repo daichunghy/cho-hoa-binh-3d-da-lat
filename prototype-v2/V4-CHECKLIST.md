@@ -1824,3 +1824,40 @@ Thang đã về hông tây đúng vị trí thật tương đối (chân ở m�
 - BYTE: index.html 571.780 -> 571.781 (+1 byte do "17.5"->"-38.5"); standalone 10.485.576 -> 10.485.577 (trần 10.485.760, dư 183) ✓ không cắt nội dung nào.
 - NGHIỆM THU HÌNH: renders/stairtoppair-topdown.png (script scripts/render_topdown_stairtoppair.py): GLB thang thật tại (-56,0,-16) + HỘP FOOTPRINT đúng kích thước code cho 2 tòa (code-built, không có GLB — giới hạn đã biết) + footprint hàng shophouse/ki-ốt + mốc TOUR/check-in. Tự soi: cặp nhà ôm đúng 2 bên đỉnh thang mới, khe sạch với hàng shophouse, lối ra quảng trường thoáng. Cảm giác thật trong game (mặt tiền 2 tòa quay về phía nam như cũ, biển/ánh sáng) chỉ chốt khi Chung Hy chơi thử.
 - Backup: index.html.bak-stairtoppair-20261111. KHÔNG đẩy GitHub, KHÔNG upload link (luật 18:05). DỪNG tại đây chờ Chung Hy xem.
+
+## FACADE-COLOR-1 — 11/11/2026 (1 mục duy nhất: sửa màu mặt tiền nhà lồng theo SỐ ĐO ảnh thật 01)
+### ĐO MÀU ẢNH THẬT (PIL, median theo vùng + quy tắc lọc pixel, ảnh 01-mat-tien-cho-ngay.jpg 1400x933)
+- Tường kem chính: x[800,1000] y[262,286] nắng phải #e7e0e0; x[300,480] y[266,292] trái #f3f1f0; cánh phải x[985,1090] y[268,345] p50 #e8e3e4 -> chốt ~#eae5e1 (L~0.90, S thấp, gần trung tính ấm).
+- Cột (pilaster phải): x[932,962] y[300,470] #e4e6e7.
+- Băng hồng đào: giữa x[380,800] y[388,414] #e9bda5; lọc sáng s>0.25,l>0.60 p50 #ecbfa7; cánh phải x[995,1090] #ead0c0 -> chốt #ecbfa7 (H 0.058, S 0.645, L 0.790).
+- Băng đào phần cong/bóng: #d6b09c (H 0.057, S 0.414, L 0.725).
+- Kính tầng 2 (tối): x[390,820] y[316,352] lọc l<0.42 #364858 (H 0.578, S 0.239, L 0.278).
+- Lam trắng dưới kính: x[390,820] y[356,388] #e7eae9 (L 0.912).
+- Chữ đỏ CHỢ ĐÀ LẠT: x[510,800] y[282,316] lọc s>0.45 p50 #be4052 (H 0.976, S 0.496, L 0.498).
+- Zigzag: phần trắng #e1e1e0; toàn dải (kèm chevron xám) #b0b6bd.
+- Viền tan/nâu ấm: trên băng đào cong x[850,1010] y[372,388] #d8a88f; khung lam phải #ebb89f -> chốt ~#d8a88f.
+### ĐO MÀU HIỆN TẠI (tái tạo đúng pipeline web bằng three r160: GLB -> clampSat(0.15,0.45,warmGray) -> ghi đè khi đặt scene)
+- WallCream/ColumnCream: GLB #f1e6ce/#e5ddce -> hiệu dụng #e3d7bd (L 0.816, S 0.404) — TỐI và VÀNG hơn ảnh (~0.90) => lệch lớn thứ 2.
+- MarketWin (GlassWin2/GlassWin3 = băng cửa sổ mặt tiền + ShopInBacks): GLB #fde7bf -> hiệu dụng #efe4d1 (kem nhạt L 0.878) trong khi ảnh là kính TỐI #364858 => LỆCH LỚN NHẤT.
+- Peach: GLB #e5ad84 -> #deb091 (L 0.720, S 0.538) vs ảnh #ecbfa7 (L 0.790, S 0.645): tối + nhạt bão hòa.
+- PeachDk: #c0987c (L 0.620) vs ảnh phần cong #d6b09c (L 0.725): tối.
+- LouverWhite: #f9f7f1 (L 0.961, ấm) vs ảnh #e7eae9 (L 0.912, mát): hơi sáng/ấm.
+- ZigBack: #c4bbab (be ấm do warmGray) vs ảnh chevron xám mát #b0b6bd: sai tông ấm.
+- TrimBrown: #bc9579 (L 0.606) vs viền ảnh #d8a88f (L 0.704): tối.
+- SignLetters: ép #c8372d (S 0.633, hue 0.011 cam) vs lõi chữ ảnh #be4052 (S 0.496, hue 0.976 hồng): hơi cam/bão hòa quá.
+- render_facade_real.py trước vòng này chỉ áp 2 ghi đè (SignLetters #c8372d, WallCream #e3d7bd) và đặt thẳng số sRGB vào ô linear của Blender (không chuyển đổi) -> render rửa sáng, không trung thực web.
+### ĐÃ SỬA (chỉ phía code web trong index.html, KHÔNG dựng lại GLB)
+- clampSat: SignLetters ép 0xc8372d -> 0xbf3b47.
+- mk.traverse: WallCream/ColumnCream 0xe3d7bd -> 0xeae3d5; MarketWin thêm color.setHex(0x3a4c5e) (emissive đêm giữ nguyên); thêm bảng FACADE_HEX áp cho Peach 0xecbfa7, PeachDk 0xd8b198, LouverWhite 0xe8eae9, ZigBack 0xb3b9bf, TrimBrown 0xd3a78b (clone material trước khi set như các nhánh cũ).
+- Sau sửa, hiệu dụng (đo lại bằng cùng pipeline): WallCream #eae3d5, Peach #ecbfa7 (= đúng median ảnh), PeachDk #d8b198, MarketWin #3a4c5e, LouverWhite #e8eae9, ZigBack #b3b9bf, TrimBrown #d3a78b, SignLetters #bf3b47 — mọi vùng đều nằm trong ~0.01-0.03 L/H của số đo ảnh.
+- BYTE: code thêm +393 byte; cắt 470 byte COMMENT (dòng clampSat market 221, R-10 122, V4.8 127 — chỉ comment, giữ nguyên code) -> index.html 571.781 -> 571.704; standalone 10.485.577 -> 10.485.500 (trần 10.485.760, dư 260; đạt đích <= 10.485.700).
+### RENDER ĐỐI CHIẾU (scripts/render_facade_real.py đã cập nhật)
+- Áp BẢNG MÀU HIỆU DỤNG ĐẦY ĐỦ của web cho mọi material market (không chỉ 2 ghi đè) + set_base_color chuyển sRGB->linear đúng ColorManagement của three.js.
+- PHÁT HIỆN: camera V8 cũ (-62, 4.5, -20) nay nằm TRONG khối thang mới (bbox thang x -67..-45, z -30..-2 sau LAYOUT-FIX-1) -> render ĐEN hoàn toàn (đã bisect: tắt khối màu vẫn đen; dời camera là hết). Camera mới three (-41, 6.5, -48) ngắm (5, 9, 12), khoảng cách mặt tiền ~78u như góc V8.
+- Ảnh: renders/facade-color-after.png + ghép renders/facade-color-cmp.png (trái render, phải ảnh thật 01, có nhãn).
+### VERDICT (tự soi ảnh ghép, chấm thẳng)
+- ĐẠT/GẦN THẬT: băng kính tầng 2 — từ kem nhạt thành tối xanh-xám + lam trắng, đọc giống ảnh nhất trong các vùng (sửa được lệch lớn nhất); chữ đỏ đậm đúng tông; zigzag trắng/xám mát khớp; viền tan nhẹ đúng mức; lam trắng hết ngả ấm.
+- ĐẠT MỘT PHẦN: tường kem — sáng và bớt vàng rõ so với trước, nhưng trên render vẫn hơi XÁM/LẠNH hơn tường nắng ấm trong ảnh (mặt tây vào bóng của đèn Blender + AgX; albedo đã khớp số đo nên phần còn lại là ánh sáng, không phải màu vật liệu). Băng hồng đào đúng hue nhưng hiện diện thị giác YẾU hơn ảnh (dải GLB mỏng 0.92u + viền lam/bóng che một phần — lệch hình khối, không phải màu).
+- CHƯA ĐẠT toàn cục: render vẫn kém sống động hơn ảnh thật (nền đất xám trung tính, thiếu nhà phố/người/xe/cây và nắng gắt Đà Lạt) — ngoài phạm vi mục màu; bố cục tượng tiền cảnh lệch (việc đã khóa GEOMETRY-2, không thuộc mục này). KHÔNG chấm "giống thật" toàn cục.
+### CỔNG: 8/8 XANH (diag 900 SẠCH, SEED_SAVE 300 SẠCH, standalone diag 300 SẠCH, traffic 26/26, audit 0 lỗi cứng/0 nhảy lưới, test_bd2 ALL PASS, check_sweep3 ALL PASS, test_real1 PASS)
+- Backup: index.html.bak-facadecolor-20261111. KHÔNG đẩy GitHub, KHÔNG upload link (luật 18:05). DỪNG tại đây chờ Chung Hy xem.

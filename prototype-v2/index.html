@@ -525,7 +525,7 @@ const ASSETS = {};
       for(const m of ms){
         if(!m || !m.color || seen.has(m)) continue; seen.add(m);
         const nm = m.name || '';
-        if(nm.indexOf('SignLetters') >= 0){ m.color.set(0xc8372d); continue; }
+        if(nm.indexOf('SignLetters') >= 0){ m.color.set(0xbf3b47); continue; }
         m.color.getHSL(_hsl);
         if(_hsl.s <= 0.03){
           if(warmGray && !(m.metalness > 0.3)) m.color.setHSL(0.07, 0.15, _hsl.l);
@@ -541,7 +541,7 @@ const ASSETS = {};
   }
   clampSat(ASSETS.stall, 0.45, 0.80, false); clampSat(ASSETS.vehicle, 0.45, 0.80, false);
   clampSat(ASSETS.character, 0.45, 0.80, false); clampSat(ASSETS.pine, 0.45, 0.80, false);
-  clampSat(ASSETS.market, 0.15, 0.45, true); clampSat(ASSETS.hotels, 0.15, 0.35, true); // SWEEP-NIGHT-1: trần bão hòa RIÊNG market 0.35 -> 0.45 (đo ảnh thật 01: băng hồng đào median #f3b99b bão hòa cao, GLB Peach s~0.56 bị kẹp 0.35 nên render/web rửa màu — verdict V8 điểm (4)); vẫn kẹp dưới mức gốc, không đụng hotels/nhóm khác
+  clampSat(ASSETS.market, 0.15, 0.45, true); clampSat(ASSETS.hotels, 0.15, 0.35, true); // SWEEP-NIGHT-1: market tran bao hoa 0.45 (chi tiet: V4-CHECKLIST)
   clampSat(ASSETS.theater, 0.15, 0.35, true); clampSat(ASSETS.cafe, 0.15, 0.35, true);
   clampSat(ASSETS.shop, 0.15, 0.35, true); clampSat(ASSETS.roundabout, 0.15, 0.35, true);
   clampSat(ASSETS.bridge, 0.15, 0.35, true); clampSat(ASSETS.stairs, 0.15, 0.35, true);
@@ -635,7 +635,7 @@ function groundH(x,z){
   if(z <= -30) return 17;                        // đỉnh đồi
   if(z >= -2) return 0;                          // thung lũng
   // LAYOUT-FIX-1: nhanh thang/them CU o tam x 0 da bo — vung nay tra ve suon tho (cong thuc mac dinh duoi), thang moi o nhanh chen phia tren.
-  // V4.8 (research/17 điểm 3): THỀM PHẲNG quanh đảo bùng binh — nối liền tới sát thềm tây (-14.5) để không còn gờ dốc cắt giữa đảo và bậc tam cấp
+  // V4.8: THEM PHANG quanh dao bung binh (research/17 diem 3).
   if(x >= -52 && x < -14.5 && z < -2 && z > -30){ // GEOMETRY-2: them phang quanh dao doi theo tam dao moi (-30,-6)
     if(z >= -16) return 0;
     return 17 * ((-16 - z) / 14);
@@ -917,6 +917,7 @@ const HYDRA_COLS = [0x7a9cc6, 0x9a7ab8, 0xd89ab8, 0xe8e4da, 0x86b8d8];
 }
 const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
 {
+  const FACADE_HEX = { Peach:0xecbfa7, PeachDk:0xd8b198, LouverWhite:0xe8eae9, ZigBack:0xb3b9bf, TrimBrown:0xd3a78b }; // FACADE-COLOR-1: mau do tu anh 01
   const mk = cloneAsset('market');
   mk.position.set(0, 0, 20);
   worldGroup.add(mk);
@@ -924,17 +925,21 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
     if(o.isMesh && o.material && !Array.isArray(o.material)){
       if(o.material.name === 'MarketWin'){
         o.material = o.material.clone();
+        o.material.color.setHex(0x3a4c5e); // FACADE-COLOR-1: kinh tang 2 toi nhu anh 01 (do #364858)
         o.material.emissive = new THREE.Color(0xff9a3c);
         o.material.emissiveIntensity = 0;
         winMats.push(o.material);
       } else if(o.material.name === 'WallCream' || o.material.name === 'ColumnCream'){
         o.material = o.material.clone();
-        o.material.color.setHex(0xe3d7bd); // V5.5: mat tien nga KEM am — ban goc trang tinh bi chay trang ban ngay tren web
+        o.material.color.setHex(0xeae3d5); // FACADE-COLOR-1: kem sang theo do anh 01 (V5.5 cu 0xe3d7bd toi/vang)
       } else if(o.material.name === 'SignLetters'){
         o.material = o.material.clone();
         o.material.emissive = new THREE.Color(0xff2015);
         o.material.emissiveIntensity = 0.35;
         signGlowMats.push(o.material);
+      } else if(FACADE_HEX[o.material.name]){
+        o.material = o.material.clone();
+        o.material.color.setHex(FACADE_HEX[o.material.name]);
       }
     }
   });
@@ -4108,7 +4113,7 @@ function parkedRow(z, x0, x1, rotY, gaps){
     v.g.traverse(o => { o.castShadow = false; });
   }
 }
-// R-10 (19b): BỎ hàng xe đậu z=11.75 sau sạp — dải sau sạp không đủ cho cả xe đậu lẫn làn chân đồi; xe đậu đã có ở vành đảo + bãi đông + vệ đường vào.
+// R-10 (19b): BO hang xe dau z=11.75 sau sap — khong du cho canh lan chan doi.
 parkedRow(-11.6, -14, -5, 0.6, []);
 // V4.7: bãi xe máy DỌC ĐƯỜNG VÀO như ảnh thật 05/06 (xe đậu kín hai vệ đường vào) — bám cao độ dốc
 function parkedRowY(z, x0, x1, rotY){
