@@ -1153,6 +1153,23 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
       window.STATUE_FX.mats.push(o.material);
     }
   });
+  // HB-SQUARE-1 (12/11): màu đảo đo lại từ ảnh thật 44 (PIL median, script /tmp/measure_sq1.py + sq2):
+  // mảng xanh đảo thật SẪM (cây lớn giữa đảo #3c5131, tượng cây #455833 — L ~0.26) trong khi GLB
+  // LeafGreen hiệu dụng sau clampSat ~#61854d (L 0.41) + PineMid ~#477a42 (L 0.37) sáng hẳn;
+  // hoa luống thật ĐỎ bão hòa #d02e2d (2 luống trái/phải khớp nhau) trong khi Flower0/Flower2
+  // là crimson hồng #c73d52/#b33852. Ghi đè theo tên material như idiom StatueStone ở trên
+  // (clone vật liệu trước khi set để không đụng ASSETS gốc); Flower1/3/4/5 giữ làm điểm nhấn.
+  rb.traverse(o => {
+    if(o.isMesh && o.material && !Array.isArray(o.material)){
+      const nm3 = o.material.name;
+      if(nm3 === 'LeafGreen' || nm3 === 'PineMid' || nm3 === 'Flower0' || nm3 === 'Flower2'){
+        o.material = o.material.clone();
+        if(nm3 === 'LeafGreen') o.material.color.set(0x3c5131);
+        else if(nm3 === 'PineMid') o.material.color.set(0x455833);
+        else o.material.color.set(0xd02e2d);
+      }
+    }
+  });
   for(const [sx, sz] of [[-37.6, -6.4], [-30.6, 0.9]]){ // GEOMETRY-2: theo tam dao moi
     const sp = new THREE.SpotLight(0xf2e8d8, 0, 34, 0.55, 0.9, 1.2);
     sp.position.set(sx, 1.18, sz); sp.target.position.set(-34.2, 5.2, -2.8);
@@ -4138,7 +4155,26 @@ function tickWater(t){
     box(0.55, 1.45, 0.04, fc, fx + 0.3, 4.65, fz, worldGroup, false);
     ball(0.09, 0xffd94d, fx, 5.65, fz, worldGroup, 0.9);
   }
-  box(64, 0.08, 14.2, 0xa79a84, 14, 0.01, 4.8, worldGroup, false); // tấm sân quảng trường rộng rãi dưới chân bậc tam cấp (x -18..46, z -2.3..11.9), tách biệt rõ với vành vòng xoay
+  // HB-SQUARE-1 (12/11): tấm sân cũ là hộp MÀU PHẲNG 0xa79a84 (L 0.55, không vân) che kín lát đá
+  // canvas sq1 bên dưới — bề mặt phẳng trơn lớn nhất quảng trường. Đổi sang LÁT ĐÁ canvas theo
+  // idiom WATER-1/sq1 với số đo ảnh thật: nền sân trước chợ ảnh 03 (PIL median, ánh sáng mềm)
+  // #8c8374 làm tông ô đá + khe #716a60 (mẫu bóng râm cùng ảnh); giữ nguyên hình học/hộp cũ
+  // (64 x 14.2, tâm 14/4.8, mặt trên y 0.05) để không đụng groundH/luồng đi.
+  const pzC = document.createElement('canvas'); pzC.width = pzC.height = 256;
+  const pg = pzC.getContext('2d'); pg.fillStyle = '#716a60'; pg.fillRect(0, 0, 256, 256);
+  for(let ry = 0; ry < 4; ry++) for(let rx = 0; rx < 4; rx++){
+    const v = Math.abs((Math.sin(rx * 12.9 + ry * 78.2) * 43758.5) % 1);
+    const tone = 0.92 + v * 0.16;
+    pg.fillStyle = 'rgb(' + Math.round(140 * tone) + ',' + Math.round(131 * tone) + ',' + Math.round(116 * tone) + ')';
+    pg.beginPath(); pg.roundRect(rx * 64 + 3, ry * 64 + 3, 58, 58, 6); pg.fill();
+  }
+  const pzTex = new THREE.CanvasTexture(pzC); pzTex.wrapS = pzTex.wrapT = THREE.RepeatWrapping; pzTex.colorSpace = THREE.SRGBColorSpace;
+  function plazaSlab(w, d, x, z, repX, repY){
+    const t2 = pzTex.clone(); t2.repeat.set(repX, repY); t2.needsUpdate = true;
+    const m2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, d), new THREE.MeshStandardMaterial({ map:t2, roughness:0.95 }));
+    m2.position.set(x, 0.01, z); m2.receiveShadow = true; worldGroup.add(m2); return m2;
+  }
+  plazaSlab(64, 14.2, 14, 4.8, 10, 2.2); // tấm sân quảng trường dưới chân bậc tam cấp (x -18..46, z -2.3..11.9), tách biệt rõ với vành vòng xoay
   box(0.7, 0.1, 14.2, 0x6e6257, -18.0, 0.02, 4.8, worldGroup, false); // dải viền đá phân tách rõ ranh giới giữa vòng xoay (mép vành -16.4) và sân dưới bậc tam cấp (-11..11)
   for(const hz of [0.5, 3.5, 6.5, 9.5]) hydrangea(-14.2, hz, 0.9);
   for(const zx of [-16.8, -15.6, -14.4, -13.2]) box(0.55, 0.03, 2.6, 0xe8e4da, zx, 0.07, 1.0, worldGroup, false); // BLENDER-DEEP-2: zebra qua vành đường đảo về bậc
@@ -4171,7 +4207,7 @@ function tickWater(t){
   clothesRack(36.9, 14.9); clothesRack(36.9, 25.1); // SWEEP-1: doi 2 gia tu SAU sap (x 42.1 — bi sap cao ~3.2 che khuat han khoi quang truong, render sw1-M3/M4 xac nhan) ra 2 DAU TRUOC cua day, xeo mat sap: ao treo lo ra phia dai phun/duong di (khong chan mat sap 37.9 vi lech z >= 1.35)
   clothesRack(40, 26.3); // giá độc lập ở đầu nam dãy
   solid(36.9, 14.9, 0.4, 1.25); solid(36.9, 25.1, 0.4, 1.25); solid(40, 26.3, 0.4, 1.25); // SWEEP-1: giá cao 1.55 mà thiếu collider -> người chơi đi xuyên qua giá (hướng dài của giá nằm dọc z do rotY -pi/2)
-  box(10, 0.08, 13.5, 0x978a78, 40.5, 0.01, 20.75, worldGroup, false); // tấm sân dãy quần áo (né làn xe dịch vụ z 12.9)
+  plazaSlab(10, 13.5, 40.5, 20.75, 1.6, 2.1); // HB-SQUARE-1: tấm sân dãy quần áo (né làn xe dịch vụ z 12.9) — cùng lát đá đo thật với sân chính, bỏ màu phẳng 0x978a78
   // --- cụm bàn thấp + người ngồi quanh đài phun (đời sống sân, đối diện khu quần áo)
   function plazaTable(x, z){
     box(0.58, 0.05, 0.58, 0x74522f, x, groundH(x, z) + 0.44, z, worldGroup, false);
@@ -5564,17 +5600,35 @@ let singer = null, singerLimbs = null;
   box(2.1, 0.09, 0.55, 0xd8d2c2, sx, sy + 0.455, sz + 4.8, worldGroup, false);
   box(2.1, 0.52, 0.08, 0xd8d2c2, sx, sy + 0.76, sz + 5.06, worldGroup, false);
   box(0.85, 0.14, 0.42, 0x3b2618, sx - 1.5, sy + 0.42, sz + 1.85, worldGroup, false); // hộp đàn mở nhận tip
+  // HB-SQUARE-1 (KE_HOACH-REBUILD P2 "ca sĩ + loa kéo + bảng ghi bài hát"): LOA KÉO cạnh sân
+  // khấu (thân đen 0x2c2c30 như cặp loa sân khấu + 2 bánh + tay kéo nghiêng) — trước đây chỉ
+  // có 2 loa hộp đặt trên sân khấu, thiếu hẳn loa kéo của hát đường phố thật.
+  box(0.52, 0.72, 0.42, 0x2c2c30, sx - 4.3, sy + 0.48, sz + 1.9, worldGroup, false);
+  box(0.40, 0.08, 0.30, 0x3a3a40, sx - 4.3, sy + 0.88, sz + 1.9, worldGroup, false);
+  box(0.06, 0.18, 0.18, 0x141416, sx - 4.52, sy + 0.09, sz + 1.9, worldGroup, false);
+  box(0.06, 0.18, 0.18, 0x141416, sx - 4.08, sy + 0.09, sz + 1.9, worldGroup, false);
+  const spkHandle = box(0.04, 0.55, 0.04, 0x2c2c30, sx - 4.3, sy + 1.05, sz + 1.62, worldGroup, false); spkHandle.rotation.x = 0.5;
+  // BẢNG BÀI HÁT dựng cạnh đông sân khấu, quay về phía vòng người nghe (bảng 2 dòng theo
+  // idiom signMesh của biển sân khấu: nền #4c3428 + chữ #ffd98a) + cột gỗ 0x4a3b2c như các biển chỉ đường.
+  box(0.08, 1.45, 0.08, 0x4a3b2c, sx + 4.7, sy + 0.72, sz + 2.9, worldGroup, false);
+  const songBoard = signMesh('BẢNG BÀI HÁT', 1.7, 1.0, '#4c3428', '#ffd98a', '♪ Đà Lạt mộng mơ ♪');
+  songBoard.position.set(sx + 4.7, sy + 1.95, sz + 2.9); songBoard.rotation.y = 0.55; worldGroup.add(songBoard);
+  solid(sx + 4.7, sz + 2.9, 0.3, 0.3);
+  // HB-SQUARE-1 (KE_HOACH-REBUILD P2): khán giả hát đường phố thật NGỒI GHẾ NHỰA — 2 người
+  // nghe đang đứng (áo đỏ + áo tím) chuyển sang ngồi ghế nhựa xanh đỏ (màu ghế nhựa đã dùng
+  // ở cụm bàn sân đài phun/bàn Hoa Sữa; mặt ghế 0.30 theo đúng stoolWorld), 5 người còn lại giữ nguyên.
+  stoolWorld(sx - 3.6, -47.8, 0x2456a6); stoolWorld(sx + 3.2, -48.2, 0xc22e22);
   [[0x5f7a8c, sx - 5.4, -53.3, Math.PI / 2, true],
    [0x8c6a5a, sx - 5.4, -52.0, Math.PI / 2, true],
    [0x6a7a68, sx - 5.4, -50.7, Math.PI / 2, true],
-   [0xc8372d, sx - 3.6, -47.8, 2.45, false],
+   [0xc8372d, sx - 3.6, -47.8, 2.45, true, 0.30],
    [0x2e6da4, sx - 0.6, -47.2, 3.14, true],
    [0xd9a62e, sx + 0.6, -47.2, 3.14, true],
-   [0x74566b, sx + 3.2, -48.2, -2.5, false]].forEach(([col, ax, az, ary, sit], ai) => {
+   [0x74566b, sx + 3.2, -48.2, -2.5, true, 0.30]].forEach(([col, ax, az, ary, sit, seatH], ai) => {
     const a = makePerson(col, 0x4a4640, ai % 2 === 1 ? 'beanie' : 'cap');
     const L = a.userData.limbs;
     if(sit){
-      a.position.set(ax, sy + 0.45, az);
+      a.position.set(ax, sy + (seatH || 0.45), az);
       if(L){ L.lLeg.rotation.x = -1.5; L.rLeg.rotation.x = -1.5; }
     } else {
       a.position.set(ax, sy, az);
