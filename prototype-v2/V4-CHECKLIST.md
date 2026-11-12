@@ -2332,3 +2332,33 @@ diag 900 SẠCH · SEED_SAVE 300 SẠCH · soak 1800 SẠCH · package + standal
 ### Nợ / ngoài phạm vi (ghi rõ)
 - Companion vẫn chưa ngồi cùng thuyền (nợ từ XH-4, XH-5 không đổi — brief vòng này không yêu cầu).
 - KHÔNG đẩy GitHub, KHÔNG upload (theo lệnh vòng).
+
+## REALISM-INT-1 — Nội thất nhà lồng giống thật theo ảnh thật (12/11/2026)
+Chuẩn Chung Hy: "giống y chang từ loại hàng, vị trí, mật độ" + LUẬT ĐO KHÔNG ĐOÁN. Nguồn sự thật: 44 ảnh `theme/real-market/` + research/24. Backup: `index.html.bak-realint1-20261112` (md5 5009a94c = bản trước vòng). Phạm vi CHỈ trong nhà lồng; bố cục quầy + mọi hệ mua bán/tương tác/quest giữ nguyên (mọi test liên quan PASS lại — xem mục Cổng). KHÔNG đẩy GitHub, KHÔNG upload (lệnh vòng).
+
+### Số đo từ ảnh thật (PIL: cắt hộp xác định → median / cụm màu lớn nhất; script đo /tmp/measure_realint1.py + measure_realint1b.py)
+- **Biển hiệu** (ảnh 16/17): nền trắng-kem #f5eee5/#ece3f2 → game **#f3ecdc**; chữ chính đỏ: median pixel chữ (mặt nạ đỏ, biển HẠNH ảnh 17) #7f0b0e ở vùng tối tới #d1a1a8 vùng sáng (anti-alias loãng) → game lấy **#b01e24** (trung điểm dải đo, đọc rõ trên nền kem); dòng phụ xanh: mặt nạ xanh #8590ae/#c8caea (loãng) → game **#46649e**.
+- **Thân quầy sơn kem** (ảnh 17: cột #dcaf94, kệ #eac794) → họ kem game #dcc7a2/#e2cda6/#d8c096/#d6bd92/#e4d0a8; **mặt bàn #ece0c4**.
+- **Sàn lối đi**: cụm #957b5e (ảnh 16) / #c6a891 (ảnh 17) → canvas sàn base **#71614f**, gạch **#a08768/#93765a** (trước: #786c5e, #9c8a70/#8c7b63).
+- **Rau củ** (ảnh 22 cụm sáng + ảnh 20/21): cà rốt #e87959/#f98a43 → **0xe8763a**; củ cải đỏ #b32037/#da4c72 → **0xc22e4a**; dưa leo #267163/#2a4331 → **0x2f613c**; rau lá #64985e/#528a4f → **0x59884c**; khoai tây #d88660/#d99778 → **0xc98d64**.
+- **Rổ nhựa** (ảnh 22): đỏ median mặt nạ **#af2522** → game 0xc03327; xanh ngọc **#2d7061** (giữ đúng số đo); thêm xanh dương 0x2456a6 + xanh lá 0x3e7d46 (ảnh 20/21).
+- **Hoa bất tử** (ảnh 23, cụm theo sắc): vàng **#d2a534**, cam #c07931 → game 0xd18a3a, đỏ #b2552b → game 0xc05a30, hồng **#cc8a70**.
+- **Đèn**: pixel tuýp ảnh 16 = **#ffffff** → tubeBulbMat 0xfff4d6 → **0xfdfdf6**; ảnh 16 có bóng tròn ấm treo giữa quầy → thêm bóng **0xffc46b** trước mỗi quầy decor.
+- **Đếm mật độ**: ảnh 20 — khối quầy phải ≈ 24 mâm/rổ cho 2 mặt quầy kề → **~12–15 mâm/mặt quầy**; ảnh 16 — mỗi quầy đặc sản ~5 túi treo + ~10 hũ + ~6 chồng gói; ảnh 19 — 1 tiểu thương/quầy + 1–3 khách/quầy.
+- **Ghi trung thực**: trong 44 ảnh KHÔNG có ảnh riêng quầy thịt/cá — nhóm thịt/cá dựng theo research/24 §4.5 + trình bày chuẩn chợ thật (treo móc/thớt/khay đá), không có số đo ảnh riêng.
+- **Tên quầy lấy từ ảnh thật**: TUYẾT HẠNH (số 276, ảnh 17), ANH TUẤN (số 184, ảnh 17), BÍCH VÂN (ảnh 17), HƯNG PHÁT (ảnh 16), HƯƠNG THU (ảnh 16), TRÁI CÂY KIM DUNG (ảnh 16).
+
+### Thay đổi code (chỉ khối nhà lồng + tham số tùy chọn của helper biển dùng chung)
+1. `makeSignTexture`/`signMesh`: thêm tham số tùy chọn `subFg` (mặc định null = hành vi cũ; không caller nào ngoài nhà lồng đổi).
+2. GROUP_DEFS: cả 8 nhóm về biển thật nền #f3ecdc / chữ #b01e24 / phụ #46649e (bỏ nền màu theo nhóm của Argon); thêm **nhóm 7 THỊT & CÁ TƯƠI** (THỊT HEO CÔ SÁU, CÁ TƯƠI MINH KHAI, THỊT BÒ CHỊ TƯ, HẢI SẢN ANH BA, THỊT GÀ BÀ NĂM; awn 0xa63a2e); nhóm trái cây thêm 'TRÁI CÂY KIM DUNG'.
+3. Phân bổ nhóm trên 33 quầy decor (mô phỏng đúng vòng lặp + quy tắc bỏ 6 sạp tương tác): **RAU 4 · TRÁI CÂY 5 · HOA 3 · LEN 5 · ĐỒ KHÔ 3 · ĐẶC SẢN 6 · ẨM THỰC 3 · THỊT CÁ 4** (trước: rau 2, hoa 6, đặc sản 9, ẩm thực 2, thịt cá 0).
+4. Bày hàng viết lại theo nhóm (helper `mound()` = cầu dẹt + cầu nhỏ phủ mặt 2 tông xen nhau cho đống có hạt; `basket()` = rổ + đống): RAU 4 rổ trước + 3 rổ tầng sau kê thùng + 2 rổ sàn; TRÁI CÂY 4 mẹt + 3 mẹt tầng sau + 2 nải chuối treo + cân đồng hồ + rổ sàn; HOA 5 xô cụm đầu + 3 giỏ bất tử treo (cụm 7 đầu nhỏ theo bảng DRYF) + 3 bó gói giấy; LEN sào 9 món + 4 chồng × 4 lớp + 2 khăn treo đầu quầy; ĐỒ KHÔ kệ 2 tầng × 8 hũ nắp đỏ + 4 bao + 4 túi treo diềm + 4 túi dưới quầy; ĐẶC SẢN kệ sau 2 tầng × 8 + 4 chồng gói × 4 + đống dâu sấy đỏ 0xd92b35 + 3 túi treo + 5 túi dưới quầy; ẨM THỰC thêm nồi + bàn phụ + 4 ghế nhựa + 2 tô; THỊT CÁ: sào inox + 5 miếng thịt treo móc + thớt gỗ Ø0,30 + tảng thịt + 2 khay cá trên đá 0xe8eef0 (cá bạc 0xb9c6cc) + rổ tôm hồng 0xe8a0a8 dưới sàn.
+5. Người: thêm khách thứ hai trước quầy khi `qn2 % 3 === 0` (+9 người) → **NPC census 484 → 493** (diag xác nhận "tong: 493").
+
+### Cổng (bản cuối)
+diag 900 SẠCH · SEED_SAVE 300 SẠCH · soak 1800 SẠCH · package + standalone diag 300 SẠCH (GAME_ROOT=/tmp/realint1/sa), standalone **5.516.160 byte** < trần 10.485.760 · traffic **26/26** · audit_ground **0 lỗi cứng / 0 nhảy lưới** (cảnh báo mềm wanderer băng làn — có từ trước) · test_bd2 ALL PASS · check_sweep3 ALL PASS · test_real1 PASS · test_xh4_boat ALL PASS · test_xh5_pathing PASS. index.html md5 **318ffa70…**, 698.066 byte. Save key `chohb3d-v1` giữ nguyên; không CDN/texture ngoài.
+
+### Nghiệm thu — render MÔ PHỎNG theo thông số code (scripts/render_realint1.py, Cycles; KHÔNG phải screenshot game; biển trong harness vẽ phẳng kem + viền đỏ, KHÔNG có chữ — chữ biển chỉ kiểm chứng trong game qua canvas texture)
+- renders/realism-int-aisle.png — lối đi giữa 2 dãy quầy từ đầu đông nhìn dọc: biển kem viền đỏ 2 dãy, mặt quầy kem, đống hàng đủ màu + rổ sàn, khách đứng dọc lối, đèn tuýp trần. Đối chiếu renders/merge-market.png (bản Argon): biển hết màu theo nhóm, hàng hết cầu rời đều nhau, mật độ đặc hơn rõ.
+- renders/realism-int-stall.png — cận cặp quầy THẬT theo công thức phân bổ: qn27 THỊT CÁ (−2,6, 20.65) trái (khay cá + thịt treo móc + thớt) + qn29 RAU (2,6, 20.65) phải (rổ rau củ đủ màu + rổ sàn), tiểu thương sau quầy.
+- Tự soi: đống hàng ở mức stylized chibi vẫn đọc hơi "mịn" (cầu dẹt + hạt 2 tông) — đúng phong cách khóa của game; bố cục/mật độ/trình bày theo nhóm đã bám ảnh.
