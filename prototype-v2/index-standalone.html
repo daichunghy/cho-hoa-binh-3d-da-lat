@@ -947,6 +947,14 @@ const HYDRA_COLS = [0x7a9cc6, 0x9a7ab8, 0xd89ab8, 0xe8e4da, 0x86b8d8];
       } else {
         o.material = o.material.clone();
         o.material.map = TEX_GRIME;
+        // REALISM-STAIR-1: màu đá bậc/chiếu nghỉ theo SỐ ĐO ảnh thật (PIL median:
+        // mặt bậc nắng #574937 + đèn #604535, mặt chiếu nghỉ ngày #9e978a — xem
+        // mục REALISM-STAIR-1 trong V4-CHECKLIST). GLB cũ #cecac0/#c4bdb5/#ddd4c4
+        // sáng + trung tính, lệch hẳn đá nâu-xám ấm ngoài thật.
+        const mn = o.material.name || '';
+        if(mn === 'Concrete') o.material.color.setHex(0x97897a);
+        else if(mn === 'Stone') o.material.color.setHex(0x8d7962);
+        else if(mn === 'CanvasOld') o.material.color.setHex(0x9e978a);
       }
     }
   });
@@ -1022,7 +1030,7 @@ const HYDRA_COLS = [0x7a9cc6, 0x9a7ab8, 0xd89ab8, 0xe8e4da, 0x86b8d8];
 }
 const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
 {
-  const FACADE_HEX = { Peach:0xecbfa7, PeachDk:0xd8b198, LouverWhite:0xe8eae9, ZigBack:0xb3b9bf, TrimBrown:0xd3a78b }; // FACADE-COLOR-1: mau do tu anh 01
+  const FACADE_HEX = { Peach:0xecbfa7, PeachDk:0xd8b198, LouverWhite:0xe8eae9, ZigBack:0xb3b9bf, TrimBrown:0xd3a78b, PineDark:0x2a3520 }; // FACADE-COLOR-1: mau do tu anh 01; REALISM-STAIR-1: PineDark = thông bút mái chợ, PIL ảnh 01 median #2a3520 (GLB gốc #81aa81 pastel sáng, lệch hẳn)
   const mk = cloneAsset('market');
   mk.position.set(0, 0, 20);
   worldGroup.add(mk);
@@ -1057,6 +1065,18 @@ const marketFrontZ = 12, marketBackZ = 28, marketHW = 34;
   solid(-34, 20, 0.8, 8.4); solid(34, 20, 0.8, 8.4); solid(0, 27.8, 34, 0.8);
   for(let x=-32; x<=32; x+=8) solid(x, 12.2, 0.65, 0.65);
   solid(17.5, 9.5, 3.6, 2.6); // khối sân thượng tầng 2
+}
+{ // REALISM-STAIR-1: bổ sung tượng trắng mép mái mặt tiền — ảnh 01 đếm ~5 tượng
+  // dọc mép mái trước, GLB market chỉ có 1 (RoofStatue tại local x -19). Thêm 3
+  // tượng code-built đúng phom GLB (cao 0.62, đế 19.47) tại x -7/5/17, z theo
+  // đường cong mép mái (cùng dãy z của PencilPine trong GLB: -7.98/-8.06/-7.13
+  // local -> world z 12.02/11.94/12.87). Màu trắng ấm #f5f2ea (PIL ảnh 01
+  // median tượng #d7dada trong nắng; GLB StatueWhite hiệu dụng sau clampSat).
+  for(const [sx, sz] of [[-7, 12.02], [5, 11.94], [17, 12.87]]){
+    box(0.36, 0.1, 0.36, 0xf5f2ea, sx, 19.52, sz, worldGroup, false);
+    cyl(0.085, 0.13, 0.42, 0xf5f2ea, sx, 19.78, sz, worldGroup, 8);
+    ball(0.105, 0xf5f2ea, sx, 20.08, sz, worldGroup, 1.0);
+  }
 }
 { // FRONTAGE-1 (11/11): pano quảng cáo + LED đỏ tầng trệt theo ảnh 01. GLB đã có dải AdBand
   // PHẲNG màu clamp nhạt không họa tiết -> tầng trệt "thưa". Nền trắng + logo xanh Cozy +
@@ -1398,23 +1418,36 @@ function brandShop(x, z, rotY, kind){ // BLENDER-DEEP-2 + V6: kiến trúc cao n
   }
   buildLaTulipe(-73.5, -36.4, 17);
 
-  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH THANG (mặt tiền lam gỗ thông ấm + xanh rừng đậm #1b4332, kệ mứt/trà nhiều tầng - ảnh 10)
+  // 2. Phía Đông: CỬA HÀNG L'ANGFARM STORE ĐỈNH THANG (mặt tiền lam gỗ thông ấm + xanh thương hiệu, kệ mứt/trà nhiều tầng - ảnh 10)
+  // REALISM-STAIR-1: bỏ xanh rừng 0x1b4332 của Argon (CHƯA đo) -> số đo ảnh thật:
+  // thân/biển = xanh thương hiệu #2e5b2e (đã đo ở cửa hàng đầu chợ), mái tôn sóng
+  // xanh xám phai #88915e (PIL ảnh 10), chữ biển TRẮNG (ảnh 08/10), thêm dây bóng
+  // đèn viền mái như ảnh 10.
   function buildLangfarmStairs(x, z, y){
     const g = new THREE.Group(); g.position.set(x, y, z); worldGroup.add(g);
-    box(8.8, 6.4, 6.2, 0x1b4332, 0, 3.2, 0, g);
+    box(8.8, 6.4, 6.2, 0x2e5b2e, 0, 3.2, 0, g);
     // Hệ lam gỗ thông đứng đặc trưng thương hiệu L'angfarm Đà Lạt
     for(let sx = -4.1; sx <= 4.11; sx += 0.45){
       box(0.14, 6.2, 0.12, 0xc88a4b, sx, 3.15, 3.12, g, false);
     }
     box(9.2, 0.3, 6.6, 0x3b2618, 0, 6.55, 0, g, false);
     const rLen = Math.hypot(4.6, 2.1);
-    const sl1 = box(rLen, 0.16, 6.8, 0x1b4332, -2.2, 7.55, 0, g, false); sl1.rotation.z = Math.atan2(2.1, 4.4);
-    const sl2 = box(rLen, 0.16, 6.8, 0x1b4332, 2.2, 7.55, 0, g, false); sl2.rotation.z = -Math.atan2(2.1, 4.4);
-    box(8.2, 1.7, 0.15, 0x234f3b, 0, 7.35, 3.11, g, false);
-    const lfSign = signMesh("L'ANGFARM", 8.0, 1.35, '#133325', '#ffd98a', 'ĐẶC SẢN ĐÀ LẠT • MỨT • TRÀ ATISO • HỒNG TREO');
+    const sl1 = box(rLen, 0.16, 6.8, 0x88915e, -2.2, 7.55, 0, g, false); sl1.rotation.z = Math.atan2(2.1, 4.4);
+    const sl2 = box(rLen, 0.16, 6.8, 0x88915e, 2.2, 7.55, 0, g, false); sl2.rotation.z = -Math.atan2(2.1, 4.4);
+    box(8.2, 1.7, 0.15, 0x2e5b2e, 0, 7.35, 3.11, g, false);
+    const lfSign = signMesh("L'ANGFARM", 8.0, 1.35, '#2e5b2e', '#ffffff', 'ĐẶC SẢN ĐÀ LẠT • MỨT • TRÀ ATISO • HỒNG TREO');
     lfSign.position.set(0, 4.85, 3.28); g.add(lfSign);
+    // REALISM-STAIR-1: dây bóng đèn nhỏ chạy dọc 2 mép mái trước (ảnh 10: 2 hàng
+    // bóng trắng ấm viền mái tôn) — bóng emissive dùng chung họ lampGlows.
+    const eaveMat = new THREE.MeshStandardMaterial({ color:0xfff6dc, emissive:0xffc86b, emissiveIntensity:1.6, roughness:0.3 });
+    lampGlows.push(eaveMat);
+    const eaveGeo = new THREE.SphereGeometry(0.05, 8, 6);
+    for(const sgn of [-1, 1]) for(let bi = 0; bi <= 5; bi++){
+      const t = bi / 5, bl = new THREE.Mesh(eaveGeo, eaveMat);
+      bl.position.set(sgn * (4.35 - 4.35 * t), 6.62 + 1.95 * t, 3.52); g.add(bl);
+    }
     // Mái hiên lam gỗ + sắt xanh
-    box(7.8, 0.12, 1.45, 0x1b4332, 0, 2.95, 3.75, g, false);
+    box(7.8, 0.12, 1.45, 0x2e5b2e, 0, 2.95, 3.75, g, false);
     box(6.8, 2.3, 0.15, 0x3d2817, 0, 1.35, 3.14, g, false);
     const wp = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.9), new THREE.MeshStandardMaterial({ color:0xffecc4, emissive:0xff9a3c, emissiveIntensity:0.55, roughness:0.5 }));
     wp.position.set(0, 1.35, 3.24); g.add(wp);
