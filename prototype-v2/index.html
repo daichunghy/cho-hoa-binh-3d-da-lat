@@ -1741,12 +1741,21 @@ for(let cy2 = 0; cy2 < 4; cy2++) for(let cx2 = 0; cx2 < 4; cx2++){
     g.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
     g.position.set(x, groundH(x, z) - 0.05, z); g.scale.setScalar(s); g.rotation.y = (x * 7 + z * 13) % 3.14; worldGroup.add(g);
     if(near){ cyl(0.20 * s, 0.23 * s, 0.8, 0xcfcfc8, x, groundH(x, z) + 0.4, z, worldGroup, 8); solid(x, z, 0.38, 0.38); } }; // XH-4C: voi goc 0xe8e2d4 qua trang -> 0xcfcfc8 trang nga xam do video (research/28)
-  _umb(-545, 209, 1.80); _umb(-528, 217, 1.65); _umb(-512, 206, 1.85); _umb(-497, 215, 1.60);
-  _umb(-481, 208, 1.75); _umb(-466, 218, 1.82); _umb(-450, 207, 1.68); _umb(-435, 214, 1.78);
-  _umb(-419, 206, 1.63); _umb(-404, 216, 1.81); _umb(-388, 209, 1.70); _umb(-373, 217, 1.58);
-  _umb(-357, 207, 1.85); _umb(-342, 213, 1.66); _umb(-326, 206, 1.79); _umb(-311, 216, 1.61);
-  _umb(-295, 208, 1.73); _umb(-280, 215, 1.83); _umb(-264, 207, 1.64); _umb(-249, 214, 1.77);
-  _umb(-236, 209, 1.69); _umb(-470, 227, 1.75); _umb(-385, 228, 1.85); _umb(-300, 227, 1.70);
+  // PINE-MAP (12/11/2026): PHA DEU BO NAM — hang cu 24 thong cach deu ~15-16u + scale xen ke
+  // doc ra "trong bang may". Trong lai theo NHIP CUM-THUA cua research/29 muc 2 (cum 2-4 cay
+  // cach nhau 6-8u, giua cac cum trong 17-30u nhu doan trong dai trong video that): 9 cum /
+  // 26 cay doc taluy z 206..218 + 3 cay them z 227-228 lech khoi truc villa; scale bien thien
+  // 1.55-1.92 (cao 10.6-13.1u, 2 cay diem nhan cao 1.90-1.92) thay vi day 1.58-1.85 xen deu.
+  _umb(-548, 210, 1.78); _umb(-541, 216, 1.62); _umb(-534, 208, 1.88);          // cum 1 (tay)
+  _umb(-514, 214, 1.70); _umb(-507, 207, 1.58);                                 // cum 2
+  _umb(-481, 209, 1.92); _umb(-474, 217, 1.66); _umb(-468, 211, 1.74); _umb(-461, 215, 1.55); // cum 3 (co cay nhan 1.92)
+  _umb(-443, 207, 1.68); _umb(-436, 213, 1.80);                                 // cum 4
+  _umb(-406, 215, 1.72); _umb(-399, 208, 1.60); _umb(-392, 218, 1.84);          // cum 5
+  _umb(-370, 210, 1.66); _umb(-363, 216, 1.90); _umb(-357, 206, 1.58);          // cum 6 (cay nhan 1.90)
+  _umb(-340, 213, 1.76); _umb(-333, 208, 1.64);                                 // cum 7
+  _umb(-308, 216, 1.82); _umb(-301, 209, 1.68); _umb(-294, 214, 1.59);          // cum 8
+  _umb(-275, 207, 1.71); _umb(-268, 212, 1.63); _umb(-245, 216, 1.60); _umb(-238, 210, 1.77); // cum 9 (dong)
+  _umb(-455, 227, 1.78); _umb(-378, 228, 1.66); _umb(-318, 227, 1.88);          // them nam: 3 cay lech nhip (cu: -470/-385/-300 deu truc villa)
   _umb(-212, 100, 1.70); _umb(-213, 48, 1.70);                                   // thong dai bo dong — doi sang tan o nhu bo nam
   // XH-3R: HANG THONG TAN O BO BAC — mep bac duong dao z 25.2 (anh 03/18: thong trong sat mep duong, tan trum xuong duong dao);
   // scale ~1.7 -> cao ~11.7u (6,4 H), tan O~7.7 (4,2 H); goc quet voi trang 0.8u (chi tiet that anh 25) + solid than.
