@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "serve . -l 3000",
     "start": "serve . -l 3000",
-    "build": "echo static-site-no-build-step"
+    "build": "echo static-site-no-build-step",
+    "lint": "node --check prototype-v2/scripts/diag_runtime.mjs"
   },
   "dependencies": {
     "serve": "^14.2.4"

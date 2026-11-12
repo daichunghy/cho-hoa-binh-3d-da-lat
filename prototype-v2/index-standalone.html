@@ -6,68 +6,198 @@
 <title>Chợ Hòa Bình 3D — Đà Lạt</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { width:100%; height:100%; overflow:hidden; background:#17100a;
-    font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif; color:#f7e8c8; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#1c141d;
+    font-family:"Nunito", "Quicksand", "Segoe UI", system-ui, -apple-system, Arial, sans-serif; color:#fff7e8; }
   #app { position:fixed; inset:0; }
   canvas { display:block; }
-  .panel { background:linear-gradient(165deg, rgba(66,40,22,.92), rgba(32,18,10,.95)); border:1.5px solid rgba(232,180,84,.82); border-radius:16px;
-    backdrop-filter: blur(8px); box-shadow:0 8px 24px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,230,175,.28); }
-  #hudMain { position:fixed; top:12px; left:12px; padding:11px 15px; z-index:20; min-width:215px; font-variant-numeric:tabular-nums; }
-  #hudMain .title { font-size:14.5px; font-weight:800; letter-spacing:.5px; color:#ffe094; text-shadow:0 1px 4px rgba(0,0,0,.6); }
-  #zoneName { font-size:12.5px; margin-top:3px; color:#fff6e0; font-weight:600; }
-  #xuRow { margin-top:6px; font-size:13.5px; display:flex; align-items:center; gap:5px; }
-  #xuVal { color:#ffd94d; font-weight:800; font-size:17px; }
-  #questPanel { position:fixed; top:12px; left:50%; transform:translateX(-50%);
-    padding:8px 16px; z-index:20; font-size:12.5px; text-align:center; max-width:min(540px,88vw); font-variant-numeric:tabular-nums; }
-  #questPanel b { color:#ffd98a; }
-  #questPanel .done { color:#8be08b; font-weight:700; }
-  #hudBtns { position:fixed; top:12px; right:12px; z-index:20; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:42vw; }
-  .hbtn { cursor:pointer; color:#fff2d2; font-size:12.5px; font-weight:700;
-    background:linear-gradient(165deg, rgba(76,46,24,.94), rgba(36,20,10,.96)); border:1.5px solid rgba(226,174,78,.78); border-radius:12px; padding:8px 11px; backdrop-filter: blur(6px); box-shadow:0 3px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,225,160,.28); transition:transform .12s, border-color .15s, background .15s; }
-  .hbtn:hover { border-color:#ffd94d; background:linear-gradient(165deg, rgba(98,60,31,.96), rgba(48,27,14,.98)); }
+  /* COZY CHIBI LIFE-SIM UI THEME (No backdrop-filter over WebGL canvas) */
+  .panel {
+    background:linear-gradient(170deg, rgba(82,53,35,.96), rgba(50,31,20,.98));
+    border:2.5px solid #e7c594;
+    border-radius:18px;
+    box-shadow:0 8px 22px rgba(20,10,5,.52), inset 0 1.5px 0 rgba(255,244,220,.38);
+  }
+  /* Top-Left Cozy Avatar + Vitality Bar */
+  #hudMain {
+    position:fixed; top:12px; left:12px; padding:10px 14px; z-index:20;
+    min-width:278px; max-width:305px; font-variant-numeric:tabular-nums;
+    background:linear-gradient(165deg, rgba(78,50,33,.96), rgba(48,29,18,.98));
+    border:2.5px solid #e6c38f; border-radius:22px;
+  }
+  .cozyProfileRow { display:flex; align-items:center; gap:11px; }
+  .cozyAvatarWrap {
+    position:relative; width:56px; height:56px; border-radius:50%; flex-shrink:0;
+    background:radial-gradient(circle at 50% 38%, #ffe9c8, #d4a373);
+    border:3px solid #fff3db; box-shadow:0 4px 10px rgba(0,0,0,.42);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .cozyAvatarLv {
+    position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+    background:linear-gradient(180deg, #6e472b, #472b18); color:#fff5df;
+    border:1.8px solid #f0cfa0; border-radius:10px; padding:1px 7px;
+    font-size:10.5px; font-weight:800; white-space:nowrap; box-shadow:0 2px 5px rgba(0,0,0,.4);
+  }
+  .cozyVitalCol { flex:1; min-width:0; }
+  .cozyHearts { display:flex; align-items:center; gap:3px; font-size:16px; line-height:1; margin-bottom:5px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+  .cozyHeart { color:#ff758f; transition:transform .2s; }
+  .cozyHeart.dim { color:rgba(255,255,255,.25); }
+  #hudMain .title { font-size:11.5px; font-weight:800; letter-spacing:.3px; color:#ffdca2; margin-top:6px; opacity:.95; }
+  #zoneName { font-size:12px; margin-top:2px; color:#fff6e5; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #xuRow { display:none; } /* Displayed in Top-Right Currency Bar; kept in DOM for scripts */
+  #xuVal { color:#ffd94d; font-weight:800; font-size:16px; }
+
+  /* Cozy Cream Parchment Daily Quest Checklist (Top-Left under Avatar, matching Image 4) */
+  #questPanel {
+    position:fixed; top:154px; left:12px; transform:none;
+    width:278px; padding:10px 13px; z-index:20; font-size:12px; text-align:left;
+    background:linear-gradient(180deg, rgba(246,232,207,.97), rgba(232,211,177,.97));
+    color:#4c311b; border:2.5px solid #b58c5a; border-radius:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.75);
+    font-variant-numeric:tabular-nums;
+  }
+  #questPanel .qpHead {
+    display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; color:#5a381e;
+    padding-bottom:6px; margin-bottom:6px; border-bottom:1.5px dashed rgba(120,80,45,.32);
+  }
+  .qpItem { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:2.5px 0; font-weight:700; color:#5c3d24; font-size:11.8px; cursor:pointer; }
+  .qpItem:hover { color:#a8422b; }
+  .qpItem .qpBox {
+    width:15px; height:15px; border-radius:4px; border:1.8px solid #8c6543;
+    display:inline-flex; align-items:center; justify-content:center; font-size:10px;
+    background:#fff9ef; color:#fff; flex-shrink:0; margin-right:5px;
+  }
+  .qpItem.done { color:#3d7a36; text-decoration:line-through; opacity:.88; }
+  .qpItem.done .qpBox { background:#6ab04c; border-color:#4e8c35; color:#fff; }
+  #questPanel b { color:#8f3918; }
+  #questPanel .done { color:#2f7d2f; font-weight:800; }
+
+  /* Top-Right Đà Lạt Weather, Clock & Currency Bar (Matching Images 3 & 4) */
+  #cozyTopRight {
+    position:fixed; top:12px; right:12px; z-index:21;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  .cozyCurrPill {
+    display:flex; align-items:center; gap:6px; padding:6px 12px;
+    background:linear-gradient(170deg, rgba(78,50,33,.96), rgba(49,30,19,.98));
+    border:2px solid #e2be88; border-radius:999px;
+    color:#fff7e6; font-size:13px; font-weight:800;
+    box-shadow:0 4px 12px rgba(0,0,0,.38); cursor:pointer;
+  }
+  .cozyCurrPill:hover { border-color:#ffd94d; transform:translateY(-1px); }
+  .cozyWeatherCard {
+    display:flex; align-items:center; gap:12px; padding:7px 14px;
+    background:linear-gradient(170deg, rgba(82,53,35,.96), rgba(50,31,20,.98));
+    border:2.5px solid #e6c38f; border-radius:18px;
+    color:#fff7e6; box-shadow:0 6px 16px rgba(0,0,0,.42); cursor:pointer;
+  }
+  .cwLeft { display:flex; align-items:center; gap:8px; padding-right:11px; border-right:1.5px solid rgba(255,235,200,.24); }
+  .cwIcon { font-size:22px; line-height:1; }
+  .cwCity { font-size:13px; font-weight:800; color:#fff8eb; }
+  .cwSub { font-size:11px; color:#ebd2b0; font-weight:700; }
+  .cwRight { text-align:right; line-height:1.2; }
+  .cwTime { font-size:17px; font-weight:800; color:#fff9ed; letter-spacing:.4px; }
+  .cwTemp { font-size:12px; font-weight:800; color:#ffd685; margin-top:2px; }
+
+  /* Right-Side Cozy Action Capsule Buttons (Matching Image 3) */
+  #hudBtns {
+    position:fixed; right:12px; bottom:90px; z-index:20;
+    display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+  }
+  .hbtn {
+    cursor:pointer; color:#fff6e5; font-size:12.5px; font-weight:800;
+    background:linear-gradient(170deg, rgba(96,62,40,.96), rgba(62,38,24,.98));
+    border:2px solid #e7c696; border-radius:999px; padding:6px 14px 6px 10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,240,210,.35);
+    transition:transform .12s, border-color .15s, background .15s;
+    display:inline-flex; align-items:center; gap:6px; min-width:128px;
+  }
+  .hbtn:hover { border-color:#ffd94d; background:linear-gradient(170deg, rgba(118,76,48,.98), rgba(76,47,29,.99)); transform:translateX(-2px); }
   .hbtn:active { transform:scale(.95); }
-  #buffs { position:fixed; left:12px; bottom:118px; z-index:20; display:flex; flex-direction:column; gap:6px; }
+  #hudExtraDrawer {
+    display:none; flex-direction:column; gap:5px; align-items:flex-end;
+    margin-bottom:4px;
+  }
+  #hudExtraDrawer.open { display:flex; }
+
+  /* Bottom-Center 8-Slot Cozy Cream Hotbar (Matching Image 3 & 4) */
+  #cozyHotbar {
+    position:fixed; bottom:12px; left:50%; transform:translateX(-50%); z-index:22;
+    display:flex; align-items:center; gap:7px; padding:7px 10px;
+    background:linear-gradient(180deg, rgba(242,223,192,.96), rgba(219,192,152,.97));
+    border:3px solid #9e7348; border-radius:20px;
+    box-shadow:0 8px 24px rgba(0,0,0,.48), inset 0 2px 0 rgba(255,250,240,.8);
+  }
+  .hbSlot {
+    position:relative; width:50px; height:50px; border-radius:13px; cursor:pointer;
+    background:linear-gradient(180deg, #fff8eb, #edd8b8);
+    border:2px solid #b58b5e;
+    box-shadow:inset 0 2px 4px rgba(140,95,50,.18), 0 2px 4px rgba(0,0,0,.2);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transition:transform .12s, border-color .15s, box-shadow .15s;
+  }
+  .hbSlot:hover, .hbSlot.active {
+    transform:translateY(-4px) scale(1.05);
+    border-color:#d96b27;
+    background:linear-gradient(180deg, #fffdf7, #ffe8c2);
+    box-shadow:0 5px 12px rgba(0,0,0,.3), 0 0 0 2px rgba(255,196,77,.65);
+  }
+  .hbSlot:active { transform:scale(.94); }
+  .hbKey {
+    position:absolute; top:2px; left:4px;
+    background:#6e472b; color:#fff5df; border-radius:6px;
+    font-size:9.5px; font-weight:800; padding:0 4px; line-height:13px;
+  }
+  .hbIcon { font-size:23px; line-height:1; margin-top:2px; filter:drop-shadow(0 2px 2px rgba(80,45,15,.25)); }
+  .hbLbl { font-size:8.5px; font-weight:800; color:#5c3b20; margin-top:2px; white-space:nowrap; }
+  @media (max-width:760px) {
+    #cozyHotbar { gap:4px; padding:5px 7px; bottom:8px; }
+    .hbSlot { width:40px; height:40px; border-radius:10px; }
+    .hbIcon { font-size:18px; }
+    .hbLbl { display:none; }
+  }
+
+  #buffs { position:fixed; left:12px; bottom:96px; z-index:20; display:flex; flex-direction:column; gap:6px; }
   .buff { padding:6px 10px; font-size:12px; min-width:170px; }
   .buff .bar { height:5px; background:rgba(255,255,255,.18); border-radius:3px; margin-top:4px; overflow:hidden; }
   .buff .fill { height:100%; border-radius:3px; }
   .buffWarm .fill { background:#ff9a3c; } .buffLeg .fill { background:#7ec850; } .buffAlert .fill { background:#ffd94d; }
-  #ctxPrompt { position:fixed; left:50%; bottom:88px; transform:translateX(-50%); z-index:20;
-    padding:12px 22px; font-size:16.5px; font-weight:700; display:none; text-align:center; cursor:pointer;
-    border:2px solid rgba(255,217,77,.95); animation:ctxPulse 1.6s ease-in-out infinite; }
+  #ctxPrompt { position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:25;
+    padding:10px 20px; font-size:15.5px; font-weight:800; display:none; text-align:center; cursor:pointer;
+    border:2.5px solid #ffd94d; animation:ctxPulse 1.6s ease-in-out infinite; }
   @keyframes ctxPulse { 0%,100% { box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 0 rgba(255,190,60,0); } 50% { box-shadow:0 6px 24px rgba(0,0,0,.55), 0 0 24px rgba(255,190,60,.65); } }
   /* V4.7: thẻ hướng dẫn lớn "một việc một lúc" */
-  #tutCard { position:fixed; left:50%; top:138px; transform:translateX(-50%); z-index:26; width:min(560px,94vw);
-    padding:15px 20px 13px; text-align:center; cursor:pointer; display:none;
+  #tutCard { position:fixed; left:50%; top:80px; transform:translateX(-50%); z-index:26; width:min(520px,92vw);
+    padding:12px 18px 11px; text-align:center; cursor:pointer; display:none;
     background:linear-gradient(165deg, rgba(88,55,29,.97), rgba(43,24,12,.97)); border:2.5px solid #f4be39; border-radius:18px;
     box-shadow:0 10px 34px rgba(0,0,0,.55); color:#ffeec4; }
-  #tutCard .tstep { font-size:12.5px; letter-spacing:1.2px; color:#ffd98a; font-weight:800; }
-  #tutCard .ttxt { font-size:21px; font-weight:800; line-height:1.35; margin:5px 0 6px; color:#fff3d0; }
-  #tutCard .tdist { font-size:14.5px; color:#ffd98a; }
-  #tutSkip { margin-top:10px; cursor:pointer; border:1.5px solid rgba(255,217,138,.6); background:rgba(0,0,0,.25);
-    color:#ffeec4; border-radius:10px; padding:6px 14px; font-size:13px; font-weight:700; }
-  #guidePanel { cursor:pointer; padding:10px 13px; transition:border-color .15s; }
+  #tutCard .tstep { font-size:11.5px; letter-spacing:1.1px; color:#ffd98a; font-weight:800; }
+  #tutCard .ttxt { font-size:17.5px; font-weight:800; line-height:1.32; margin:4px 0 5px; color:#fff3d0; }
+  #tutCard .tdist { font-size:13px; color:#ffd98a; }
+  #tutSkip { margin-top:7px; cursor:pointer; border:1.5px solid rgba(255,217,138,.6); background:rgba(0,0,0,.25);
+    color:#ffeec4; border-radius:10px; padding:4px 12px; font-size:12px; font-weight:700; }
+  #guidePanel { cursor:pointer; padding:8px 12px; transition:border-color .15s; position:fixed; left:12px; top:298px; z-index:16; width:278px; font-size:11.8px; line-height:1.38; }
   #guidePanel:hover { border-color:#ffd94d; }
   #ctxPrompt b { color:#ffd94d; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.4);
     border-radius:6px; padding:1px 8px; margin-right:6px; }
-  #cookBar { position:fixed; left:50%; bottom:148px; transform:translateX(-50%); z-index:20;
+  #cookBar { position:fixed; left:50%; bottom:140px; transform:translateX(-50%); z-index:20;
     padding:8px 14px; font-size:13px; display:none; text-align:center; min-width:230px; }
   #cookBar .bar { height:6px; background:rgba(255,255,255,.15); border-radius:3px; margin-top:5px; overflow:hidden; }
   #cookFill { height:100%; width:0%; background:#ffb347; }
-  #toasts { position:fixed; top:68px; left:50%; transform:translateX(-50%); z-index:40;
+  #toasts { position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:40;
     display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:max-content; max-width:94vw; }
-  .toast { padding:10px 18px; font-size:14px; border-radius:12px; text-align:center;
-    background:linear-gradient(165deg, rgba(88,55,29,.96), rgba(43,24,12,.96)); border:1.5px solid rgba(216,164,65,.8); color:#ffeec4;
-    animation:tin .25s ease-out; box-shadow:0 6px 22px rgba(0,0,0,.45); }
-  .toast.stamp { background:linear-gradient(165deg, rgba(112,62,26,.96), rgba(56,30,14,.96)); border-color:#f0c268; color:#ffe9b0; font-weight:700; }
+  .toast { padding:9px 16px; font-size:13.5px; border-radius:14px; text-align:center;
+    background:linear-gradient(165deg, rgba(88,55,29,.97), rgba(43,24,12,.98)); border:2px solid #e6c38f; color:#fff4dc;
+    animation:tin .25s ease-out; box-shadow:0 6px 22px rgba(0,0,0,.45); font-weight:700; }
+  .toast.stamp { background:linear-gradient(165deg, rgba(112,62,26,.97), rgba(56,30,14,.98)); border-color:#f0c268; color:#ffe9b0; font-weight:800; }
   @keyframes tin { from { opacity:0; transform:translateY(-8px);} to { opacity:1; transform:none;} }
   .modal { position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.48); }
+    background:rgba(15,8,4,.52); }
   .modal.open { display:flex; }
   .sheet { width:min(440px,94vw); max-height:84vh; overflow-y:auto; padding:18px;
-    background:linear-gradient(170deg, #503219, #2a170b 70%); border:2px solid rgba(216,164,65,.85); border-radius:22px; box-shadow:0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,150,.3); }
+    background:linear-gradient(170deg, #57371d, #2d190c 75%); border:2.5px solid #e6c38f; border-radius:22px; box-shadow:0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,150,.3); }
   .sheet h2 { font-size:17px; color:#ffd98a; margin-bottom:4px; }
   .sheet .sub { font-size:12.5px; color:#dcbc8d; margin-bottom:12px; }
-  .sheet .closeX { float:right; cursor:pointer; font-size:18px; color:#bbb; background:none; border:none; }
+  .sheet .closeX { float:right; cursor:pointer; font-size:18px; color:#ffe5bd; background:none; border:none; }
   .itemRow { display:flex; justify-content:space-between; align-items:center; gap:10px;
     padding:9px 10px; border:1px solid rgba(216,164,65,.28); border-radius:12px; margin-bottom:8px; background:rgba(255,214,140,.06); }
   .itemRow .nm { font-size:14px; font-weight:600; }
@@ -81,10 +211,10 @@
   .stampCell { border:1.6px dashed rgba(255,255,255,.25); border-radius:10px; padding:10px; font-size:13px;
     color:#8f887a; text-align:center; }
   .stampCell.got { border:1.6px solid #f0c268; color:#ffe9b0; background:rgba(246,173,31,.14); font-weight:700; }
-  #tempRow { font-size:12.5px; margin-top:5px; color:#cfe6f5; }
-  #warmRow { display:flex; align-items:center; gap:7px; margin-top:5px; font-size:12.5px; }
-  #warmRow .wbar { flex:1; height:8px; background:rgba(255,255,255,.18); border-radius:4px; overflow:hidden; min-width:90px; }
-  #warmFill { height:100%; width:100%; background:linear-gradient(90deg,#ff7a3c,#ffb347); transition:width .3s; }
+  #tempRow { display:none; }
+  #warmRow { display:flex; align-items:center; gap:7px; margin-top:4px; font-size:11.5px; }
+  #warmRow .wbar { flex:1; height:7px; background:rgba(0,0,0,.32); border:1px solid rgba(255,230,190,.3); border-radius:5px; overflow:hidden; min-width:80px; }
+  #warmFill { height:100%; width:100%; background:linear-gradient(90deg,#ff7a3c,#ffd166); transition:width .3s; }
   .sellBtn { cursor:pointer; white-space:nowrap; border:1.5px solid rgba(216,164,65,.85); border-radius:12px; padding:8px 12px; background:rgba(43,24,12,.85); color:#ffeec4; font-weight:700; font-size:13px; }
   .rowBtns { display:flex; gap:6px; }
   #lyricBar { position:fixed; left:50%; bottom:198px; transform:translateX(-50%); z-index:20; padding:9px 18px; font-size:15px; display:none; text-align:center; color:#ffe9b0; max-width:92vw; }
@@ -103,42 +233,46 @@
     background:linear-gradient(180deg,#ffd94d,#f6ad1f); border:2px solid #b97e14; color:#4a2405; font-size:14px; box-shadow:0 4px 14px rgba(0,0,0,.45);
     font-weight:800; display:none; align-items:center; justify-content:center; text-align:center; touch-action:none; }
   @media (pointer:coarse) { #joyBase { display:block; } #actBtn { display:flex; } #buffs { bottom:150px; } }
-  #hint { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); z-index:15; font-size:12px;
-    color:rgba(255,244,220,.88); background:rgba(22,14,8,.72); border:1px solid rgba(216,164,65,.35); padding:5px 14px; border-radius:10px; text-align:center; max-width:94vw; backdrop-filter:blur(4px); }
+  #hint { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:15; font-size:11.5px;
+    color:#fff4dc; background:rgba(48,29,18,.92); border:1.5px solid rgba(230,195,143,.55); padding:4px 13px; border-radius:999px; text-align:center; max-width:94vw; pointer-events:none; opacity:.88; }
   @media (pointer:coarse) { #hint { display:none; } }
-  #guidePanel { position:fixed; left:12px; top:162px; z-index:16; width:276px; font-size:12.5px; line-height:1.42; }
   #orderChip { position:fixed; top:438px; right:12px; z-index:20; padding:9px 12px; max-width:250px;
     font-size:12.5px; line-height:1.45; display:none; border-color:rgba(255,181,46,.85); }
   #orderChip b { color:#ffd98a; }
   #guidePanel .gprog { color:#ffd98a; font-weight:700; }
-  #areaCard { position:fixed; left:50%; top:15%; transform:translateX(-50%); z-index:24; font-size:34px; font-weight:800;
-    letter-spacing:1px; color:#ffd98a; text-shadow:0 2px 14px rgba(0,0,0,.75), 0 0 34px rgba(255,150,50,.45);
+  #areaCard { position:fixed; left:50%; top:14%; transform:translateX(-50%); z-index:24; font-size:32px; font-weight:800;
+    letter-spacing:1px; color:#fff5d6; text-shadow:0 3px 14px rgba(0,0,0,.78), 0 0 28px rgba(255,165,65,.55);
     opacity:0; transition:opacity .6s; pointer-events:none; white-space:nowrap; }
   #areaCard.show { opacity:1; }
-  #minimap { position:fixed; right:12px; top:60px; z-index:16; border-radius:14px; border:1.5px solid rgba(232,180,84,.65);
-    background:rgba(16,12,8,.9); box-shadow:0 6px 22px rgba(0,0,0,.55); }
-  #quickNav { position:fixed; right:12px; top:224px; z-index:18; width:156px; padding:8px; display:flex; flex-direction:column; gap:4px; }
-  #quickNav .qnTitle { font-size:11px; font-weight:800; color:#ffd98a; letter-spacing:.4px; text-align:center; margin-bottom:2px; }
+  /* Illustrated Cozy Minimap (Matching Image 3 bottom-left / Image 4 top-right) */
+  #minimap {
+    position:fixed; right:12px; top:68px; z-index:16;
+    border-radius:20px; border:3.5px solid #e8cfa6;
+    background:#d4e2b8; box-shadow:0 8px 24px rgba(0,0,0,.48), 0 0 0 2px #6e472b;
+    cursor:pointer;
+  }
+  #quickNav { position:fixed; right:12px; top:232px; z-index:18; width:156px; padding:7px; display:flex; flex-direction:column; gap:4px; }
+  #quickNav .qnTitle { font-size:10.5px; font-weight:800; color:#ffdca2; letter-spacing:.4px; text-align:center; margin-bottom:1px; }
   #quickNav .qnGrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-  .qnBtn { cursor:pointer; border:1px solid rgba(216,164,65,.55); border-radius:8px; padding:5px 4px; font-size:11px; font-weight:700;
-    color:#ffeec4; background:rgba(28,16,8,.78); text-align:center; transition:background .15s, border-color .15s, transform .1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .qnBtn:hover { border-color:#ffd94d; background:rgba(92,54,24,.92); color:#fff; }
+  .qnBtn { cursor:pointer; border:1.5px solid rgba(230,195,143,.65); border-radius:9px; padding:4.5px 4px; font-size:10.8px; font-weight:800;
+    color:#fff5df; background:rgba(58,35,21,.92); text-align:center; transition:background .15s, border-color .15s, transform .1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .qnBtn:hover { border-color:#ffd94d; background:rgba(104,63,34,.96); color:#fff; }
   .qnBtn:active { transform:scale(.95); }
-  #bubble { position:fixed; z-index:22; max-width:210px; background:#fff8ea; color:#3a2c1c; font-size:12.5px; font-weight:600;
-    padding:7px 11px; border-radius:13px; transform:translate(-50%,-115%); display:none; pointer-events:none;
-    box-shadow:0 4px 14px rgba(0,0,0,.45); text-align:center; }
+  #bubble { position:fixed; z-index:22; max-width:220px; background:#fff9ee; color:#452c18; font-size:12.5px; font-weight:700;
+    padding:7px 12px; border-radius:14px; border:2px solid #cfa878; transform:translate(-50%,-115%); display:none; pointer-events:none;
+    box-shadow:0 5px 15px rgba(0,0,0,.42); text-align:center; }
   #bubble::after { content:''; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%);
-    border:7px solid transparent; border-top-color:#fff8ea; border-bottom:0; }
+    border:7px solid transparent; border-top-color:#fff9ee; border-bottom:0; }
   #xuPops { position:fixed; left:22px; top:104px; z-index:26; pointer-events:none; }
   .xuPop { position:absolute; left:0; font-size:17px; font-weight:800; color:#ffd94d; text-shadow:0 1px 6px rgba(0,0,0,.8);
     animation:xuFly 1.6s ease-out forwards; white-space:nowrap; }
   @keyframes xuFly { 0% { opacity:0; transform:translateY(8px); } 15% { opacity:1; } 100% { opacity:0; transform:translateY(-46px); } }
-  #xpRow { margin-top:6px; font-size:12.5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  #xpLvl { color:#ffd94d; font-weight:800; }
-  #xpTitle { color:#ffe9b0; font-weight:600; }
-  #xpNext { color:#dcbc8d; font-size:11.5px; }
-  .xpbar { flex:1; min-width:80px; height:8px; background:rgba(255,255,255,.16); border-radius:4px; overflow:hidden; }
-  #xpFill { height:100%; width:0%; background:linear-gradient(90deg,#b07fe8,#ffd94d); transition:width .35s; }
+  #xpRow { margin-top:2px; font-size:11.5px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  #xpLvl { color:#ffd94d; font-weight:800; display:none; }
+  #xpTitle { color:#ffe9b0; font-weight:700; font-size:11px; }
+  #xpNext { color:#ebd2b0; font-size:10.5px; }
+  .xpbar { flex:1; min-width:85px; height:9px; background:rgba(25,14,8,.55); border:1.5px solid #d4af7a; border-radius:999px; overflow:hidden; }
+  #xpFill { height:100%; width:35%; background:linear-gradient(90deg,#7ec850,#b8e986); transition:width .35s; }
   .xpbar.near { animation:xpShake .5s infinite; }
   @keyframes xpShake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(1.5px); } 75% { transform:translateX(-1.5px); } }
   .xpPop { position:absolute; left:26px; font-size:15px; font-weight:800; color:#cfa9ff; text-shadow:0 1px 6px rgba(0,0,0,.85);
@@ -167,7 +301,7 @@
   #btnWardrobe .wdCount { color:#ffd94d; font-weight:800; }
 
 /* BLENDER-DEEP-2 (mục 15-17): chế độ chơi */
-#modePanel{ position:fixed; left:12px; top:274px; width:276px; z-index:25; padding:10px 12px; font-size:12.5px; }
+#modePanel{ position:fixed; left:12px; top:385px; width:278px; z-index:25; padding:10px 12px; font-size:12px; }
 #modePanelTitle{ font-weight:bold; color:#ffd94d; margin-bottom:6px; }
 #modeTasks .tk{ margin:3px 0; color:#e8e2d4; }
 #modeTasks .tk.done{ color:#9fd48a; text-decoration:line-through; }
@@ -182,55 +316,226 @@
 .modeCard .ds{ font-size:12px; color:#bdb5a2; line-height:1.45; }
 #photoFlash{ position:fixed; inset:0; background:#fff8ea; opacity:0; pointer-events:none; z-index:80; display:flex; align-items:center; justify-content:center; transition:opacity .5s; }
 #photoFlash .fr{ border:6px solid #7a4a2e; border-radius:10px; padding:26px 44px; color:#7a2e22; font-size:26px; font-weight:bold; background:rgba(255,248,234,.92); }
+#moodWeatherRow { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:5px; font-size:11px; color:#ffeec4; }
+.mwBadge { background:rgba(255,235,195,.14); border:1px solid rgba(255,225,165,.38); border-radius:999px; padding:2px 8px; font-weight:700; }
+.bagTabs { display:flex; gap:5px; flex-wrap:wrap; margin:8px 0 10px; }
+.bagTab { cursor:pointer; background:rgba(43,24,12,.85); color:#ffeec4; border:1.5px solid rgba(216,164,65,.45); border-radius:9px; padding:5px 10px; font-size:12px; font-weight:700; }
+.bagTab.active { background:linear-gradient(180deg,#ffd94d,#f6ad1f); color:#4a2405; border-color:#ffd94d; }
+#emoteWheel { position:fixed; bottom:84px; left:50%; transform:translateX(-50%); z-index:42; display:none; gap:6px; flex-wrap:wrap; justify-content:center; max-width:560px; padding:10px 14px; }
+.emBtn { cursor:pointer; background:rgba(36,22,12,.92); color:#ffeec4; border:1.5px solid rgba(255,210,115,.55); border-radius:10px; padding:6px 11px; font-size:12.5px; font-weight:700; transition:transform .12s, border-color .15s; }
+.emBtn:hover, .emBtn.active { border-color:#ffd94d; background:rgba(82,50,20,.95); transform:translateY(-1px); }
+#selfieBar { position:fixed; bottom:74px; left:50%; transform:translateX(-50%); z-index:75; display:none; flex-direction:column; gap:8px; width:min(94vw,660px); padding:12px 16px; }
+.sfRow { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:center; }
+.sfLbl { font-size:12px; font-weight:800; color:#ffd98a; margin-right:4px; }
+.sfChip { cursor:pointer; background:rgba(38,24,14,.9); color:#ffeec4; border:1px solid rgba(255,210,115,.45); border-radius:8px; padding:4px 9px; font-size:12px; font-weight:700; }
+.sfChip.sel { background:linear-gradient(180deg,#ffd94d,#f6ad1f); color:#4a2405; border-color:#ffd94d; }
+.albumGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:8px; margin-top:8px; }
+.albumCard { background:rgba(255,255,255,.05); border:1px solid rgba(255,210,115,.35); border-radius:10px; padding:6px; text-align:center; }
+.albumCard img { width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:6px; display:block; margin-bottom:4px; }
+.albumCard .cp { font-size:11px; color:#ffeec4; font-weight:700; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 
+<!-- Top-Left Cozy Chibi Avatar & Vitality Card (Matching Images 3 & 4) -->
 <div id="hudMain" class="panel">
-  <div class="title">🏮 CHỢ HÒA BÌNH 3D — ĐÀ LẠT</div>
-  <div id="zoneName">Đường Nguyễn Thị Minh Khai</div>
+  <div class="cozyProfileRow">
+    <div class="cozyAvatarWrap" id="cozyAvatarBtn" title="Mở Tủ đồ Đà Lạt (T)">
+      <svg width="46" height="46" viewBox="0 0 64 64" aria-hidden="true">
+        <!-- Cute Chibi Girl with Cream Knit Beanie & Red Đà Lạt Scarf -->
+        <circle cx="32" cy="34" r="18" fill="#ffe2c4"/>
+        <path d="M13 30 C13 14, 51 14, 51 30 Z" fill="#f3dfc1" stroke="#8c5838" stroke-width="2.5"/>
+        <circle cx="32" cy="12" r="5.5" fill="#fff5e4" stroke="#8c5838" stroke-width="2"/>
+        <path d="M16 28 Q32 23 48 28" stroke="#c97b5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M16 30 C14 38, 15 47, 19 52" stroke="#54331e" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <path d="M48 30 C50 38, 49 47, 45 52" stroke="#54331e" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <circle cx="25" cy="36" r="2.7" fill="#3b2314"/>
+        <circle cx="39" cy="36" r="2.7" fill="#3b2314"/>
+        <circle cx="21" cy="40" r="3.2" fill="#ff9ebb" opacity="0.65"/>
+        <circle cx="43" cy="40" r="3.2" fill="#ff9ebb" opacity="0.65"/>
+        <path d="M29 41 Q32 44 35 41" stroke="#7a3e28" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M20 49 Q32 55 44 49" stroke="#d64545" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="cozyAvatarLv" id="cozyLvBadge">Lv.12</div>
+    </div>
+    <div class="cozyVitalCol">
+      <div class="cozyHearts" id="cozyHeartsRow">
+        <span class="cozyHeart">♥</span><span class="cozyHeart">♥</span><span class="cozyHeart">♥</span><span class="cozyHeart">♥</span><span class="cozyHeart">♥</span>
+      </div>
+      <div id="xpRow">
+        <span id="xpLvl">Cấp 1</span>
+        <div class="xpbar"><div id="xpFill"></div></div>
+        <span id="xpTitle"></span><span id="xpNext"></span>
+      </div>
+      <div id="warmRow"><span>🔥 Ấm</span><div class="wbar"><div id="warmFill"></div></div></div>
+    </div>
+  </div>
+  <div class="title">🏮 CHỢ HÒA BÌNH — ĐÀ LẠT</div>
+  <div id="zoneName">Quảng trường Chợ Đêm Đà Lạt</div>
   <div id="xuRow">Xu Chợ: <span id="xuVal">300</span> 🪙</div>
-  <div id="xpRow"><span>⭐</span><span id="xpLvl">Cấp 1</span><span id="xpTitle"></span><div class="xpbar"><div id="xpFill"></div></div><span id="xpNext"></span></div>
-  <div id="tempRow">🌡 Đà Lạt: <span id="tempVal">--°C</span><span id="heatHint"></span></div>
-  <div id="warmRow"><span>🔥 Độ ấm</span><div class="wbar"><div id="warmFill"></div></div></div>
+  <div id="tempRow">🌡 Đà Lạt: <span id="tempVal">15°C</span><span id="heatHint"></span></div>
+  <div id="moodWeatherRow">
+    <span class="mwBadge" id="moodBadge">😊 Vui: 85%</span>
+    <span class="mwBadge" id="weatherBadge">🌙 Chiều tối</span>
+  </div>
 </div>
 
+<!-- Cozy Cream Parchment Daily Checklist (Top-Left below Avatar, Matching Image 4) -->
 <div id="questPanel" class="panel">
-  <b>🎯 Nhiệm vụ hôm nay:</b> Ăn/uống <span id="qEat">0</span>/3 món khác nhau •
-  Đóng <span id="qStamp">0</span>/4 dấu hộ chiếu → thưởng <b>120 Xu</b> <span id="qDone" class="done"></span>
+  <div class="qpHead">📋 Nhiệm vụ hôm nay</div>
+  <div class="qpItem" id="qpItem1" data-tp="-22,6.5,0">
+    <span><span class="qpBox" id="qpBox1"></span>Ghé Chợ Đà Lạt mua hoa / quà</span>
+    <span id="qpCnt1">0/1</span>
+  </div>
+  <div class="qpItem" id="qpItem2" data-tp="-42,-28,0">
+    <span><span class="qpBox" id="qpBox2"></span>Uống cà phê ở Cà phê Tùng</span>
+    <span id="qpCnt2">0/1</span>
+  </div>
+  <div class="qpItem done" id="qpItem3" data-tp="-43.5,-3.2,3.14">
+    <span><span class="qpBox" id="qpBox3">✓</span>Thưởng thức sữa đậu nành Hoa Sữa</span>
+    <span id="qpCnt3">1/1</span>
+  </div>
+  <div style="margin-top:5px;padding-top:5px;border-top:1px dashed rgba(120,80,45,.28);font-size:11px;color:#6e472b;">
+    Ăn/uống <b><span id="qEat">0</span>/3</b> món • Đóng <b><span id="qStamp">0</span>/4</b> dấu → <b>+120 Xu</b> <span id="qDone" class="done"></span>
+  </div>
 </div>
-<div id="guidePanel" class="panel"><b>🧭 Hành trình đi chợ</b> — theo cột sáng vàng (chạm vào thẻ để TỰ ĐI):<br><span id="guideTxt"></span><br><span class="gprog" id="guideProg"></span><br><span id="guideColl" style="opacity:.92"></span></div>
+
+<!-- Top-Right Currency + Đà Lạt Weather & Clock Bar (Matching Images 3 & 4) -->
+<div id="cozyTopRight">
+  <div class="cozyCurrPill" id="cozyGreenPill" title="Điểm Xanh Đà Lạt">
+    <span>🌿</span><span id="cozyGreenVal">5,820</span>
+  </div>
+  <div class="cozyCurrPill" id="cozyXuPill" title="Xu Chợ Đà Lạt">
+    <span>🪙</span><span id="cozyXuMirror">300</span>
+  </div>
+  <div class="cozyCurrPill" id="cozyStampPill" title="Mở Hộ chiếu Đà Lạt (P)">
+    <span>💎</span><span id="cozyGemVal">1,260</span>
+  </div>
+  <div class="cozyWeatherCard" id="cozyWeatherCard" title="Bấm để chuyển Ngày / Đêm Đà Lạt">
+    <div class="cwLeft">
+      <span class="cwIcon" id="cwIcon">🌥️</span>
+      <div>
+        <div class="cwCity">Đà Lạt</div>
+        <div class="cwSub" id="cwPeriod">Chiều tối</div>
+      </div>
+    </div>
+    <div class="cwRight">
+      <div class="cwTime" id="cwClock">17:52</div>
+      <div class="cwTemp">🌡 <span id="cwTempMirror">15°C</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="guidePanel" class="panel"><b>🧭 Hành trình đi chợ</b> — chạm vào thẻ để TỰ ĐI:<br><span id="guideTxt"></span><br><span class="gprog" id="guideProg"></span><br><span id="guideColl" style="opacity:.92"></span></div>
 <div id="tutCard"><div class="tstep" id="tutStep">🧭 LẦN ĐẦU ĐI CHỢ</div><div class="ttxt" id="tutTxt"></div><div class="tdist" id="tutDist"></div><button id="tutSkip">Bỏ qua hướng dẫn</button></div>
 <div id="orderChip" class="panel"></div>
 <div id="eventChip" class="panel"></div>
 <div id="flash"></div>
 <div id="areaCard"></div>
 <div id="bubble"></div>
-<canvas id="minimap" width="156" height="156"></canvas>
+<canvas id="minimap" width="156" height="156" title="Bản đồ Đà Lạt (Chạm để xem các địa danh)"></canvas>
 <div id="quickNav" class="panel">
   <div class="qnTitle">📍 ĐI NHANH ĐỊA DANH</div>
   <div class="qnGrid">
-    <button class="qnBtn" id="qnMarket" data-tp="-22,3.5,0">🏮 Chợ Đêm</button>
-    <button class="qnBtn" id="qnHall" data-tp="0,18.2,0">🏛 Nhà Lồng</button>
-    <button class="qnBtn" id="qnStairs" data-tp="-56,-10,3.14">🪜 Bậc Thang</button>
-    <button class="qnBtn" id="qnSquare" data-tp="22,-48,0">🎭 Hòa Bình</button>
-    <button class="qnBtn" id="qnPier" data-tp="-259,32.5,0">🦢 Bến Hồ</button>
-    <button class="qnBtn" id="qnThuyTa" data-tp="-250,51.5,0">🌸 Thủy Tạ</button>
+    <button class="qnBtn" id="qnMarket" data-tp="-27,-22,2.85">🏮 Toàn Cảnh</button>
+    <button class="qnBtn" id="qnHall" data-tp="14,-5,2.45">⛲ Quảng Trường</button>
+    <button class="qnBtn" id="qnStairs" data-tp="-43.5,-3.2,3.14">🥛 Hoa Sữa</button>
+    <button class="qnBtn" id="qnSquare" data-tp="-42,-28,0.4">☕ Cà Phê Tùng</button>
+    <button class="qnBtn" id="qnPier" data-tp="-259,32.5,3.14">🦢 Bờ Hồ</button>
+    <button class="qnBtn" id="qnThuyTa" data-tp="-250,51.5,3.14">🌸 Thủy Tạ</button>
   </div>
 </div>
 <div id="xuPops"></div>
 
+<!-- Right-Side Cozy Capsule Buttons (Matching Image 3: Túi đồ, Trang trí, Nhiệm vụ, Bản đồ + Extra tools) -->
 <div id="hudBtns">
-  <button class="hbtn" id="btnDayNight">🌙 Chợ đêm</button>
-  <button class="hbtn" id="btnMute">🔊 Âm thanh</button> <!-- SOUND-COLOR-1 -->
-  <button class="hbtn" id="btnPassport">📖 Hộ chiếu</button>
-  <button class="hbtn" id="btnMode">🎭 Chế độ</button> <span id="modeBadge" style="color:#ffd94d;font-weight:bold"></span>
-  <button class="hbtn" id="btnBag">🧺 Giỏ (<span id="bagCount">0</span>)</button>
-  <button class="hbtn" id="btnWardrobe">🧣 Tủ đồ (<span id="wdCount">1</span>)</button>
-  <button class="hbtn" id="btnUpgrade">⬆️ Nâng cấp</button>
+  <div id="hudExtraDrawer">
+    <button class="hbtn" id="btnDayNight">🌙 Chợ đêm</button>
+    <button class="hbtn" id="btnMute">🔊 Âm thanh</button>
+    <button class="hbtn" id="btnMode">🎭 Chế độ</button> <span id="modeBadge" style="color:#ffd94d;font-weight:bold;display:none"></span>
+    <button class="hbtn" id="btnUpgrade">⬆️ Nâng cấp</button>
+    <button class="hbtn" id="btnEmote">👋 Hành động (G)</button>
+    <button class="hbtn" id="btnSelfie">🤳 Chụp Selfie (C)</button>
+  </div>
+  <button class="hbtn" id="btnBag">🎒 Túi đồ (<span id="bagCount">0</span>)</button>
+  <button class="hbtn" id="btnWardrobe">🔨 Trang trí (<span id="wdCount">1</span>)</button>
+  <button class="hbtn" id="btnPassport">🌱 Nhiệm vụ</button>
+  <button class="hbtn" id="btnCamMode">📍 Bản đồ / Góc nhìn</button>
+  <button class="hbtn" id="btnMoreTools" style="min-width:128px;">✨ Tiện ích ▾</button>
   <button class="hbtn" id="btnReturnBike" style="display:none">🛵 Trả xe</button>
   <button class="hbtn" id="btnReturnBoat" style="display:none">🦢 Về bến</button>
+</div>
+
+<!-- Bottom-Center 8-Slot Cozy Hotbar (Matching Image 3: 1..8 slots) -->
+<div id="cozyHotbar">
+  <button class="hbSlot" data-slot="1" title="1: Máy ảnh Selfie Đà Lạt (Phím C)">
+    <span class="hbKey">1</span><span class="hbIcon">📷</span><span class="hbLbl">Máy ảnh</span>
+  </button>
+  <button class="hbSlot" data-slot="2" title="2: Hoa Cẩm Tú Cầu — Bùng binh Chợ Đà Lạt">
+    <span class="hbKey">2</span><span class="hbIcon">🪻</span><span class="hbLbl">Cẩm tú cầu</span>
+  </button>
+  <button class="hbSlot" data-slot="3" title="3: Cà phê Tùng cổ điển">
+    <span class="hbKey">3</span><span class="hbIcon">☕</span><span class="hbLbl">Cà phê Tùng</span>
+  </button>
+  <button class="hbSlot" data-slot="4" title="4: Sữa đậu nành Hoa Sữa & Bánh tráng nướng">
+    <span class="hbKey">4</span><span class="hbIcon">🍓</span><span class="hbLbl">Đặc sản</span>
+  </button>
+  <button class="hbSlot" data-slot="5" title="5: Đồi thông & Gieo quẻ Chú Ba">
+    <span class="hbKey">5</span><span class="hbIcon">🌲</span><span class="hbLbl">Đồi thông</span>
+  </button>
+  <button class="hbSlot" data-slot="6" title="6: Hộ chiếu & Bưu thiếp Đà Lạt (Phím P)">
+    <span class="hbKey">6</span><span class="hbIcon">🎴</span><span class="hbLbl">Hộ chiếu</span>
+  </button>
+  <button class="hbSlot" data-slot="7" title="7: Mứt dâu & Giỏ hàng (Phím B)">
+    <span class="hbKey">7</span><span class="hbIcon">🫙</span><span class="hbLbl">Mứt dâu</span>
+  </button>
+  <button class="hbSlot" data-slot="8" title="8: Hộp quà & Tủ đồ ấm (Phím T)">
+    <span class="hbKey">8</span><span class="hbIcon">🎁</span><span class="hbLbl">Quà tặng</span>
+  </button>
+</div>
+
+<div id="emoteWheel" class="panel">
+  <button class="emBtn" data-em="wave">👋 Vẫy tay</button>
+  <button class="emBtn" data-em="bow">🙇 Cúi chào</button>
+  <button class="emBtn" data-em="sit">🪑 Ngồi xuống</button>
+  <button class="emBtn" data-em="pose1">✌️ Pose Chibi</button>
+  <button class="emBtn" data-em="pose2">🫶 Pose Tim</button>
+  <button class="emBtn" data-em="dance">💃 Nhảy theo nhạc</button>
+  <button class="emBtn" data-em="point">👉 Chỉ tay ngắm cảnh</button>
+  <button class="emBtn" id="btnToggleStroll" data-em="stroll">🚶 Đi dạo thong thả: TẮT</button>
+</div>
+
+<div id="selfieBar" class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <b style="color:#ffd94d;font-size:14px;">🤳 STUDIO SELFIE ĐÀ LẠT (1080×1350 • 4:5)</b>
+    <span id="sfSpotLabel" style="font-size:12px;color:#9fd48a;font-weight:700;">📍 Khung cảnh tự do</span>
+    <button class="sfChip" id="btnCloseSelfie">✕ Thoát</button>
+  </div>
+  <div class="sfRow">
+    <span class="sfLbl">Góc máy:</span>
+    <button class="sfChip sfAng sel" data-ang="selfie">🤳 Selfie Chibi</button>
+    <button class="sfChip sfAng" data-ang="wide">🏞 Toàn cảnh</button>
+    <button class="sfChip sfAng" data-ang="close">🔍 Cận cảnh</button>
+    <span class="sfLbl" style="margin-left:8px;">Màu:</span>
+    <button class="sfChip sfFlt sel" data-flt="warm">🏮 Ấm tối Đà Lạt</button>
+    <button class="sfChip sfFlt" data-flt="fog">🌫 Sáng sớm sương</button>
+    <button class="sfChip sfFlt" data-flt="film">🎞 Phim cũ</button>
+  </div>
+  <div class="sfRow">
+    <span class="sfLbl">Sticker:</span>
+    <button class="sfChip sfStk sel" data-stk="none">Không</button>
+    <button class="sfChip sfStk" data-stk="heart">❤️ Tim</button>
+    <button class="sfChip sfStk" data-stk="milk">🥛 Ly sữa nóng</button>
+    <button class="sfChip sfStk" data-stk="swan">🦢 Thuyền vịt</button>
+    <span class="sfLbl" style="margin-left:8px;">Pose:</span>
+    <button class="sfChip sfPose sel" data-ps="peace">✌️ Chào</button>
+    <button class="sfChip sfPose" data-ps="heart">🫶 Tim</button>
+    <button class="sfChip sfPose" data-ps="view">👉 Ngắm cảnh</button>
+  </div>
+  <div class="sfRow">
+    <button class="buyBtn" id="btnSnapSelfie" style="padding:8px 20px;font-size:14px;">📸 CHỤP ẢNH NGAY (4:5)</button>
+  </div>
 </div>
 
 <div id="buffs"></div>
@@ -242,12 +547,23 @@
 <div class="modal" id="menuModal"><div class="sheet">
   <button class="closeX" data-close="menuModal">✕</button>
   <h2 id="menuTitle">Quầy</h2><div class="sub" id="menuSub"></div>
+  <div id="haggleBar" style="margin:8px 0;padding:8px 10px;border-radius:10px;background:rgba(255,217,77,.1);border:1px dashed rgba(255,217,77,.45);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <span id="haggleTxt" style="font-size:12.5px;color:#ffeec4;">🤝 Mặc cả đầu ngày: thử vận may giảm 15% giá toàn quầy!</span>
+    <button class="buyBtn" id="btnHaggle">🤝 Mặc cả</button>
+  </div>
   <div id="menuItems"></div>
 </div></div>
 
 <div class="modal" id="bagModal"><div class="sheet">
   <button class="closeX" data-close="bagModal">✕</button>
-  <h2>🧺 Giỏ đi chợ</h2><div class="sub" id="bagSub">Bấm Ăn/Uống để dùng món — món nóng cho buff, đặc sản thì mang về làm quà.</div>
+  <h2>🧺 Túi đồ Đi Chợ (4 Ngăn)</h2><div class="sub" id="bagSub">Bấm Ăn/Uống để dùng món — món nóng cho buff, đặc sản thì mang về làm quà hoặc tặng NPC.</div>
+  <div class="bagTabs" id="bagTabs">
+    <button class="bagTab active" data-btab="all">Tất cả</button>
+    <button class="bagTab" data-btab="food">🍽 Đồ ăn</button>
+    <button class="bagTab" data-btab="drink">🥤 Thức uống</button>
+    <button class="bagTab" data-btab="goods">🎁 Đặc sản & Lưu niệm</button>
+    <button class="bagTab" data-btab="util">🧰 Đồ dùng & Vỏ rác</button>
+  </div>
   <div id="bagItems"></div>
 </div></div>
 
@@ -279,13 +595,28 @@
 <div class="modal" id="passModal"><div class="sheet">
   <button class="closeX" data-close="passModal">✕</button>
   <h2>📖 Hộ chiếu Đi Chợ</h2><div class="sub" id="passSub"></div>
+  <div id="dailyQueBox" style="margin:8px 0 12px;padding:9px 12px;border-radius:10px;background:rgba(255,217,77,.1);border:1px solid rgba(255,217,77,.4);font-size:12.5px;color:#ffeec4;"></div>
   <div class="stampGrid" id="stampGrid"></div>
+  <h2 style="margin-top:14px">🤳 Album Selfie Đà Lạt (<span id="selfieSpotCount">0</span>/7 điểm chính thức)</h2>
+  <div class="sub" id="selfieAlbumSub">Chụp đủ 7 điểm Selfie chính thức để nhận dấu đặc biệt “Nhiếp ảnh gia Hòa Bình” & treo lên Tường Ảnh Du Khách ở Quảng trường!</div>
+  <div class="albumGrid" id="selfieAlbumGrid"></div>
   <h2 style="margin-top:14px">📖 Sổ Đặc Sản Đà Lạt</h2><div class="sub" id="dacSanInfo"></div>
   <div id="dacSanBody"></div>
   <h2 style="margin-top:14px">⭐ Cấp Khách Quen Chợ</h2><div class="sub" id="lvInfo"></div>
   <h2>🏆 Thành tựu</h2><div class="stampGrid" id="achGrid"></div>
   <h2 style="margin-top:14px">📸 Ảnh check-in đã chụp</h2><div id="photoList"></div>
   <h2 style="margin-top:14px">🏮 Lồng đèn sao đã nhặt</h2><div class="sub" id="collInfo"></div>
+</div></div>
+
+<div class="modal" id="selfiePreviewModal"><div class="sheet" style="max-width:440px;text-align:center;">
+  <button class="closeX" data-close="selfiePreviewModal">✕</button>
+  <h2>📸 Ảnh Selfie Đà Lạt (1080×1350)</h2>
+  <div class="sub" id="sfPrevSub"></div>
+  <img id="sfPrevImg" style="width:100%;max-width:320px;aspect-ratio:4/5;border-radius:12px;border:2px solid #ffd94d;margin:8px auto;display:block;" alt="Selfie preview"/>
+  <div class="btnRow" style="justify-content:center;gap:8px;margin-top:10px;">
+    <button class="buyBtn" id="btnShareSelfie">📤 Chia sẻ / Tải PNG</button>
+    <button class="eatBtn" id="btnSaveAlbum">💾 Lưu vào Album Đi Chợ</button>
+  </div>
 </div></div>
 
 <div class="modal" id="upgModal"><div class="sheet">
@@ -300,6 +631,7 @@
   <div id="fortuneResult"></div>
   <div class="btnRow" id="fortuneTypes">
     <button class="bigBtn ftype" data-ft="bai">🃏 Xem Bài</button>
+    <button class="bigBtn ftype" data-ft="xam">🎋 Xin Xăm</button>
     <button class="bigBtn ftype" data-ft="mat">👁️ Xem Mặt</button>
     <button class="bigBtn ftype" data-ft="tay">✋ Xem Chỉ Tay</button>
   </div>
@@ -308,7 +640,11 @@
 
 <div class="modal" id="stageModal"><div class="sheet">
   <button class="closeX" data-close="stageModal">✕</button>
-  <h2>🎶 Góc Hát Đà Lạt</h2><div class="sub" id="stageSub"></div>
+  <h2>🎶 Góc Hát Acoustic Hòa Bình</h2><div class="sub" id="stageSub"></div>
+  <div id="songBoardBox" style="margin:8px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,217,77,.35);">
+    <div style="font-size:12px;font-weight:800;color:#ffd98a;margin-bottom:6px;">🎼 BẢNG CHỌN BÀI HÁT ĐÊM NAY:</div>
+    <div id="songList" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+  </div>
   <div class="btnRow">
     <button class="bigBtn" id="btnListen">🎧 Nghe hát</button>
     <button class="bigBtn" id="btnTip">🪙 Tặng 10 Xu</button>
@@ -323,7 +659,7 @@
 
 <div id="joyBase"><div id="joyKnob"></div></div>
 <button id="actBtn">MUA / ĂN</button>
-<div id="hint">WASD: đi • Kéo chuột: xoay camera • <b>E</b>: tương tác • <b>B</b>: giỏ (bán lại đồ) • <b>U</b>: nâng cấp • <b>P</b>: hộ chiếu • <b>N</b>: ngày/đêm • Trời lạnh nhớ giữ ấm! • 🧭 Theo cột sáng vàng để đi hết hành trình • Bản đồ nhỏ ở góc phải</div>
+<div id="hint">WASD: đi • Kéo chuột: xoay camera • <b>E</b>: tương tác • <b>B</b>: túi 4 ngăn • <b>G</b>: hành động • <b>V</b>: đổi góc camera • <b>C</b>: chụp selfie • <b>P</b>: hộ chiếu • <b>N</b>: ngày/đêm</div>
 
 <script type="importmap">
 { "imports": {
@@ -9948,6 +10284,2453 @@ tickWater = function(t){
   for(const L of XH5_LANTERNS){ L.lm.emissiveIntensity = isNight ? 2.6 : 0.15; L.sm.opacity = isNight ? 0.5 + Math.sin(t * 2.3 + L.ph) * 0.06 : 0; }
   xh5LapTick();
 };
+
+// ====================================================================================================
+// REBUILD "GIỐNG THẬT" PHASE 1 → PHASE 7 + DYNAMIC NIGHTTIME NEON SIGN FLICKER
+// ====================================================================================================
+{
+  // ---------- KHỞI TẠO DỮ LIỆU LƯU TRỮ MỞ RỘNG (tương thích 100% chohb3d-v1 cũ) ----------
+  if(typeof state.mood !== 'number') state.mood = 85;
+  if(typeof state.cleanPts !== 'number') state.cleanPts = 0;
+  if(!state.haggled || typeof state.haggled !== 'object') state.haggled = {};
+  if(!state.stallBuys || typeof state.stallBuys !== 'object') state.stallBuys = {};
+  if(!state.npcFriend || typeof state.npcFriend !== 'object') state.npcFriend = {};
+  if(!Array.isArray(state.selfieAlbum)) state.selfieAlbum = [];
+  if(!state.selfieSpots || typeof state.selfieSpots !== 'object') state.selfieSpots = {};
+  if(typeof state.badQueActive !== 'boolean') state.badQueActive = false;
+  if(typeof state.activeQueEffect !== 'string') state.activeQueEffect = '';
+
+  const curGameDay = () => Math.floor((Date.now() / 86400000) + (gameHourF / 24));
+
+  // ---------- 0. HIỆU ỨNG NEON SIGN FLICKER BAN ĐÊM CHO BIỂN HIỆU CHÍNH ----------
+  // Tạo viền ống đèn Neon phát sáng & nhấp nháy cường độ ngẫu nhiên (randomized intensity pulse)
+  // cho các biển hiệu lớn: CHỢ ĐÀ LẠT, SỮA ĐẬU NÀNH HOA SỮA, HỒNG TRÀ HÒA BÌNH, BÁNH TRÁNG NƯỚNG,
+  // LA TULIPE, L'ANGFARM, NHÀ HÀNG THỦY TẠ, CÀ PHÊ TÙNG, PHỐ CHỢ ĐÊM.
+  const neonSigns = [];
+  function makeNeonSignFrame(x, y, z, w, h, rotY, hexCol, labelTxt, subTxt){
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    g.rotation.y = rotY || 0;
+    worldGroup.add(g);
+
+    const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#140c1c'; ctx.fillRect(0, 0, 512, 160);
+    const hexStr = '#' + hexCol.toString(16).padStart(6, '0');
+    ctx.strokeStyle = hexStr; ctx.lineWidth = 8;
+    ctx.strokeRect(10, 10, 492, 140);
+    ctx.shadowColor = hexStr; ctx.shadowBlur = 18;
+    ctx.fillStyle = '#fff8ea'; ctx.font = 'bold 44px Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(labelTxt, 256, subTxt ? 64 : 80);
+    if(subTxt){
+      ctx.fillStyle = hexStr; ctx.font = 'bold 26px Arial, sans-serif';
+      ctx.fillText(subTxt, 256, 116);
+    }
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const matSign = new THREE.MeshStandardMaterial({
+      map: tex,
+      emissive: new THREE.Color(hexCol),
+      emissiveMap: tex,
+      emissiveIntensity: isNight ? 1.85 : 0.15,
+      roughness: 0.35
+    });
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(w, h), matSign);
+    g.add(board);
+
+    const tubeMat = new THREE.MeshStandardMaterial({
+      color: hexCol,
+      emissive: hexCol,
+      emissiveIntensity: isNight ? 2.6 : 0.2,
+      roughness: 0.25
+    });
+    const topT = new THREE.Mesh(new THREE.BoxGeometry(w + 0.08, 0.05, 0.05), tubeMat);
+    topT.position.set(0, h / 2 + 0.02, 0.02); g.add(topT);
+    const botT = new THREE.Mesh(new THREE.BoxGeometry(w + 0.08, 0.05, 0.05), tubeMat);
+    botT.position.set(0, -h / 2 - 0.02, 0.02); g.add(botT);
+
+    neonSigns.push({
+      matSign,
+      tubeMat,
+      ph: Math.random() * 10,
+      f1: 6.5 + Math.random() * 5.5,
+      f2: 17.0 + Math.random() * 11.0,
+      baseI: 1.75 + Math.random() * 0.55
+    });
+    return g;
+  }
+
+  // Gắn bảng Neon động tại các điểm thương hiệu lớn & sạp chính của chợ đêm
+  makeNeonSignFrame(0, 10.6, 11.65, 6.2, 1.35, Math.PI, 0xff3b5c, 'CHỢ ĐÀ LẠT', 'TRUNG TÂM THƯƠNG MẠI HÒA BÌNH');
+  makeNeonSignFrame(-22, 2.85, -43.5, 3.6, 0.88, 0, 0xffb830, 'SỮA ĐẬU NÀNH HOA SỮA', '3F TĂNG BẠT HỔ • NÀNH BÒ - BÁNH TIÊU');
+  makeNeonSignFrame(6.0, 3.05, -36.1, 3.5, 0.85, 0, 0xff4d6d, 'HỒNG TRÀ HÒA BÌNH', 'KI-ỐT 30–32 KHU HÒA BÌNH');
+  makeNeonSignFrame(-41.5, 19.3, -38.8, 3.4, 0.82, 0, 0x38d9a9, 'L’ANGFARM ĐÀ LẠT', 'ĐẶC SẢN TRÀ ATISO • HỒNG TREO GIÓ');
+  makeNeonSignFrame(-50.5, 19.3, -38.8, 3.2, 0.82, 0, 0xe599f7, 'LA TULIPE', 'BÁNH NGỌT & QUÀ LƯU NIỆM ĐÀ LẠT');
+  makeNeonSignFrame(-36, 2.75, 30.6, 2.8, 0.72, Math.PI, 0xff6b35, 'BÁNH TRÁNG NƯỚNG', 'ĐẶC SẢN CHỢ ĐÊM ĐÀ LẠT');
+  makeNeonSignFrame(19.5, 19.2, -55.5, 3.0, 0.76, 0, 0xffd166, 'CÀ PHÊ TÙNG • SỐ 6', 'KHU HÒA BÌNH • TỪ NĂM 1956');
+
+  // Đăng ký thêm các vật liệu đèn lồng/biển sạp lớn để cùng nhấp nháy Neon về đêm
+  for(const s of stalls){
+    if(s.special && s.lanternMat){
+      neonSigns.push({
+        matSign: s.lanternMat,
+        tubeMat: s.bigLanternMat || s.lanternMat,
+        ph: s.phase || Math.random() * 6.28,
+        f1: 8.2,
+        f2: 21.5,
+        baseI: 1.95
+      });
+    }
+  }
+
+  // ---------- PHASE 1: HỒ XUÂN HƯƠNG — ĐÀN THUYỀN THIÊN NGA GIỮA HỒ, THÙNG RÁC XANH, XE ĐẠP ĐÔI, CÂU CÁ ĐẬP ÔNG ĐẠO, HÀNG RONG Bờ HỒ ----------
+  // 1a. Đàn 4 thuyền thiên nga trắng bơi chậm thành đàn ở vùng giữa hồ (ngoài thuyền cho thuê ở bến)
+  const midLakeFlock = [];
+  {
+    const swanTemplate = ASSETS.lake && ASSETS.lake.getObjectByName('SwanBoat');
+    const flockDefs = [
+      { cx: -310, cz: 96, rx: 28, rz: 16, sp: 0.085, ph: 0.4 },
+      { cx: -318, cz: 104, rx: 28, rz: 16, sp: 0.085, ph: 0.75 },
+      { cx: -355, cz: 112, rx: 32, rz: 18, sp: 0.072, ph: 1.9 },
+      { cx: -364, cz: 118, rx: 32, rz: 18, sp: 0.072, ph: 2.25 }
+    ];
+    for(const fd of flockDefs){
+      if(!swanTemplate) break;
+      const b = swanTemplate.clone(true);
+      b.position.set(fd.cx, 4.9, fd.cz);
+      b.traverse(o => { o.matrixAutoUpdate = true; });
+      worldGroup.add(b);
+      midLakeFlock.push(Object.assign({ boat: b }, fd));
+    }
+  }
+
+  // 1b. Mặt nước lấp lánh nắng/trăng (Specular Glint strip) + 2 lớp gợn sóng nhiễu không lặp đều
+  let waterSpecMesh = null;
+  {
+    const sc = document.createElement('canvas'); sc.width = 128; sc.height = 256;
+    const sctx = sc.getContext('2d');
+    for(let i = 0; i < 95; i++){
+      const gx = 24 + Math.sin(i * 37.3) * 18 + 40;
+      const gy = (i / 95) * 240 + 8;
+      const gw = 10 + Math.abs(Math.cos(i * 19.1)) * 28;
+      sctx.fillStyle = 'rgba(255,248,220,' + (0.18 + 0.35 * Math.sin((i / 95) * Math.PI)).toFixed(2) + ')';
+      sctx.fillRect(gx - gw / 2, gy, gw, 2.5);
+    }
+    const specTex = new THREE.CanvasTexture(sc); specTex.colorSpace = THREE.SRGBColorSpace;
+    waterSpecMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 86),
+      new THREE.MeshBasicMaterial({ map: specTex, transparent: true, opacity: 0.38, depthWrite: false, blending: THREE.AdditiveBlending })
+    );
+    waterSpecMesh.rotation.x = -Math.PI / 2;
+    waterSpecMesh.position.set(-295, 4.942, 86);
+    waterSpecMesh.renderOrder = 4;
+    worldGroup.add(waterSpecMesh);
+  }
+
+  // 1c. Thùng rác xanh công cộng (bờ hồ + chợ + quảng trường) — tương tác bỏ vỏ rác nhận điểm văn minh
+  const TRASH_BINS = [
+    { x: -338, y: 5.49, z: 26.4, name: 'Thùng rác xanh bờ hồ Tây' },
+    { x: -294, y: 5.49, z: 26.4, name: 'Thùng rác xanh bờ hồ Giữa' },
+    { x: -252, y: 5.49, z: 26.4, name: 'Thùng rác xanh đầu cầu Thủy Tạ' },
+    { x: -18,  y: 0.0,  z: 8.5,  name: 'Thùng rác xanh trước Chợ Đà Lạt' },
+    { x: 22,   y: 16.5, z: -46,  name: 'Thùng rác xanh Quảng trường Hòa Bình' }
+  ];
+  for(const tb of TRASH_BINS){
+    const g = new THREE.Group(); g.position.set(tb.x, tb.y, tb.z); worldGroup.add(g);
+    cyl(0.24, 0.20, 0.68, 0x1e6b3a, 0, 0.36, 0, g, 10);
+    cyl(0.26, 0.25, 0.10, 0x298a4c, 0, 0.74, 0, g, 10);
+    box(0.22, 0.12, 0.02, 0xe8f5e9, 0, 0.42, 0.23, g, false);
+  }
+
+  // 1d. Biển "HỒ XUÂN HƯƠNG" ở đầu cầu đảo Thủy Tạ + Dàn xe đạp đôi cho thuê dựng ở bến
+  {
+    const hxhSign = signMesh('HỒ XUÂN HƯƠNG', 3.1, 0.72, '#1b4332', '#ffd98a', 'DANH THẮNG QUỐC GIA • ĐÀ LẠT');
+    hxhSign.position.set(-246.2, 6.85, 34.8);
+    hxhSign.rotation.y = Math.PI;
+    worldGroup.add(hxhSign);
+    cyl(0.05, 0.05, 1.4, 0x1b4332, -247.3, 6.15, 34.8, worldGroup, 8);
+    cyl(0.05, 0.05, 1.4, 0x1b4332, -245.1, 6.15, 34.8, worldGroup, 8);
+
+    // 2 chiếc xe đạp đôi (tandem bikes) dựng cạnh bến thuyền (-270.5, 5.49, 32.8)
+    for(let ti = 0; ti < 2; ti++){
+      const tg = new THREE.Group();
+      tg.position.set(-270.5 - ti * 1.6, 5.49, 32.8);
+      tg.rotation.y = 0.35;
+      worldGroup.add(tg);
+      const fMat = mat(ti === 0 ? 0xe05263 : 0x2e86ab, 0.45, 0.4);
+      const tMat = mat(0x222428, 0.85);
+      for(const wz of [-0.85, 0.85]){
+        const w = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.045, 8, 16), tMat);
+        w.position.set(0, 0.33, wz); tg.add(w);
+      }
+      box(0.05, 0.06, 1.65, ti === 0 ? 0xe05263 : 0x2e86ab, 0, 0.56, 0, tg, false);
+      // 2 yên + 2 ghi-đông đặc trưng xe đạp đôi Đà Lạt
+      for(const sz of [-0.45, 0.25]){
+        box(0.22, 0.06, 0.18, 0x2b2623, 0, 0.78, sz, tg, false);
+        box(0.34, 0.04, 0.06, 0xd8dde2, 0, 0.92, sz + 0.32, tg, false);
+      }
+    }
+    const tdSign = signMesh('XE ĐẠP ĐÔI DẠO HỒ', 2.1, 0.48, '#2b4c7e', '#ffeec4');
+    tdSign.position.set(-271.2, 6.55, 32.2); tdSign.rotation.y = Math.PI; worldGroup.add(tdSign);
+  }
+
+  // 1e. Người câu cá ở đập Ông Đạo (-552, 5.49, 88) có cần câu cong + xô cá xanh,
+  // người tập thể dục sáng sớm (-315, 5.49, 32.2), và gánh bánh tráng nướng lưu động buổi tối gần cầu (-243.5, 5.49, 31.8)
+  const lakeAnimActors = [];
+  {
+    // Người câu cá đập Ông Đạo
+    const angler = crowdPerson(1.0, 'crowd'); dressWarmXH3(angler);
+    angler.position.set(-552.0, 5.49, 88.0); angler.rotation.y = Math.PI / 2;
+    worldGroup.add(angler);
+    const rod = cyl(0.012, 0.025, 2.8, 0x8d6e46, 0, 1.35, 1.25, angler, 6);
+    rod.rotation.x = 1.15;
+    cyl(0.16, 0.13, 0.34, 0x1e88e5, 0.48, 0.17, 0.25, angler, 8); // xô nhựa xanh đựng cá
+    lakeAnimActors.push({ g: angler, kind: 'angler', ph: 0.4 });
+
+    // 2 người tập thể dục dưỡng sinh buổi sáng trên bờ hồ
+    for(let ei = 0; ei < 2; ei++){
+      const ex = crowdPerson(1.0, 'crowd'); dressWarmXH3(ex);
+      ex.position.set(-315.5 + ei * 1.8, 5.49, 32.2); ex.rotation.y = Math.PI;
+      worldGroup.add(ex);
+      lakeAnimActors.push({ g: ex, kind: 'exercise', ph: ei * 1.5 });
+    }
+
+    // Gánh bánh tráng nướng lưu động buổi tối gần đầu cầu đảo Thủy Tạ (-243.5, 5.49, 31.8)
+    const btCart = new THREE.Group(); btCart.position.set(-243.5, 5.49, 31.8); worldGroup.add(btCart);
+    box(1.25, 0.72, 0.75, 0x7a4a2e, 0, 0.36, 0, btCart, false);
+    cyl(0.24, 0.20, 0.18, 0x3a3532, 0.25, 0.80, 0, btCart, 10); // bếp than hồng
+    const coalGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.05, 10), new THREE.MeshBasicMaterial({ color: 0xff5722 }));
+    coalGlow.position.set(0.25, 0.88, 0); btCart.add(coalGlow);
+    for(const sx of [-0.55, 0.55]){
+      box(0.32, 0.28, 0.32, 0xd32f2f, sx, 0.14, 0.72, btCart, false); // ghế đẩu nhựa đỏ
+    }
+    const btVendor = crowdPerson(1.0, 'crowd'); dressWarmXH3(btVendor);
+    btVendor.position.set(0, 0, -0.58); btCart.add(btVendor);
+    const btSign = signMesh('BÁNH TRÁNG NƯỚNG BỜ HỒ', 2.0, 0.45, '#8c2f22', '#ffe9b0', '15 XU • NÓNG GIÒN');
+    btSign.position.set(0, 1.45, 0); btCart.add(btSign);
+    lakeAnimActors.push({ g: btVendor, cart: btCart, kind: 'rover', ph: 2.1 });
+  }
+
+  // 1f. Đăng ký ghế đá bờ hồ vào SIT_SPOTS để người chơi ngồi ngắm hồ (camera chậm + hồi tâm trạng)
+  const LAKE_BENCHES_X = [-346, -334, -322, -310, -298, -286, -274, -242, -230];
+  for(const bx of LAKE_BENCHES_X){
+    SIT_SPOTS.push({ x: bx, y: 5.53, z: 35.35, rotY: 0, lakeBench: true, stall: { name: 'Ghế đá bờ Hồ Xuân Hương' } });
+  }
+
+  // ---------- PHASE 2: QUẢNG TRƯỜNG HÒA BÌNH + FOUNTAIN ĐỔI MÀU ĐÊM + BẢNG CHỌN BÀI HÁT + BẢNG SỰ KIỆN TP ----------
+  const FOUNTAIN_PT = { x: 27.0, z: 5.2 };
+  const fountainUnderwaterLight = new THREE.PointLight(0x38d9a9, isNight ? 32 : 0, 14, 1.6);
+  fountainUnderwaterLight.position.set(27.0, 1.35, 5.2);
+  worldGroup.add(fountainUnderwaterLight);
+
+  // Vòng đèn LED dưới mặt nước bồn đài phun + bọt trắng chân tia
+  const fountainFoamRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.15, 2.35, 24),
+    new THREE.MeshBasicMaterial({ color: 0xccf2ff, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false })
+  );
+  fountainFoamRing.rotation.x = -Math.PI / 2;
+  fountainFoamRing.position.set(27.0, 0.76, 5.2);
+  worldGroup.add(fountainFoamRing);
+
+  // Loa kéo + Bảng ghi bài hát cạnh Góc Hát Quảng trường Hòa Bình (26.8, 16.5, -52)
+  {
+    const stgDeco = new THREE.Group(); stgDeco.position.set(26.8, groundH(26.8, -52), -52); worldGroup.add(stgDeco);
+    // Loa kéo thùng gỗ đen + vòng LED bass
+    box(0.52, 0.82, 0.42, 0x1e2024, -1.35, 0.41, 0.35, stgDeco, false);
+    const woofer = new THREE.Mesh(new THREE.RingGeometry(0.11, 0.17, 16), new THREE.MeshBasicMaterial({ color: 0xff9f1c, side: THREE.DoubleSide }));
+    woofer.position.set(-1.35, 0.38, 0.57); stgDeco.add(woofer);
+    // Bảng ghi bài hát viết tay trên giá gỗ
+    const sbSign = signMesh('ĐÊM NHẠC ACOUSTIC ĐÀ LẠT', 2.2, 0.75, '#2b2118', '#ffeec4', 'CHỌN BÀI HÁT • YÊU CẦU TỰ DO');
+    sbSign.position.set(1.55, 1.18, 0.45); sbSign.rotation.y = -0.35; stgDeco.add(sbSign);
+    cyl(0.03, 0.03, 1.2, 0x5c4028, 1.55, 0.6, 0.45, stgDeco, 6);
+
+    // Bảng thông tin sự kiện của thành phố Đà Lạt ở Quảng trường Hòa Bình
+    const cityBoard = signMesh('BẢNG TIN THÀNH PHỐ ĐÀ LẠT', 3.4, 1.1, '#1b3a4b', '#ffd98a', 'T6–CN: PHỐ ĐI BỘ & CHỢ ĐÊM CUỐI TUẦN');
+    cityBoard.position.set(15.5, groundH(15.5, -47.5) + 1.65, -47.5);
+    cityBoard.rotation.y = 0.25;
+    worldGroup.add(cityBoard);
+    cyl(0.05, 0.05, 1.6, 0x2b3a42, 14.3, groundH(15.5, -47.5) + 0.8, -47.2, worldGroup, 8);
+    cyl(0.05, 0.05, 1.6, 0x2b3a42, 16.7, groundH(15.5, -47.5) + 0.8, -47.8, worldGroup, 8);
+  }
+
+  // Danh sách bài hát ở Góc Hát Quảng trường Hòa Bình
+  const STAGE_SONGS = [
+    { id: 'hoanghon', name: '🎵 Đà Lạt Hoàng Hôn', notes: [523.25, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 659.25], lyric: '🎵 Đà Lạt chiều nghiêng sương xuống mờ trên phố núi…' },
+    { id: 'tpbuon',   name: '🎵 Thành Phố Sương Mù', notes: [440.00, 523.25, 659.25, 587.33, 523.25, 493.88, 440.00, 392.00], lyric: '🎵 Thành phố nào vừa đi đã mỏi, đường quanh co quyện gốc thông già…' },
+    { id: 'hoadao',   name: '🎵 Ai Lên Xứ Hoa Đào', notes: [587.33, 659.25, 783.99, 880.00, 987.77, 880.00, 783.99, 659.25], lyric: '🎵 Ai lên xứ hoa đào dừng chân bên hồ nghe chiều rơi…' },
+    { id: 'demlanh',  name: '🎵 Đêm Hòa Bình Ấm Lòng', notes: [659.25, 783.99, 659.25, 523.25, 587.33, 659.25, 523.25, 440.00], lyric: '🎵 Ly sữa đậu nành thơm khói trắng, ấm bàn tay giữa chợ đêm sương…' }
+  ];
+  let currentSongId = 'hoanghon';
+  function renderSongList(){
+    const sl = document.getElementById('songList'); if(!sl) return;
+    sl.innerHTML = '';
+    for(const sg of STAGE_SONGS){
+      const b = document.createElement('button');
+      b.className = 'sfChip' + (sg.id === currentSongId ? ' sel' : '');
+      b.textContent = sg.name;
+      b.addEventListener('click', () => {
+        currentSongId = sg.id;
+        for(let i = 0; i < sg.notes.length && i < MELODY.length; i++) MELODY[i] = sg.notes[i];
+        LYRICS[0] = sg.lyric;
+        state.mood = Math.min(100, state.mood + 6);
+        updateHUD();
+        renderSongList();
+        toast('🎶 Ca sĩ bắt nhịp bài: ' + sg.name + ' (+6% Tâm trạng Vui!)');
+      });
+      sl.appendChild(b);
+    }
+  }
+  renderSongList();
+
+  // ---------- PHASE 3 & PHASE 4: BẬC TAM CẤP + ĐỈNH HOA SỮA (3F TĂNG BẠT HỔ) + HỒNG TRÀ HÒA BÌNH (KI-ỐT 30–32) ----------
+  // 3a. Học sinh ngồi bậc tam cấp ăn vặt buổi chiều + Cô bán vé số/đồ len lưu niệm ngồi bậc + Lan can ngắm cảnh đỉnh thang
+  {
+    // Cô bán vé số / móc khóa len ngồi chiếu bậc tam cấp (-54.2, groundH, -14.5)
+    const stepLotto = crowdPerson(0.95, 'sitter'); dressWarmXH3(stepLotto);
+    stepLotto.position.set(-54.2, groundH(-54.2, -14.5) - 0.15, -14.5);
+    stepLotto.rotation.y = 0.45;
+    const lL = stepLotto.userData.limbs;
+    if(lL){ lL.lLeg.rotation.x = -1.35; lL.rLeg.rotation.x = -1.35; lL.rArm.rotation.x = -0.65; }
+    worldGroup.add(stepLotto);
+    box(0.46, 0.08, 0.34, 0xd4a359, -53.85, groundH(-54.2, -14.5) + 0.05, -14.2, worldGroup, false); // khay vé số & đồ len
+
+    // 2 học sinh mặc áo khoác đồng phục ngồi ăn bánh tráng/sữa nóng trên bậc thang ngắm xuống chợ (-57.6, -21.5)
+    for(let si = 0; si < 2; si++){
+      const stu = crowdPerson(0.92, 'sitter'); dressWarmXH3(stu);
+      const sx = -57.6 + si * 0.85, sz = -21.5;
+      stu.position.set(sx, groundH(sx, sz) - 0.15, sz);
+      stu.rotation.y = 0.1; // nhìn thẳng xuống quảng trường + mặt tiền chợ (góc Hong Kong)
+      const sL = stu.userData.limbs;
+      if(sL){ sL.lLeg.rotation.x = -1.35; sL.rLeg.rotation.x = -1.35; sL.lArm.rotation.x = -0.85; sL.rArm.rotation.x = -0.85; }
+      worldGroup.add(stu);
+    }
+
+    // Sân ngắm cảnh & biển "GÓC HONG KONG — ĐỈNH THANG CHỢ ĐÀ LẠT" trên đỉnh tam cấp (-55.5, 16.5, -31.5)
+    const viewSign = signMesh('ĐÀI NGẮM CẢNH ĐỈNH THANG', 2.6, 0.58, '#4a2c18', '#ffd98a', 'TOÀN CẢNH CHỢ ĐÀ LẠT & HỒ XUÂN HƯƠNG');
+    viewSign.position.set(-52.0, groundH(-52.0, -31.2) + 1.45, -31.2);
+    worldGroup.add(viewSign);
+  }
+
+  // 4a. Làm giàu khu Sữa Đậu Nành Hoa Sữa (3F Tăng Bạt Hổ, quanh x=-22, z=-43) & Hồng Trà Hòa Bình (Ki-ốt 30–32, x=6, z=-35.5)
+  // theo đúng research/25: bảng menu viết tay canvas, bàn ghế nhựa thấp, khách ngồi ôm ly sữa nóng hai tay, cô bán múc sữa bằng vá
+  {
+    const hsY = groundH(-22, -43);
+    const hsGroup = new THREE.Group(); hsGroup.position.set(-22, hsY, -43); worldGroup.add(hsGroup);
+
+    // Bảng menu viết tay (canvas texture) của Quán Hoa Sữa 3F Tăng Bạt Hổ
+    const mc = document.createElement('canvas'); mc.width = 512; mc.height = 320;
+    const mctx = mc.getContext('2d');
+    mctx.fillStyle = '#243326'; mctx.fillRect(0, 0, 512, 320); // bảng phấn xanh đen viết tay
+    mctx.strokeStyle = '#c89b56'; mctx.lineWidth = 10; mctx.strokeRect(8, 8, 496, 304);
+    mctx.fillStyle = '#ffe999'; mctx.font = 'bold 34px Arial, sans-serif'; mctx.textAlign = 'center';
+    mctx.fillText('SỮA ĐẬU NÀNH HOA SỮA (3F TĂNG BẠT HỔ)', 256, 48);
+    mctx.fillStyle = '#ffffff'; mctx.font = 'bold 25px Arial, sans-serif'; mctx.textAlign = 'left';
+    mctx.fillText('• Nành bò (pha sữa Ông Thọ) ...... 15 Xu', 34, 102);
+    mctx.fillText('• Nành phụng (đậu phộng béo) ... 15 Xu', 34, 142);
+    mctx.fillText('• Nành xanh / Sữa mè đen ......... 14 Xu', 34, 182);
+    mctx.fillText('• Bánh tiêu / Su kem / Sừng trâu .. 10 Xu', 34, 222);
+    mctx.fillStyle = '#ffd166'; mctx.font = 'italic 23px Arial, sans-serif';
+    mctx.fillText('🔥 Uống tại chỗ: +100% Độ Ấm & hết run lạnh 3 phút!', 34, 276);
+    const menuTex = new THREE.CanvasTexture(mc); menuTex.colorSpace = THREE.SRGBColorSpace;
+    const menuBoard = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 1.45), new THREE.MeshBasicMaterial({ map: menuTex }));
+    menuBoard.position.set(-1.85, 1.55, 0.25); menuBoard.rotation.y = 0.28; hsGroup.add(menuBoard);
+
+    // 2 bàn nhựa thấp + khách mặc áo ấm ngồi ghế nhựa ôm ly sữa thủy tinh bốc khói bằng hai tay ("quán sữa đậu nành ôm")
+    for(const [tx, tz] of [[-2.2, 1.85], [2.2, 1.85]]){
+      box(0.68, 0.42, 0.68, 0x1e6091, tx, 0.21, tz, hsGroup, false); // bàn nhựa xanh thấp
+      cyl(0.06, 0.05, 0.14, 0xf8f9fa, tx - 0.15, 0.49, tz, hsGroup, 8); // ly thủy tinh sữa nóng
+      cyl(0.06, 0.05, 0.14, 0xf8f9fa, tx + 0.15, 0.49, tz, hsGroup, 8);
+      for(const s of [-1, 1]){
+        box(0.32, 0.26, 0.32, 0xc1121f, tx + s * 0.58, 0.13, tz, hsGroup, false); // ghế nhựa đỏ thấp
+        const cust = crowdPerson(0.95, 'sitter'); dressWarmXH3(cust);
+        cust.position.set(tx + s * 0.58, 0.12, tz);
+        cust.rotation.y = -s * Math.PI / 2;
+        const cL = cust.userData.limbs;
+        if(cL){
+          cL.lLeg.rotation.x = -1.35; cL.rLeg.rotation.x = -1.35;
+          cL.lArm.rotation.x = -1.15; cL.rArm.rotation.x = -1.15; // hai tay nâng ly sữa nóng cho ấm
+        }
+        hsGroup.add(cust);
+      }
+    }
+
+    // Menu treo tường Quán Hồng Trà Hòa Bình (Ki-ốt 30–32 Khu Hòa Bình, x=6, z=-35.5)
+    const htY = groundH(6.0, -35.5);
+    const htMenu = signMesh('MENU HỒNG TRÀ HÒA BÌNH (KI-ỐT 30–32)', 2.4, 0.85, '#5e1914', '#ffeec4', 'Hồng Trà Nóng • Trà Sữa Hạnh Nhân • Trà Đào');
+    htMenu.position.set(8.1, htY + 1.65, -35.2); htMenu.rotation.y = -0.25; worldGroup.add(htMenu);
+  }
+
+  // ---------- PHASE 5: TÚI ĐỒ 4 NGĂN, MẶC CẢ, TÚI ĐỒ CẦM TAY, ĂN UỐNG NHÌN THẤY, BÁNH XE HÀNH ĐỘNG, 12 QUẺ CHÚ BA ----------
+  // 5.1 Phân loại vật phẩm vào 4 ngăn: food (Đồ ăn), drink (Thức uống), goods (Đặc sản & lưu niệm), util (Đồ dùng & vỏ rác)
+  function itemCategoryOf(it){
+    if(!it) return 'food';
+    if(it.cat) return it.cat;
+    if(it.type === 'util' || (it.name && (it.name.indexOf('Vỏ ') === 0 || it.name.indexOf('Ly giấy') === 0))) return 'util';
+    if(it.type === 'goods') return 'goods';
+    if(it.type === 'drink' || (it.name && /Sữa|Trà|Cà phê|Nước|Đậu nành|Hồng trà/i.test(it.name))) return 'drink';
+    return 'food';
+  }
+
+  let currentBagTab = 'all';
+  document.querySelectorAll('#bagTabs .bagTab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentBagTab = btn.dataset.btab || 'all';
+      document.querySelectorAll('#bagTabs .bagTab').forEach(b => b.classList.toggle('active', b === btn));
+      renderBag4Compartments();
+    });
+  });
+
+  // Vật phẩm cầm trên tay nhân vật sau khi mua (túi quà chợ Đà Lạt) hoặc khi đang ăn/uống
+  const playerCarryGroup = new THREE.Group();
+  playerCarryGroup.position.set(0.28, 0.82, 0.26);
+  playerCarryGroup.visible = false;
+  player.add(playerCarryGroup);
+  box(0.24, 0.28, 0.16, 0xd4a359, 0, 0, 0, playerCarryGroup, false); // túi giấy/cói đi chợ
+  box(0.16, 0.08, 0.04, 0xc8372d, 0, 0.16, 0, playerCarryGroup, false); // quai túi đỏ
+  let carryBagUntil = 0;
+
+  // Hiệu ứng hơi ấm bốc lên từ người chơi khi uống sữa đậu nành nóng / ăn đồ nóng
+  const playerWarmSteam = [];
+  {
+    const sc = document.createElement('canvas'); sc.width = sc.height = 64;
+    const sctx = sc.getContext('2d');
+    const gr = sctx.createRadialGradient(32, 32, 2, 32, 32, 28);
+    gr.addColorStop(0, 'rgba(255,245,220,0.85)');
+    gr.addColorStop(1, 'rgba(255,245,220,0)');
+    sctx.fillStyle = gr; sctx.fillRect(0, 0, 64, 64);
+    const stTex = new THREE.CanvasTexture(sc);
+    for(let i = 0; i < 6; i++){
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: stTex, transparent: true, opacity: 0, depthWrite: false }));
+      sp.scale.set(0.45, 0.45, 1);
+      sp.visible = false;
+      player.add(sp);
+      playerWarmSteam.push({ sp, ph: i / 6 });
+    }
+  }
+  let warmSteamUntil = 0;
+
+  // 5.2 Mặc cả (Haggling) tại quầy: 1 lần/quầy/ngày, 50% cơ bản (80% nếu có Quẻ Tài), khách quen mua >=3 lần giảm thêm 5%
+  let activeMenuStall = null;
+  function getStallDiscountFactor(stall){
+    if(!stall) return 1;
+    let factor = 1;
+    const key = stall.id + '_' + curGameDay();
+    if(state.haggled[key] === 'win') factor *= 0.85; // mặc cả thành công -15%
+    if((state.stallBuys[stall.id] || 0) >= 3) factor *= 0.95; // khách quen -5%
+    return factor;
+  }
+
+  function updateHaggleBar(stall){
+    activeMenuStall = stall;
+    const hBar = document.getElementById('haggleBar');
+    const hTxt = document.getElementById('haggleTxt');
+    const hBtn = document.getElementById('btnHaggle');
+    if(!hBar || !hTxt || !hBtn || !stall) return;
+    const key = stall.id + '_' + curGameDay();
+    const buys = state.stallBuys[stall.id] || 0;
+    const regTag = buys >= 3 ? ' • 💖 Khách quen (-5%)' : ' • Đã mua ' + buys + '/3 lần để thành Khách quen';
+    if(state.haggled[key] === 'win'){
+      hTxt.innerHTML = '🎉 <b>Đã mặc cả thành công (-15%)</b> hôm nay tại quầy này!' + regTag;
+      hBtn.disabled = true; hBtn.textContent = '✔ Đã giảm 15%';
+    } else if(state.haggled[key] === 'lose'){
+      hTxt.innerHTML = '😅 Tiểu thương lắc đầu: <i>“Giá gốc sát vốn rồi nghen!”</i>' + regTag;
+      hBtn.disabled = true; hBtn.textContent = 'Đã thử hôm nay';
+    } else {
+      hTxt.innerHTML = '🤝 <b>Mặc cả 1 chạm</b>: 50% cơ hội giảm 15% toàn bộ món hôm nay!' + regTag;
+      hBtn.disabled = false; hBtn.textContent = '🤝 Mặc cả (-15%)';
+    }
+    // Cập nhật giá hiển thị trên các nút mua trong menuModal
+    const factor = getStallDiscountFactor(stall);
+    if(factor < 0.999){
+      const btns = document.querySelectorAll('#menuItems .itemRow .buyBtn');
+      let idx = 0;
+      for(const item of stall.menu){
+        if(WD_LEGACY[item.name]) continue;
+        const b = btns[idx++];
+        if(b && !b.disabled){
+          const p = Math.max(1, Math.round(effPrice(stall, item.price) * factor));
+          b.textContent = p + ' Xu (Ưu đãi!)';
+        }
+      }
+    }
+  }
+
+  document.getElementById('btnHaggle').addEventListener('click', () => {
+    if(!activeMenuStall) return;
+    const key = activeMenuStall.id + '_' + curGameDay();
+    if(state.haggled[key]) return;
+    const chance = (state.activeQueEffect === 'tai' || buffs.luck) ? 0.80 : 0.52;
+    const win = Math.random() < chance;
+    state.haggled[key] = win ? 'win' : 'lose';
+    save();
+    if(win){
+      sfxCoin();
+      toast('🤝 Mặc cả thành công! Chủ quầy ' + activeMenuStall.name + ': “Thôi bớt cho khách dễ thương 15% lấy thảo nghen!”');
+    } else {
+      toast('😅 Chủ quầy ' + activeMenuStall.name + ' lắc đầu cười: “Hàng Đà Lạt tuyển chọn đó, chú bán đúng giá nghen!”');
+    }
+    updateHaggleBar(activeMenuStall);
+  });
+
+  // Theo dõi khi menuModal mở để gắn thanh Mặc cả & Khách quen + hoàn tiền chênh lệch khi mua
+  const menuModalEl = document.getElementById('menuModal');
+  let lastMenuOpenState = false;
+  let lastBagLen = state.bag.length;
+
+  // Nâng cấp giao diện Túi đồ 4 ngăn (renderBag4Compartments)
+  function renderBag4Compartments(){
+    const wrap = document.getElementById('bagItems'); if(!wrap) return;
+    wrap.innerHTML = '';
+    const nowDay = curGameDay();
+    const counts = { all: state.bag.length, food: 0, drink: 0, goods: 0, util: 0 };
+    state.bag.forEach(it => {
+      if(it.day === undefined) it.day = nowDay;
+      const c = itemCategoryOf(it);
+      counts[c] = (counts[c] || 0) + 1;
+    });
+    document.querySelectorAll('#bagTabs .bagTab').forEach(b => {
+      const k = b.dataset.btab;
+      const baseNames = { all: 'Tất cả', food: '🍽 Đồ ăn', drink: '🥤 Thức uống', goods: '🎁 Đặc sản & Lưu niệm', util: '🧰 Đồ dùng & Vỏ rác' };
+      b.textContent = baseNames[k] + ' (' + (counts[k] || 0) + ')';
+    });
+    document.getElementById('bagSub').textContent =
+      'Túi đồ: ' + state.bag.length + '/' + bagCap() + ' món • Điểm văn minh sạch sẽ: ' + state.cleanPts + ' ♻️ • Ăn tại ghế bờ hồ/bậc thang/quảng trường được x2 độ Vui (Picnic)!';
+
+    const filtered = state.bag.map((it, idx) => ({ it, idx })).filter(x => currentBagTab === 'all' || itemCategoryOf(x.it) === currentBagTab);
+    if(!filtered.length){
+      wrap.innerHTML = '<div style="color:#bdb5a2;font-size:13.5px;padding:10px 0;">Ngăn này đang trống — ghé chợ Đà Lạt, Quán Hoa Sữa hoặc Hồng Trà Hòa Bình mua thêm nhé!</div>';
+      return;
+    }
+    for(const { it, idx } of filtered){
+      const cat = itemCategoryOf(it);
+      const expired = cat === 'food' && (nowDay - (it.day || nowDay) >= 1);
+      const row = document.createElement('div'); row.className = 'itemRow';
+      const left = document.createElement('div');
+      const effDesc = cat === 'util'
+        ? 'Bỏ vào Thùng rác xanh (bờ hồ / chợ / quảng trường) để nhận +5 XP & +1 Điểm Sạch Sẽ'
+        : cat === 'goods'
+        ? 'Đặc sản Đà Lạt — tặng NPC tăng thân thiện hoặc mang về làm quà'
+        : expired
+        ? '⚠️ Đồ ăn để qua ngày đã nguội/hỏng — hãy bỏ vào Thùng rác xanh để giữ vệ sinh!'
+        : (it.fw ? '🔥 Đặc sản Hoa Sữa: +100% Độ Ấm, hết run lạnh 3 phút' : (it.hot || it.buff === 'warm' ? '🔥 Món nóng: +45 Độ Ấm, +12% Vui' : '😊 Thưởng thức: +15% Vui' + (it.buff && BUFF_INFO[it.buff] ? ' • Buff ' + BUFF_INFO[it.buff].name : '')));
+      left.innerHTML = '<div class="nm"></div><div class="ds"></div>';
+      left.querySelector('.nm').textContent = (expired ? '⚠️ ' : '') + it.name + (it.price ? ' (' + it.price + ' Xu)' : '');
+      left.querySelector('.ds').textContent = effDesc;
+
+      const btns = document.createElement('div'); btns.className = 'rowBtns';
+      if(cat === 'util' || expired){
+        const tb = document.createElement('button'); tb.className = 'eatBtn'; tb.textContent = '♻️ Bỏ thùng rác';
+        tb.addEventListener('click', () => {
+          state.bag.splice(idx, 1);
+          state.cleanPts = (state.cleanPts || 0) + 1;
+          gainXP(5); save(); updateHUD(); renderBag4Compartments();
+          toast('♻️ Đã bỏ rác đúng nơi quy định! (+5 XP, Điểm sạch sẽ: ' + state.cleanPts + ')');
+        });
+        btns.appendChild(tb);
+      } else if(cat === 'goods'){
+        const gb = document.createElement('button'); gb.className = 'eatBtn'; gb.textContent = '🎁 Tặng NPC';
+        gb.addEventListener('click', () => {
+          state.bag.splice(idx, 1);
+          const mult = state.activeQueEffect === 'duyen' ? 2 : 1;
+          state.npcFriend.totalGifts = (state.npcFriend.totalGifts || 0) + mult;
+          state.mood = Math.min(100, state.mood + 12);
+          if(state.badQueActive){
+            state.badQueActive = false;
+            gainXu(35);
+            toast('✨ Đã tặng quà kết duyên — Hóa giải quẻ xấu thành công (+35 Xu may mắn)!');
+          } else {
+            toast('🎁 Người dân Đà Lạt mỉm cười cảm ơn món "' + it.name + '" của bạn! (+Thân thiện, +12% Vui)');
+          }
+          if(state.npcFriend.totalGifts >= 3 && !G.ach.gift3){
+            G.ach.gift3 = true;
+            toast('🏆 Mở thành tựu Hộ chiếu: “Tấm lòng Đà Lạt” (Tặng quà cho người dân)!', 'stamp');
+          }
+          gainXP(10); save(); updateHUD(); renderBag4Compartments();
+        });
+        btns.appendChild(gb);
+        const sb = document.createElement('button'); sb.className = 'sellBtn'; sb.textContent = '💰 Bán +' + sellPrice(it);
+        sb.addEventListener('click', () => { sellItem(idx); renderBag4Compartments(); });
+        btns.appendChild(sb);
+      } else {
+        const eb = document.createElement('button'); eb.className = 'eatBtn'; eb.textContent = cat === 'drink' ? '🥤 Uống ngay' : '🍽 Ăn ngay';
+        eb.addEventListener('click', () => {
+          const isPicnic = (playerState.z >= 25 && playerState.x <= -224) || (playerState.x < -45 && playerState.z < -8) || (playerState.y > 15);
+          eatItem(idx);
+          // Hiệu ứng ăn/uống nhìn thấy: đứng yên 2.2s, tay cầm món, bốc hơi ấm, bong bóng chữ "Ngon quá!", sinh vỏ rác nhỏ
+          eatUntil = performance.now() + 2200;
+          carryBagUntil = performance.now() + 2200;
+          if(it.fw || it.hot || it.buff === 'warm'){
+            warmSteamUntil = performance.now() + 6000;
+            buffs.warm = Math.max(buffs.warm || 0, 180); // 3 phút game hết run lạnh
+            warmth = it.fw ? 100 : Math.min(100, warmth + 45);
+            renderBuffs();
+          }
+          const joyGain = (isPicnic ? 2 : 1) * 12;
+          state.mood = Math.min(100, (state.mood || 80) + joyGain);
+          if(state.bag.length < bagCap()){
+            state.bag.push({ name: cat === 'drink' ? 'Ly giấy đã dùng' : 'Vỏ gói đồ ăn', type: 'util', cat: 'util', price: 0, day: nowDay });
+          }
+          closeModal('bagModal');
+          toast((isPicnic ? '🧺 Picnic tại điểm đẹp (x2 Vui +' + joyGain + '%): ' : '😋 Ngon tuyệt (+' + joyGain + '% Vui): ') + 'Nhớ bỏ vỏ/ly vào Thùng rác xanh nhé!');
+          save(); updateHUD();
+        });
+        btns.appendChild(eb);
+        const sb = document.createElement('button'); sb.className = 'sellBtn'; sb.textContent = '💰 Bán +' + sellPrice(it);
+        sb.addEventListener('click', () => { sellItem(idx); renderBag4Compartments(); });
+        btns.appendChild(sb);
+      }
+      row.appendChild(left); row.appendChild(btns); wrap.appendChild(row);
+    }
+  }
+
+  document.getElementById('btnBag').addEventListener('click', () => setTimeout(renderBag4Compartments, 10));
+
+  // 5.4 Bánh xe hành động (Emote Wheel) & Chế độ Đi dạo thong thả (Stroll Mode)
+  let activeEmote = null, emoteUntil = 0, strollMode = false, lakeStrollAngAcc = 0, lastLakeAng = null;
+  const emoteWheelEl = document.getElementById('emoteWheel');
+  document.getElementById('btnEmote').addEventListener('click', () => {
+    emoteWheelEl.style.display = emoteWheelEl.style.display === 'flex' ? 'none' : 'flex';
+  });
+  document.querySelectorAll('#emoteWheel .emBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const em = btn.dataset.em;
+      if(em === 'stroll'){
+        strollMode = !strollMode;
+        btn.textContent = '🚶 Đi dạo thong thả: ' + (strollMode ? 'BẬT' : 'TẮT');
+        btn.classList.toggle('active', strollMode);
+        toast(strollMode ? '🚶 Đã bật Chế độ Đi dạo thong thả — camera hạ thấp điện ảnh, đi 1 vòng Hồ Xuân Hương để nhận thành tựu!' : '🏃 Đã về tốc độ đi thường.');
+        return;
+      }
+      if(em === 'sit'){
+        sitting = sitting > 0 ? 0 : 999;
+        toast(sitting > 0 ? '🪑 Đang ngồi nghỉ ngơi ngắm cảnh Đà Lạt (di chuyển để đứng dậy).' : '🚶 Đã đứng dậy.');
+        emoteWheelEl.style.display = 'none';
+        return;
+      }
+      activeEmote = em;
+      emoteUntil = performance.now() + (em === 'dance' ? 6000 : 3600);
+      state.mood = Math.min(100, (state.mood || 80) + 5);
+      updateHUD();
+      const labels = {
+        wave: '👋 Bạn vẫy tay chào — người đi đường Đà Lạt mỉm cười vẫy lại!',
+        bow: '🙇 Bạn cúi chào lễ phép — ai nhìn cũng quý!',
+        pose1: '✌️ Tạo dáng Chibi sẵn sàng chụp ảnh!',
+        pose2: '🫶 Tạo dáng thả tim giữa trời lạnh Đà Lạt!',
+        dance: '💃 Nhảy bắt nhịp theo tiếng nhạc đường phố Hòa Bình!',
+        point: '👉 Chỉ tay ngắm nhìn khung cảnh Đà Lạt mờ sương!'
+      };
+      toast(labels[em] || '🎭 Đang thực hiện hành động!');
+      // NPC đứng gần vẫy tay đáp lại
+      for(const st of statics){
+        if(st.g && Math.hypot(st.g.position.x - playerState.x, st.g.position.z - playerState.z) < 6.5){
+          const L = st.g.userData.limbs;
+          if(L) L.rArm.rotation.x = -2.2;
+        }
+      }
+      emoteWheelEl.style.display = 'none';
+    });
+  });
+
+  // 5.6 Coi bói Chú Ba mở rộng: thêm Xin Xăm (12 quẻ xăm cổ truyền giọng Nam Bộ hóm hỉnh + hiệu ứng thật + cách Hóa giải) & Quẻ Ngày
+  const XAM_STICKS = [
+    { name: 'Xăm Số 1 — Thượng Thượng: Mai Đào Nở Rộ Giữa Sương', poem: '“Sương giăng mặt nước buổi tinh mơ,\nThuyền ghé Thủy Tạ khách đợi chờ,\nMua may bán đắt tiền đầy túi,\nĐà Lạt đêm về đẹp như thơ.”', eff: 'tai', score: 6, desc: 'Hiệu ứng Quẻ Tài: Mặc cả ở mọi quầy tăng 80% tỷ lệ thành công hôm nay!' },
+    { name: 'Xăm Số 2 — Thượng Cát: Ly Sữa Hoa Sữa Ấm Tình', poem: '“Tăng Bạt Hổ khói trắng bay lên,\nNành bò bánh tiêu nhớ chẳng quên,\nNgười thương sánh bước qua bậc đá,\nDuyên lành chớm nở vững trăm nền.”', eff: 'duyen', score: 5, desc: 'Hiệu ứng Quẻ Duyên: Tặng quà & trò chuyện NPC tăng gấp đôi độ thân thiện!' },
+    { name: 'Xăm Số 3 — Trung Cát: Thông Reo Đồi Gió Bình An', poem: '“Thông già đứng vững giữa trời đông,\nGió lạnh sương khuya ấm cõi lòng,\nChậm bước nhìn mây qua đỉnh chợ,\nTâm an vạn sự ắt hanh thông.”', eff: 'an', score: 4, desc: 'Hiệu ứng Quẻ An: Trời Đà Lạt ít làm hao Độ Ấm hơn 40% trong ngày!' },
+    { name: 'Xăm Số 4 — Hạ Quẻ: Sương Mù Che Lối Nhỏ (Cần Hóa Giải)', poem: '“Sương dày lối nhỏ bước hơi nghiêng,\nMua bán coi chừng kẻo tốn tiền,\nMuốn cho vận đổi sang tươi sáng,\nRa đài phun nước thả đồng thiêng!”', eff: 'bad', score: -2, desc: '🙏 Cách hóa giải: Tới Đài phun nước Hòa Bình bấm F thả xu cầu may (hoặc tặng quà 1 NPC) để chuyển vận nhận +35 Xu!' }
+  ];
+  FORTUNE_RITUAL.xam = '🎋 Chú Ba lắc ống xăm tre lách cách dưới ánh đèn vàng… một thẻ xăm rơi ra:';
+
+  document.getElementById('btnDrawFortune').addEventListener('click', () => {
+    if(fortuneType === 'xam'){
+      setTimeout(() => {
+        const xm = XAM_STICKS[Math.floor(Math.random() * XAM_STICKS.length)];
+        state.activeQueEffect = xm.eff;
+        state.badQueActive = xm.score < 0;
+        const rs = document.getElementById('fortuneResult');
+        if(rs){
+          rs.innerHTML = '<div class="fname">🎋 ' + xm.name + '</div><div class="ftext" style="white-space:pre-line;margin-top:6px;">' + xm.poem + '\n\n✨ ' + xm.desc + '</div>';
+        }
+        save();
+      }, 950);
+    } else {
+      const effs = ['tai', 'duyen', 'an'];
+      state.activeQueEffect = effs[Math.floor(Math.random() * effs.length)];
+      save();
+    }
+  });
+
+  // ---------- PHASE 7: 4 TRẠNG THÁI THỜI TIẾT ĐÀ LẠT, ĐỒI XA XẾP LỚP, SƯƠNG 3 LỚP, 4 CHẾ ĐỘ CAMERA, ĐÀN CHIM HỒ & CHỢ ĐÊM CUỐI TUẦN ----------
+  // 7.1 Đồi thông xa xếp lớp (2–3 lớp silhouette aerial perspective bao quanh hồ & sau đồi chợ)
+  {
+    const hillLayers = [
+      { r: 420, h: 48, y: 2, col: 0x384952, op: 0.72 },
+      { r: 510, h: 68, y: 6, col: 0x4b5e69, op: 0.52 },
+      { r: 590, h: 88, y: 12, col: 0x627785, op: 0.36 }
+    ];
+    for(let li = 0; li < hillLayers.length; li++){
+      const hl = hillLayers[li];
+      const geo = new THREE.CylinderGeometry(hl.r, hl.r * 1.04, hl.h, 48, 1, true);
+      const pos = geo.attributes.position;
+      for(let i = 0; i < pos.count; i++){
+        if(pos.getY(i) > 0){
+          const ang = Math.atan2(pos.getZ(i), pos.getX(i));
+          const wave = Math.sin(ang * 5 + li * 1.7) * 12 + Math.cos(ang * 11 + li * 2.3) * 6;
+          pos.setY(i, pos.getY(i) + wave);
+        }
+      }
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+        color: hl.col, transparent: true, opacity: hl.op, side: THREE.BackSide, depthWrite: false
+      }));
+      mesh.position.set(-220, hl.y, 40);
+      worldGroup.add(mesh);
+    }
+  }
+
+  // 7.2 4 trạng thái thời tiết Đà Lạt xoay vòng mềm + liên kết Quẻ Ngày
+  const WEATHERS = [
+    { id: 'sunny',   label: '🌤 Nắng sớm trong', fogD: 0.0020, fogColDay: 0xc9d6df, fogColNight: 0x161d2b },
+    { id: 'foggy',   label: '🌫 Sương mù Đà Lạt', fogD: 0.0042, fogColDay: 0xc9ced2, fogColNight: 0x1e2636 },
+    { id: 'drizzle', label: '🌧 Mưa phùn chiều',  fogD: 0.0034, fogColDay: 0x9aa8b2, fogColNight: 0x182232 },
+    { id: 'sunset',  label: '🌇 Hoàng hôn hồng',  fogD: 0.0024, fogColDay: 0xd89aa8, fogColNight: 0x241b35 }
+  ];
+  let curWeatherIdx = 0;
+  function pickWeatherByHour(){
+    if(gameHourF >= 5.0 && gameHourF < 8.2) return 1; // Sương mù dày sáng sớm 5:00-7:30
+    if(gameHourF >= 15.0 && gameHourF < 17.0) return 2; // Mưa phùn chiều
+    if(gameHourF >= 17.0 && gameHourF < 18.6) return 3; // Hoàng hôn hồng
+    return 0; // Nắng sớm trong
+  }
+
+  // Hạt mưa phùn mịn (zero-GC preallocated Points)
+  const DRIZZLE_N = 180;
+  const drizzleGeo = new THREE.BufferGeometry();
+  const drizzlePos = new Float32Array(DRIZZLE_N * 3);
+  for(let i = 0; i < DRIZZLE_N; i++){
+    drizzlePos[i * 3]     = (Math.random() - 0.5) * 32;
+    drizzlePos[i * 3 + 1] = Math.random() * 14;
+    drizzlePos[i * 3 + 2] = (Math.random() - 0.5) * 32;
+  }
+  drizzleGeo.setAttribute('position', new THREE.BufferAttribute(drizzlePos, 3));
+  const drizzlePts = new THREE.Points(drizzleGeo, new THREE.PointsMaterial({ color: 0xcce3f0, size: 0.09, transparent: true, opacity: 0 }));
+  worldGroup.add(drizzlePts);
+
+  // Đàn chim buổi sáng bay qua mặt Hồ Xuân Hương + bóng chim trên mặt nước
+  const lakeBirds = [];
+  {
+    const birdMat = new THREE.MeshBasicMaterial({ color: 0x2b3038, side: THREE.DoubleSide });
+    const shadMat = new THREE.MeshBasicMaterial({ color: 0x1a2226, transparent: true, opacity: 0.28, depthWrite: false });
+    for(let bi = 0; bi < 5; bi++){
+      const bg = new THREE.Group();
+      const wL = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.18), birdMat); wL.position.x = -0.22; bg.add(wL);
+      const wR = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.18), birdMat); wR.position.x = 0.22; bg.add(wR);
+      const sh = new THREE.Mesh(new THREE.CircleGeometry(0.22, 8), shadMat); sh.rotation.x = -Math.PI / 2;
+      worldGroup.add(bg); worldGroup.add(sh);
+      lakeBirds.push({ bg, wL, wR, sh, offX: bi * 2.4, offZ: (bi % 2) * 1.8, ph: bi * 0.9 });
+    }
+  }
+
+  // 7.6 Dây đèn vàng Chợ Đêm Cuối Tuần (Thứ 6 – Chủ Nhật, 17:30–22:00) giăng ngang quảng trường & phố chợ
+  const weekendFestoonMats = [];
+  {
+    const fMat = new THREE.MeshBasicMaterial({ color: 0xffd97d, transparent: true, opacity: isNight ? 0.95 : 0.2 });
+    weekendFestoonMats.push(fMat);
+    for(const zLine of [6.0, 2.0, -4.0, -44.0]){
+      for(let bx = -32; bx <= -10; bx += 2.4){
+        const sag = Math.sin(((bx + 32) / 22) * Math.PI) * 0.65;
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), fMat);
+        bulb.position.set(bx, (zLine < -20 ? 21.2 : 4.8) - sag, zLine);
+        worldGroup.add(bulb);
+      }
+    }
+  }
+
+  // 7.3 4 Chế độ Camera: 0 = Diorama 45° (mặc định), 1 = Tản bộ ngang vai, 2 = Ngắm cảnh Postcard, 3 = Ảnh Selfie
+  const CAM_MODES = [
+    { id: 'diorama', label: '🎥 Góc nhìn: Diorama 45°', dist: 12.0, pitch: 0.38, fov: 50, yOff: 2.1 },
+    { id: 'stroll',  label: '🚶 Góc nhìn: Tản bộ vai',  dist: 5.4,  pitch: 0.18, fov: 44, yOff: 1.65 },
+    { id: 'vista',   label: '🏞 Góc nhìn: Ngắm cảnh',   dist: 15.5, pitch: 0.26, fov: 54, yOff: 2.6 },
+    { id: 'selfie',  label: '🤳 Góc nhìn: Selfie',      dist: 3.1,  pitch: 0.10, fov: 42, yOff: 1.48 }
+  ];
+  let camModeIdx = 0;
+  const btnCamModeEl = document.getElementById('btnCamMode');
+  function setCamMode(idx){
+    camModeIdx = ((idx % CAM_MODES.length) + CAM_MODES.length) % CAM_MODES.length;
+    const cm = CAM_MODES[camModeIdx];
+    if(btnCamModeEl) btnCamModeEl.textContent = cm.label;
+    camera.fov = cm.fov;
+    camera.updateProjectionMatrix();
+    toast(cm.label);
+  }
+  if(btnCamModeEl) btnCamModeEl.addEventListener('click', () => setCamMode(camModeIdx + 1));
+
+  // ---------- PHASE 6: UGC SELFIE STUDIO (1080×1350 4:5) + 7 ĐIỂM CHÍNH THỨC + TƯỜNG ẢNH DU KHÁCH ----------
+  const OFFICIAL_SELFIE_SPOTS = [
+    { id: 'market_front', name: 'Mặt tiền Chợ Đà Lạt',       x: -18,   z: 8.5,   yaw: 0 },
+    { id: 'stairs_mid',   name: 'Giữa Bậc Tam Cấp (Góc HK)', x: -56,   z: -16.0, yaw: 0 },
+    { id: 'island_bridge',name: 'Cầu Đảo Thủy Tạ',           x: -250,  z: 42.0,  yaw: 0 },
+    { id: 'lake_sunset',  name: 'Bờ Hồ Xuân Hương',          x: -288,  z: 33.5,  yaw: 0.35 },
+    { id: 'hb_fountain',  name: 'Đài Phun Nước Hòa Bình',    x: 27,    z: 8.5,   yaw: Math.PI },
+    { id: 'hoasua_top',   name: 'Đỉnh Đồi Khu Hòa Bình',     x: 22,    z: -48.0, yaw: 0 },
+    { id: 'soymilk_table',name: 'Bàn Sữa Đậu Nành Hoa Sữa',  x: -22,   z: -41.0, yaw: Math.PI }
+  ];
+
+  // Tường Ảnh Du Khách (3D Gallery Wall) tại Quảng trường Hòa Bình (19.0, 16.5, -45.5)
+  const wallCanvas = document.createElement('canvas'); wallCanvas.width = 512; wallCanvas.height = 256;
+  const wallCtx = wallCanvas.getContext('2d');
+  const wallTex = new THREE.CanvasTexture(wallCanvas); wallTex.colorSpace = THREE.SRGBColorSpace;
+  {
+    const wy = groundH(19.0, -45.5);
+    const wg = new THREE.Group(); wg.position.set(19.0, wy, -45.5); wg.rotation.y = 0.22; worldGroup.add(wg);
+    box(3.8, 2.2, 0.16, 0x3d2817, 0, 1.35, 0, wg, false);
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 1.75), new THREE.MeshBasicMaterial({ map: wallTex }));
+    screen.position.set(0, 1.35, 0.09); wg.add(screen);
+    const topBanner = signMesh('TƯỜNG ẢNH DU KHÁCH HÒA BÌNH (LOCAL ALBUM)', 3.7, 0.42, '#7a2e22', '#ffd98a');
+    topBanner.position.set(0, 2.65, 0); wg.add(topBanner);
+  }
+  function refreshTouristPhotoWall(){
+    wallCtx.fillStyle = '#1f1610'; wallCtx.fillRect(0, 0, 512, 256);
+    wallCtx.strokeStyle = '#ffd94d'; wallCtx.lineWidth = 6; wallCtx.strokeRect(6, 6, 500, 244);
+    wallCtx.fillStyle = '#ffe9b0'; wallCtx.font = 'bold 22px Arial'; wallCtx.textAlign = 'center';
+    wallCtx.fillText('📸 KỶ NIỆM CHỢ HÒA BÌNH ONLINE • ĐÀ LẠT (' + state.selfieAlbum.length + ' ẢNH)', 256, 34);
+    if(!state.selfieAlbum.length){
+      wallCtx.fillStyle = '#bdb5a2'; wallCtx.font = '18px Arial';
+      wallCtx.fillText('Bấm nút 🤳 Chụp Selfie (phím C) và Lưu vào Album để treo ảnh lên tường!', 256, 138);
+      wallTex.needsUpdate = true;
+      return;
+    }
+    state.selfieAlbum.slice(0, 4).forEach((entry, idx) => {
+      const img = new Image();
+      img.onload = () => {
+        const x = 22 + idx * 120, y = 52;
+        wallCtx.drawImage(img, x, y, 106, 132);
+        wallCtx.strokeStyle = '#ffd98a'; wallCtx.lineWidth = 2; wallCtx.strokeRect(x, y, 106, 132);
+        wallCtx.fillStyle = '#ffeec4'; wallCtx.font = 'bold 12px Arial';
+        wallCtx.fillText((entry.spotName || 'Đà Lạt').slice(0, 14), x + 53, y + 148);
+        wallTex.needsUpdate = true;
+      };
+      img.src = entry.dataUrl;
+    });
+    wallTex.needsUpdate = true;
+  }
+  refreshTouristPhotoWall();
+
+  let selfieActive = false, sfAng = 'selfie', sfFlt = 'warm', sfStk = 'none', sfPose = 'peace', lastSelfieDataUrl = '', lastSelfieSpot = null;
+  const selfieBarEl = document.getElementById('selfieBar');
+
+  function detectSelfieSpot(){
+    let best = null, bestD = 9.5;
+    for(const sp of OFFICIAL_SELFIE_SPOTS){
+      const d = Math.hypot(playerState.x - sp.x, playerState.z - sp.z);
+      if(d < bestD){ bestD = d; best = sp; }
+    }
+    return best;
+  }
+
+  function toggleSelfieStudio(on){
+    selfieActive = on !== undefined ? on : !selfieActive;
+    selfieBarEl.style.display = selfieActive ? 'flex' : 'none';
+    document.getElementById('hudMain').style.display = selfieActive ? 'none' : '';
+    document.getElementById('questPanel').style.display = selfieActive ? 'none' : '';
+    document.getElementById('guidePanel').style.display = selfieActive ? 'none' : '';
+    if(selfieActive){
+      setCamMode(3);
+      const sp = detectSelfieSpot();
+      const lbl = document.getElementById('sfSpotLabel');
+      if(lbl) lbl.textContent = sp ? '🌟 Điểm vàng: ' + sp.name : '📍 Góc chụp tự do';
+      activeEmote = sfPose === 'heart' ? 'pose2' : sfPose === 'view' ? 'point' : 'pose1';
+      emoteUntil = performance.now() + 60000;
+    } else {
+      setCamMode(0);
+      emoteUntil = 0;
+    }
+  }
+  document.getElementById('btnSelfie').addEventListener('click', () => toggleSelfieStudio());
+  document.getElementById('btnCloseSelfie').addEventListener('click', () => toggleSelfieStudio(false));
+
+  document.querySelectorAll('#selfieBar .sfAng').forEach(b => b.addEventListener('click', () => {
+    sfAng = b.dataset.ang;
+    document.querySelectorAll('#selfieBar .sfAng').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  document.querySelectorAll('#selfieBar .sfFlt').forEach(b => b.addEventListener('click', () => {
+    sfFlt = b.dataset.flt;
+    document.querySelectorAll('#selfieBar .sfFlt').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  document.querySelectorAll('#selfieBar .sfStk').forEach(b => b.addEventListener('click', () => {
+    sfStk = b.dataset.stk;
+    document.querySelectorAll('#selfieBar .sfStk').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  document.querySelectorAll('#selfieBar .sfPose').forEach(b => b.addEventListener('click', () => {
+    sfPose = b.dataset.ps;
+    document.querySelectorAll('#selfieBar .sfPose').forEach(x => x.classList.toggle('sel', x === b));
+    activeEmote = sfPose === 'heart' ? 'pose2' : sfPose === 'view' ? 'point' : 'pose1';
+    emoteUntil = performance.now() + 60000;
+  }));
+
+  // Chụp ảnh tỷ lệ 4:5 (1080×1350) kèm Khung địa danh + Bộ lọc màu + Sticker Chibi
+  document.getElementById('btnSnapSelfie').addEventListener('click', () => {
+    renderer.render(scene, camera);
+    const outC = document.createElement('canvas'); outC.width = 1080; outC.height = 1350;
+    const ctx = outC.getContext('2d');
+    const src = renderer.domElement;
+    // Crop trung tâm theo tỷ lệ 4:5
+    const sw = src.width, sh = src.height;
+    const targetRatio = 1080 / 1350;
+    let cw = sw, ch = Math.round(sw / targetRatio);
+    if(ch > sh){ ch = sh; cw = Math.round(sh * targetRatio); }
+    const sx = Math.floor((sw - cw) / 2), sy = Math.floor((sh - ch) / 2);
+    ctx.drawImage(src, sx, sy, cw, ch, 0, 0, 1080, 1350);
+
+    // Áp bộ lọc màu (Ấm tối Đà Lạt / Sáng sớm sương / Phim cũ)
+    if(sfFlt === 'warm'){
+      ctx.fillStyle = 'rgba(255, 175, 85, 0.14)'; ctx.fillRect(0, 0, 1080, 1350);
+    } else if(sfFlt === 'fog'){
+      ctx.fillStyle = 'rgba(210, 228, 240, 0.18)'; ctx.fillRect(0, 0, 1080, 1350);
+    } else if(sfFlt === 'film'){
+      ctx.fillStyle = 'rgba(110, 82, 48, 0.22)'; ctx.fillRect(0, 0, 1080, 1350);
+    }
+
+    // Khung viền thương hiệu Chợ Hòa Bình Online • Đà Lạt
+    const sp = detectSelfieSpot();
+    lastSelfieSpot = sp;
+    const isMorningFogHunt = gameHourF >= 5.0 && gameHourF <= 7.6;
+    ctx.strokeStyle = isMorningFogHunt ? '#a8dadc' : '#ffd94d';
+    ctx.lineWidth = 24;
+    ctx.strokeRect(18, 18, 1044, 1314);
+    ctx.fillStyle = 'rgba(22, 14, 10, 0.86)';
+    ctx.fillRect(18, 1185, 1044, 147);
+
+    ctx.fillStyle = '#ffd94d'; ctx.font = 'bold 38px Arial, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('🏮 ' + (sp ? sp.name.toUpperCase() : 'DẠO PHỐ NÚI ĐÀ LẠT') + (isMorningFogHunt ? ' • 🌫 SĂN SƯƠNG SỚM' : ''), 52, 1244);
+    const hh = String(Math.floor(gameHourF)).padStart(2, '0'), mm = String(Math.floor((gameHourF % 1) * 60)).padStart(2, '0');
+    ctx.fillStyle = '#ffeec4'; ctx.font = '28px Arial, sans-serif';
+    ctx.fillText('Chợ Hòa Bình Online • Đà Lạt  |  🕒 ' + hh + ':' + mm + '  |  🌡 ' + Math.round(tempNow()) + '°C', 52, 1296);
+
+    // Sticker chibi
+    if(sfStk !== 'none'){
+      ctx.font = '110px Arial'; ctx.textAlign = 'right';
+      const stkMap = { heart: '❤️💕', milk: '🥛🔥', swan: '🦢🌸' };
+      ctx.fillText(stkMap[sfStk] || '❤️', 1015, 160);
+    }
+
+    lastSelfieDataUrl = outC.toDataURL('image/png');
+    // Tạo bản nén nhỏ (320×400 JPEG) để lưu vào localStorage không vượt quota
+    const thC = document.createElement('canvas'); thC.width = 240; thC.height = 300;
+    thC.getContext('2d').drawImage(outC, 0, 0, 240, 300);
+    window.__LAST_SELFIE_THUMB = thC.toDataURL('image/jpeg', 0.68);
+
+    document.getElementById('sfPrevImg').src = lastSelfieDataUrl;
+    document.getElementById('sfPrevSub').textContent = (sp ? '✔ Điểm Selfie chính thức: ' + sp.name : '📍 Ảnh kỷ niệm Đà Lạt') + ' • Tỷ lệ chuẩn 4:5 (1080×1350)';
+    openModal('selfiePreviewModal');
+  });
+
+  document.getElementById('btnShareSelfie').addEventListener('click', async () => {
+    if(!lastSelfieDataUrl) return;
+    try {
+      const res = await fetch(lastSelfieDataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'cho-hoa-binh-dalat-selfie.png', { type: 'image/png' });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        await navigator.share({ title: 'Chợ Hòa Bình Online — Đà Lạt', text: 'Check-in Chợ Hòa Bình 3D Đà Lạt!', files: [file] });
+        return;
+      }
+    } catch(e){}
+    const a = document.createElement('a');
+    a.href = lastSelfieDataUrl;
+    a.download = 'cho-hoa-binh-dalat-selfie.png';
+    a.click();
+    toast('📥 Đã tải ảnh PNG (1080×1350) về máy!');
+  });
+
+  document.getElementById('btnSaveAlbum').addEventListener('click', () => {
+    const thumb = window.__LAST_SELFIE_THUMB || lastSelfieDataUrl;
+    if(!thumb) return;
+    if(state.selfieAlbum.length >= 8){
+      state.selfieAlbum.pop();
+      toast('ℹ️ Album tối đa 8 ảnh — đã thay thế ảnh cũ nhất để tiết kiệm bộ nhớ.');
+    }
+    const spName = lastSelfieSpot ? lastSelfieSpot.name : 'Dạo Chợ Hòa Bình';
+    state.selfieAlbum.unshift({ spotId: lastSelfieSpot ? lastSelfieSpot.id : 'free', spotName: spName, dataUrl: thumb });
+    if(lastSelfieSpot){
+      state.selfieSpots[lastSelfieSpot.id] = true;
+      const doneCnt = Object.keys(state.selfieSpots).length;
+      if(doneCnt >= 7 && !state.modeTitles.includes('Nhiếp ảnh gia Hòa Bình')){
+        state.modeTitles.push('Nhiếp ảnh gia Hòa Bình');
+        gainXu(150);
+        toast('🏆 Đã chụp đủ 7 điểm Selfie chính thức! Nhận danh hiệu “Nhiếp ảnh gia Hòa Bình” (+150 Xu)!', 'stamp');
+      }
+    }
+    gainXP(12); save(); refreshTouristPhotoWall(); closeModal('selfiePreviewModal');
+    toast('💾 Đã lưu vào Album Đi Chợ & treo lên Tường Ảnh Du Khách ở Quảng trường Hòa Bình!');
+  });
+
+  // Cập nhật Hộ chiếu với Quẻ Ngày + Thời tiết + Album Selfie (X/7)
+  function updatePassportExtras(){
+    const qBox = document.getElementById('dailyQueBox');
+    if(qBox){
+      const w = WEATHERS[curWeatherIdx] || WEATHERS[0];
+      const dayIdx = new Date().getDate() % XAM_STICKS.length;
+      const dq = XAM_STICKS[dayIdx];
+      qBox.innerHTML = '<b>🔮 Quẻ Ngày (' + new Date().toLocaleDateString('vi-VN') + '):</b> ' + dq.name +
+        '<br><span>' + w.label + ' • 🌙 Lịch Chợ Đêm Cuối Tuần: Thứ 6 – Chủ Nhật (17:30 – 22:00) tại Quảng trường & Chân tam cấp</span>';
+    }
+    const scEl = document.getElementById('selfieSpotCount');
+    if(scEl) scEl.textContent = Object.keys(state.selfieSpots || {}).length;
+    const grid = document.getElementById('selfieAlbumGrid');
+    if(grid){
+      grid.innerHTML = '';
+      if(!state.selfieAlbum.length){
+        grid.innerHTML = '<div style="color:#bdb5a2;font-size:12.5px;grid-column:1/-1;">Chưa có ảnh trong Album — bấm nút 🤳 Chụp Selfie (phím C) để lưu ảnh kỷ niệm nhé!</div>';
+      } else {
+        for(const item of state.selfieAlbum){
+          const card = document.createElement('div'); card.className = 'albumCard';
+          card.innerHTML = '<img src="' + item.dataUrl + '" alt="Selfie"/><div class="cp">' + item.spotName + '</div>';
+          grid.appendChild(card);
+        }
+      }
+    }
+  }
+  document.getElementById('btnPassport').addEventListener('click', () => setTimeout(updatePassportExtras, 15));
+
+  // Phím tắt mới: G (Bánh xe hành động), V (Đổi góc nhìn camera), C (Studio Selfie), F (Thả xu cầu may ở Fountain)
+  window.addEventListener('keydown', e => {
+    if(anyModalOpen()) return;
+    if(e.code === 'KeyG') document.getElementById('btnEmote').click();
+    else if(e.code === 'KeyV') setCamMode(camModeIdx + 1);
+    else if(e.code === 'KeyC') toggleSelfieStudio();
+    else if(e.code === 'KeyF'){
+      const dF = Math.hypot(playerState.x - FOUNTAIN_PT.x, playerState.z - FOUNTAIN_PT.z);
+      if(dF < 5.2){
+        if(state.xu < 5){ toast('🪙 Cần 5 Xu để thả xu cầu may vào Đài phun nước!'); return; }
+        state.xu -= 5;
+        buffs.luck = Math.max(buffs.luck || 0, 240);
+        state.mood = Math.min(100, (state.mood || 80) + 15);
+        if(state.badQueActive){
+          state.badQueActive = false;
+          gainXu(40);
+          toast('✨ Đồng xu lấp lánh dưới đáy hồ — Đã hóa giải quẻ xấu thành Đại Cát (+40 Xu)!', 'stamp');
+        } else {
+          const bonus = Math.random() < 0.45 ? 15 : 0;
+          if(bonus) gainXu(bonus);
+          toast('⛲ Đã thả xu cầu may xuống Đài phun nước! Nhận Buff 🍀 May Mắn 4 phút' + (bonus ? ' & lộc bất ngờ +' + bonus + ' Xu!' : '!'));
+        }
+        sfxCoin(); renderBuffs(); save(); updateHUD();
+      }
+    }
+  });
+
+  // ---------- HIỆU ỨNG KHÓI & HƠI NƯỚC CANVAS-BASED CHO CÁC QUẦY ĂN ĐÊM (banhtrang, khoai, xiennuong, suadaunanh...) ----------
+  function makeVaporSmokeCanvasTex(){
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 64, 64);
+    const puffs = [
+      { x: 32, y: 32, r: 28, a: 0.85 },
+      { x: 24, y: 27, r: 18, a: 0.45 },
+      { x: 40, y: 26, r: 17, a: 0.42 },
+      { x: 30, y: 39, r: 19, a: 0.40 }
+    ];
+    for(let i = 0; i < puffs.length; i++){
+      const pf = puffs[i];
+      const g = ctx.createRadialGradient(pf.x, pf.y, 1, pf.x, pf.y, pf.r);
+      g.addColorStop(0.0, 'rgba(255, 252, 245, ' + pf.a + ')');
+      g.addColorStop(0.45, 'rgba(245, 238, 228, ' + (pf.a * 0.55) + ')');
+      g.addColorStop(0.78, 'rgba(225, 218, 210, ' + (pf.a * 0.18) + ')');
+      g.addColorStop(1.0, 'rgba(210, 205, 200, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(pf.x, pf.y, pf.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  const vaporSmokeTex = makeVaporSmokeCanvasTex();
+  if(typeof smokeMat !== 'undefined' && smokeMat){
+    smokeMat.map = vaporSmokeTex;
+    smokeMat.alphaTest = 0.01;
+    smokeMat.size = 0.72;
+    smokeMat.needsUpdate = true;
+  }
+
+  // Danh sách mã quầy ẩm thực đêm chủ đạo (bao gồm alias chuẩn: banhtrang, khoai, xiennuong, suadaunanh)
+  const NIGHT_FOOD_VAPOR_PROFILES = {
+    banhtrang:  { color: 0xfff0d6, size: 0.92, speed: 0.85, height: 2.85, spread: 0.62, offY: 1.02, tag: 'banhtrang' },
+    khoai:      { color: 0xffe6c2, size: 0.98, speed: 0.78, height: 3.05, spread: 0.66, offY: 1.00, tag: 'khoai' },
+    khoainuong: { color: 0xffe6c2, size: 0.96, speed: 0.80, height: 2.95, spread: 0.64, offY: 1.00, tag: 'khoai' },
+    xien:       { color: 0xffdcb0, size: 1.05, speed: 0.96, height: 3.20, spread: 0.72, offY: 1.04, tag: 'xiennuong' },
+    xiennuong:  { color: 0xffdcb0, size: 1.05, speed: 0.96, height: 3.20, spread: 0.72, offY: 1.04, tag: 'xiennuong' },
+    sua:        { color: 0xf5faff, size: 1.02, speed: 0.72, height: 2.90, spread: 0.58, offY: 1.08, tag: 'suadaunanh' },
+    suadau:     { color: 0xf5faff, size: 1.02, speed: 0.74, height: 2.95, spread: 0.58, offY: 1.08, tag: 'suadaunanh' },
+    hoasua:     { color: 0xf5faff, size: 1.08, speed: 0.76, height: 3.10, spread: 0.62, offY: 1.10, tag: 'suadaunanh' },
+    suatuoi:    { color: 0xf5faff, size: 0.95, speed: 0.72, height: 2.80, spread: 0.56, offY: 1.06, tag: 'suadaunanh' },
+    suadaunanh: { color: 0xf5faff, size: 1.02, speed: 0.74, height: 2.95, spread: 0.58, offY: 1.08, tag: 'suadaunanh' }
+  };
+  const DEFAULT_FOOD_VAPOR_PROFILE = { color: 0xfff5e4, size: 0.86, speed: 0.78, height: 2.65, spread: 0.55, offY: 1.02, tag: 'food' };
+
+  const nightFoodVaporPlumes = [];
+  const nightFoodVaporByTag = { banhtrang: [], khoai: [], xiennuong: [], suadaunanh: [], food: [] };
+
+  for(let si = 0; si < STALL_DEFS.length; si++){
+    const s = STALL_DEFS[si];
+    const prof = NIGHT_FOOD_VAPOR_PROFILES[s.id] || (s.district === 'food' ? DEFAULT_FOOD_VAPOR_PROFILE : null);
+    if(!prof) continue;
+
+    const N = 28;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(N * 3);
+    const seeds = new Float32Array(N);
+    const sway = new Float32Array(N);
+    for(let i = 0; i < N; i++){
+      const p = i / N;
+      seeds[i] = p;
+      sway[i] = (i * 1.6180339) % (Math.PI * 2);
+      pos[i * 3]     = Math.sin(sway[i]) * 0.18 * prof.spread;
+      pos[i * 3 + 1] = p * prof.height;
+      pos[i * 3 + 2] = Math.cos(sway[i]) * 0.18 * prof.spread;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+    const mat = new THREE.PointsMaterial({
+      map: vaporSmokeTex,
+      color: prof.color,
+      size: prof.size,
+      transparent: true,
+      opacity: 0.52,
+      depthWrite: false,
+      alphaTest: 0.01
+    });
+
+    const pts = new THREE.Points(geo, mat);
+    const by = groundH(s.x, s.z);
+    // Đặt cụm khói/hơi nước ngay trên bếp than / nồi sữa đậu nành phía trước quầy
+    const fwdX = Math.sin(s.rot || 0) * 0.42;
+    const fwdZ = Math.cos(s.rot || 0) * 0.42;
+    pts.position.set(s.x + fwdX, by + prof.offY, s.z + fwdZ);
+    pts.name = 'nightVapor_' + s.id;
+    scene.add(pts);
+
+    const plume = {
+      id: s.id,
+      tag: prof.tag,
+      stall: s,
+      pts,
+      geo,
+      mat,
+      pos,
+      seeds,
+      sway,
+      N,
+      prof,
+      phase: si * 0.83 + 0.4
+    };
+    s.vaporPoints = pts;
+    nightFoodVaporPlumes.push(plume);
+    if(nightFoodVaporByTag[prof.tag]) nightFoodVaporByTag[prof.tag].push(plume);
+    nightFoodVaporByTag.food.push(plume);
+  }
+  window.__NIGHT_VAPOR_PLUMES = nightFoodVaporPlumes;
+  window.__NIGHT_VAPOR_BY_TAG = nightFoodVaporByTag;
+
+  // ---------- VÒNG LẶP CẬP NHẬT MỖI FRAME CHO PHASE 1 → PHASE 7 + NEON SIGN FLICKER + NIGHT VAPOR ----------
+  const _camTmpV3 = new THREE.Vector3();
+  const _rebuildTW = tickWater;
+  tickWater = function(t){
+    _rebuildTW(t);
+    const nowMs = performance.now();
+
+    // 1. Dynamic 'Neon Sign' Flicker Effect ban đêm (randomized multi-wave intensity pulse + micro-dropout)
+    for(let i = 0; i < neonSigns.length; i++){
+      const ns = neonSigns[i];
+      if(!isNight){
+        ns.matSign.emissiveIntensity = 0.15;
+        if(ns.tubeMat) ns.tubeMat.emissiveIntensity = 0.2;
+        continue;
+      }
+      const wave = 0.85 + 0.28 * Math.sin(t * ns.f1 + ns.ph) * Math.cos(t * 2.3 + ns.ph)
+                 + 0.14 * Math.sin(t * ns.f2 + ns.ph * 3.1);
+      // Nhịp nháy đèn neon đặc trưng (flicker dip ngắn)
+      const dip = Math.sin(t * 29.0 + ns.ph * 7.3) > 0.94 ? 0.32 : 1.0;
+      const val = ns.baseI * wave * dip;
+      ns.matSign.emissiveIntensity = val;
+      if(ns.tubeMat) ns.tubeMat.emissiveIntensity = val * 1.35;
+    }
+
+    // 1b. Animated Canvas-Based Vapor Effects cho tất cả quầy đồ ăn đêm (banhtrang, khoai, xiennuong, suadaunanh...)
+    const isNightMarket = isNight || gameHourF >= 17.0 || gameHourF <= 6.5;
+    const coldBoost = Math.max(0, (20 - tempNow()) * 0.018);
+    for(let pi = 0; pi < nightFoodVaporPlumes.length; pi++){
+      const pl = nightFoodVaporPlumes[pi];
+      pl.pts.visible = true;
+      const prof = pl.prof;
+      const pulse = 0.88 + 0.22 * Math.sin(t * 2.4 + pl.phase);
+      pl.mat.opacity = isNightMarket ? Math.min(0.78, (0.50 + coldBoost) * pulse) : 0.14;
+      pl.mat.size = prof.size * (isNightMarket ? (1.05 + 0.14 * Math.sin(t * 1.8 + pl.phase)) : 0.72);
+
+      const pos = pl.pos;
+      const seeds = pl.seeds;
+      const sway = pl.sway;
+      const spd = prof.speed * (isNightMarket ? 1.12 : 0.65);
+      const hMax = prof.height * (isNightMarket ? 1.15 : 0.75);
+      const spr = prof.spread * (isNightMarket ? 1.18 : 0.75);
+      for(let i = 0; i < pl.N; i++){
+        const p = (seeds[i] + t * 0.34 * spd) % 1;
+        const sw = sway[i];
+        // Chuyển động xoáy bốc lên + gió lùa nhẹ đặc trưng chợ đêm Đà Lạt
+        const billow = p * p * spr;
+        const windX = Math.sin(t * 0.9 + pl.phase) * 0.28 * p;
+        const windZ = Math.cos(t * 0.7 + pl.phase) * 0.18 * p;
+        pos[i * 3]     = Math.sin(t * 2.1 + sw + p * 4.2) * (0.14 + billow * 0.55) + windX;
+        pos[i * 3 + 1] = p * hMax;
+        pos[i * 3 + 2] = Math.cos(t * 1.8 + sw * 1.3 + p * 3.8) * (0.14 + billow * 0.55) + windZ;
+      }
+      pl.geo.attributes.position.needsUpdate = true;
+    }
+
+    // 2. Cập nhật đàn 4 thuyền thiên nga trắng bơi chậm ở giữa Hồ Xuân Hương
+    for(let i = 0; i < midLakeFlock.length; i++){
+      const fl = midLakeFlock[i];
+      const ang = t * fl.sp + fl.ph;
+      const nx = fl.cx + Math.cos(ang) * fl.rx;
+      const nz = fl.cz + Math.sin(ang) * fl.rz;
+      const vx = -Math.sin(ang) * fl.rx * fl.sp;
+      const vz =  Math.cos(ang) * fl.rz * fl.sp;
+      fl.boat.position.set(nx, 4.9 + Math.sin(t * 1.9 + fl.ph) * 0.022, nz);
+      fl.boat.rotation.y = Math.atan2(-vx, -vz);
+    }
+
+    // 3. Mặt nước lấp lánh nắng/trăng (specular glint)
+    if(waterSpecMesh){
+      const isGolden = (gameHourF >= 6.0 && gameHourF <= 18.5);
+      waterSpecMesh.material.opacity = (isGolden ? 0.42 : 0.22) + Math.sin(t * 2.8) * 0.08;
+      waterSpecMesh.position.x = -295 + Math.sin(t * 0.35) * 4.5;
+    }
+
+    // 4. Hoạt cảnh NPC bờ hồ (người câu cá đập Ông Đạo, tập thể dục sáng sớm, gánh bánh tráng tối)
+    for(let i = 0; i < lakeAnimActors.length; i++){
+      const ac = lakeAnimActors[i];
+      const L = ac.g.userData.limbs;
+      if(!L) continue;
+      if(ac.kind === 'angler'){
+        L.rArm.rotation.x = -0.95 + Math.sin(t * 1.2 + ac.ph) * 0.12;
+      } else if(ac.kind === 'exercise'){
+        const morning = gameHourF >= 5.0 && gameHourF <= 9.5;
+        ac.g.visible = morning;
+        if(morning){
+          L.lArm.rotation.x = -1.2 + Math.sin(t * 2.6 + ac.ph) * 0.85;
+          L.rArm.rotation.x = -1.2 + Math.sin(t * 2.6 + ac.ph) * 0.85;
+        }
+      } else if(ac.kind === 'rover'){
+        if(ac.cart) ac.cart.visible = isNight;
+        L.rArm.rotation.x = -0.85 + Math.sin(t * 4.5) * 0.22; // quạt than nướng bánh tráng
+      }
+    }
+
+    // 5. Đài phun nước Hòa Bình: đèn đổi màu chậm dưới nước ban đêm + gợi ý thả xu cầu may (phím F)
+    if(isNight){
+      const hue = (t * 0.06) % 1;
+      fountainUnderwaterLight.color.setHSL(hue, 0.85, 0.58);
+      fountainUnderwaterLight.intensity = 34 + Math.sin(t * 3.2) * 6;
+    } else {
+      fountainUnderwaterLight.intensity = 0;
+    }
+    fountainFoamRing.scale.setScalar(0.94 + Math.sin(t * 4.2) * 0.06);
+    const dFount = Math.hypot(playerState.x - FOUNTAIN_PT.x, playerState.z - FOUNTAIN_PT.z);
+    if(dFount < 4.8 && !anyModalOpen() && !window.__BOAT_ACTIVE){
+      ctxEl.style.display = 'block';
+      ctxEl.innerHTML = '⛲ <b>F</b> Thả 5 Xu cầu may vào Đài phun nước Hòa Bình (+Buff May Mắn & Hóa giải vận xui)';
+    }
+
+    // 6. Phát hiện khi mở menuModal để cập nhật thanh Mặc cả & xử lý mua hàng cầm túi đồ trên tay
+    const isMenuOpen = menuModalEl.classList.contains('open');
+    if(isMenuOpen && !lastMenuOpenState && nearestStall){
+      updateHaggleBar(nearestStall);
+    }
+    lastMenuOpenState = isMenuOpen;
+
+    if(state.bag.length > lastBagLen){
+      // Người chơi vừa mua thêm món mới -> cầm túi đồ trên tay 8 giây + tính lượt Khách quen + hoàn tiền ưu đãi Mặc cả/Khách quen
+      carryBagUntil = nowMs + 8000;
+      const latest = state.bag[state.bag.length - 1];
+      if(latest && latest.day === undefined) latest.day = curGameDay();
+      if(activeMenuStall){
+        state.stallBuys[activeMenuStall.id] = (state.stallBuys[activeMenuStall.id] || 0) + 1;
+        const factor = getStallDiscountFactor(activeMenuStall);
+        if(factor < 0.999 && latest && latest.price){
+          const savedXu = Math.max(1, Math.round(latest.price * (1 - factor)));
+          state.xu += savedXu;
+          updateHUD();
+        }
+        save();
+      }
+    }
+    lastBagLen = state.bag.length;
+    playerCarryGroup.visible = nowMs < carryBagUntil;
+
+    // 7. Hơi ấm bốc lên từ nhân vật khi vừa uống sữa đậu nành Hoa Sữa / ăn đồ nóng
+    const showWarmSteam = nowMs < warmSteamUntil;
+    for(let i = 0; i < playerWarmSteam.length; i++){
+      const ws = playerWarmSteam[i];
+      ws.sp.visible = showWarmSteam;
+      if(showWarmSteam){
+        const p = (t * 0.75 + ws.ph) % 1;
+        ws.sp.position.set(Math.sin(t * 2 + i) * 0.22, 0.9 + p * 1.35, Math.cos(t * 1.7 + i) * 0.22);
+        ws.sp.material.opacity = (1 - p) * 0.65;
+      }
+    }
+
+    // 8. Biểu diễn Emote (Vẫy tay, Cúi chào, Pose, Nhảy theo nhạc, Chỉ tay) & Chế độ Đi dạo quanh hồ
+    if(nowMs < emoteUntil && activeEmote){
+      const pL = player.userData.limbs;
+      if(pL){
+        if(activeEmote === 'wave'){
+          pL.rArm.rotation.x = -2.4 + Math.sin(t * 10) * 0.35;
+        } else if(activeEmote === 'bow'){
+          pL.lArm.rotation.x = -0.4; pL.rArm.rotation.x = -0.4;
+          if(player.userData.head) player.userData.head.rotation.x = 0.45;
+        } else if(activeEmote === 'pose1'){
+          pL.rArm.rotation.x = -2.1; pL.lArm.rotation.x = -0.6;
+        } else if(activeEmote === 'pose2'){
+          pL.rArm.rotation.x = -2.35; pL.lArm.rotation.x = -2.35;
+        } else if(activeEmote === 'dance'){
+          pL.lArm.rotation.x = -1.5 + Math.sin(t * 8) * 0.7;
+          pL.rArm.rotation.x = -1.5 - Math.sin(t * 8) * 0.7;
+          pL.lLeg.rotation.x = Math.sin(t * 8) * 0.45;
+          pL.rLeg.rotation.x = -Math.sin(t * 8) * 0.45;
+        } else if(activeEmote === 'point'){
+          pL.rArm.rotation.x = -1.55;
+        }
+      }
+    }
+    if(strollMode && playerState.x < -220 && playerState.z > 24){
+      const ang = Math.atan2(playerState.z - 90, playerState.x + 340);
+      if(lastLakeAng !== null){
+        let d = ang - lastLakeAng;
+        while(d > Math.PI) d -= Math.PI * 2;
+        while(d < -Math.PI) d += Math.PI * 2;
+        lakeStrollAngAcc += Math.abs(d);
+        if(lakeStrollAngAcc > 2.2 && !G.ach.lakeLoop){
+          G.ach.lakeLoop = true;
+          gainXu(80); save();
+          toast('🏆 Hoàn thành “Một vòng Xuân Hương” trong chế độ Đi dạo! (+80 Xu)', 'stamp');
+        }
+      }
+      lastLakeAng = ang;
+    }
+
+    // 9. Thời tiết Đà Lạt (4 trạng thái + mưa phùn + sương theo giờ) & Đàn chim bay buổi sáng
+    curWeatherIdx = pickWeatherByHour();
+    const w = WEATHERS[curWeatherIdx];
+    const wbEl = document.getElementById('weatherBadge');
+    if(wbEl) wbEl.textContent = w.label;
+    const mbEl = document.getElementById('moodBadge');
+    if(mbEl) mbEl.textContent = '😊 Vui: ' + Math.round(state.mood || 85) + '%';
+
+    if(scene.fog && scene.fog.isFogExp2){
+      scene.fog.density += (w.fogD - scene.fog.density) * 0.03;
+    }
+    const isDrizzle = w.id === 'drizzle';
+    drizzlePts.visible = isDrizzle;
+    if(isDrizzle){
+      drizzlePts.position.set(playerState.x, playerState.y, playerState.z);
+      drizzlePts.material.opacity = 0.45;
+      const arr = drizzleGeo.attributes.position.array;
+      for(let i = 0; i < DRIZZLE_N; i++){
+        arr[i * 3 + 1] -= 0.22;
+        if(arr[i * 3 + 1] < 0) arr[i * 3 + 1] = 14;
+      }
+      drizzleGeo.attributes.position.needsUpdate = true;
+    }
+
+    // Đàn chim bay qua mặt hồ buổi sáng (5:30 - 10:30) kèm bóng dưới mặt nước
+    const birdVis = gameHourF >= 5.5 && gameHourF <= 10.5;
+    for(let bi = 0; bi < lakeBirds.length; bi++){
+      const b = lakeBirds[bi];
+      b.bg.visible = birdVis; b.sh.visible = birdVis;
+      if(birdVis){
+        const bx = -340 + ((t * 4.2 + b.offX) % 110);
+        const bz = 58 + Math.sin(t * 0.6 + b.ph) * 18 + b.offZ;
+        const by = 12.5 + Math.sin(t * 2.1 + b.ph) * 0.6;
+        b.bg.position.set(bx, by, bz);
+        const flap = Math.sin(t * 9.5 + b.ph) * 0.55;
+        b.wL.rotation.z = flap; b.wR.rotation.z = -flap;
+        b.sh.position.set(bx, 4.94, bz);
+      }
+    }
+
+    // 10. Điều chỉnh góc nhìn theo 4 Chế độ Camera (Diorama / Tản bộ / Ngắm cảnh / Selfie)
+    if(camModeIdx > 0 || strollMode){
+      const cm = CAM_MODES[selfieActive ? 3 : (camModeIdx || (strollMode ? 1 : 0))];
+      const tx = playerState.x, ty = playerState.y + cm.yOff, tz = playerState.z;
+      const yaw = (cm.id === 'selfie') ? (playerState.face + ( sfAng === 'wide' ? 0.25 : 0 )) : camYaw;
+      const dist = (cm.id === 'selfie') ? (sfAng === 'close' ? 2.2 : sfAng === 'wide' ? 4.8 : 3.1) : cm.dist;
+      const cxp = tx + Math.sin(yaw) * Math.cos(cm.pitch) * dist;
+      const czp = tz + Math.cos(yaw) * Math.cos(cm.pitch) * dist;
+      const cyp = Math.max(ty + Math.sin(cm.pitch) * dist, groundH(cxp, czp) + 0.85);
+      camera.position.lerp(_camTmpV3.set(cxp, cyp, czp), 0.18);
+      camera.lookAt(tx, ty, tz);
+    }
+  };
+}
+
+// ====================================================================================================
+// COZY CHIBI ĐÀ LẠT REBUILD (IMAGES 1, 2, 3, 4): VỊ TRÍ LOGIC CHỢ ĐÊM + HỒ XUÂN HƯƠNG + COZY HUD
+// ====================================================================================================
+{
+  const isAutomatedHarness = (typeof navigator !== 'undefined' && navigator.userAgent === 'diag-node');
+
+  // ---------- 1. BẦU TRỜI CHIỀU TỐI ĐÀ LẠT (TWILIGHT VIOLET-PINK-GOLD PALETTE — ẢNH 1, 2, 3, 4) ----------
+  const _origApplyDN = applyDayNight;
+  applyDayNight = function(){
+    _origApplyDN();
+    if(isNight){
+      // Bầu trời Chiều tối / Chợ đêm Đà Lạt tím hồng lãng mạn như 4 ảnh tham khảo
+      scene.background.set(0x2b1f3d);
+      scene.fog.color.set(0x4b3858);
+      skyUni.topC.value.set(0x2c2248);
+      skyUni.midC.value.set(0x6e4873);
+      skyUni.botC.value.set(0xd97f8c);
+      hemi.color.set(0xc6a8e0);
+      hemi.groundColor.set(0x523924);
+      hemi.intensity = 0.62;
+      amb.color.set(0xffe0bd);
+      amb.intensity = 0.18;
+      renderer.toneMappingExposure = 1.26;
+    } else {
+      skyUni.topC.value.set(0x6fa8dc);
+      skyUni.midC.value.set(0xa5d1ee);
+      skyUni.botC.value.set(0xf5dec4);
+    }
+  };
+  applyDayNight();
+
+  // ---------- 2. HELPER DỰNG HOA CẨM TÚ CẦU (HYDRANGEA MOUNDS) & BẢNG HIỆU VẼ CANVAS ----------
+  const hydraClusterMats = [
+    new THREE.MeshStandardMaterial({ color: 0x8b9cf4, roughness: 0.75 }), // xanh tím cẩm tú cầu
+    new THREE.MeshStandardMaterial({ color: 0xb185f0, roughness: 0.75 }), // tím pastel
+    new THREE.MeshStandardMaterial({ color: 0xf28db2, roughness: 0.75 }), // hồng phấn
+    new THREE.MeshStandardMaterial({ color: 0x72b4f2, roughness: 0.75 }), // xanh lam nhạt
+  ];
+  const hydraLeafMat = new THREE.MeshStandardMaterial({ color: 0x3b6638, roughness: 0.85 });
+  const sharedLeafGeo = new THREE.SphereGeometry(0.42, 8, 6);
+  const sharedBloomGeo = new THREE.SphereGeometry(0.24, 8, 6);
+
+  function addHydrangeaBed(parent, x, y, z, radius, count, withStoneRim){
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    if(withStoneRim){
+      const rim = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius + 0.16, radius + 0.2, 0.34, 14),
+        new THREE.MeshStandardMaterial({ color: 0xd8ccb8, roughness: 0.88 })
+      );
+      rim.position.y = 0.17;
+      g.add(rim);
+    }
+    for(let i = 0; i < count; i++){
+      const ang = (i / count) * Math.PI * 2 + (i % 2) * 0.25;
+      const r = (0.28 + 0.68 * ((i * 7) % 11) / 10) * radius;
+      const bx = Math.cos(ang) * r;
+      const bz = Math.sin(ang) * r;
+      const leaf = new THREE.Mesh(sharedLeafGeo, hydraLeafMat);
+      leaf.position.set(bx, 0.24, bz);
+      leaf.scale.set(1.1, 0.65, 1.1);
+      g.add(leaf);
+      const bloom = new THREE.Mesh(sharedBloomGeo, hydraClusterMats[i % hydraClusterMats.length]);
+      bloom.position.set(bx, 0.46 + (i % 3) * 0.06, bz);
+      bloom.scale.set(1.15, 0.9, 1.15);
+      g.add(bloom);
+    }
+    return g;
+  }
+
+  function makeCozySignCanvas(titleTxt, subTxt, bgHex, borderHex, titleColor, subColor, iconEmoji){
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 192;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = bgHex || '#fff6e4';
+    ctx.fillRect(0, 0, 512, 192);
+    ctx.strokeStyle = borderHex || '#7a4928';
+    ctx.lineWidth = 12;
+    ctx.strokeRect(8, 8, 496, 176);
+    ctx.strokeStyle = 'rgba(180,120,65,0.35)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(20, 20, 472, 152);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if(iconEmoji){
+      ctx.font = '56px Arial, sans-serif';
+      ctx.fillText(iconEmoji, 76, 96);
+    }
+    const tx = iconEmoji ? 284 : 256;
+    ctx.fillStyle = titleColor || '#b82929';
+    ctx.font = 'bold 46px "Segoe UI", Arial, sans-serif';
+    ctx.fillText(titleTxt, tx, subTxt ? 74 : 96);
+    if(subTxt){
+      ctx.fillStyle = subColor || '#4a321e';
+      ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
+      ctx.fillText(subTxt, tx, 134);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  // ---------- 3. MẶT TIỀN CHỢ ĐÀ LẠT (ẢNH 1, 3, 4): ĐỒNG HỒ TRÒN + CỜ TỔ QUỐC + 5 ĐÈN LỒNG ĐỎ LỚN + BỒN CẨM TÚ CẦU ----------
+  {
+    const mktCrown = new THREE.Group();
+    mktCrown.position.set(0, 0, 12);
+    worldGroup.add(mktCrown);
+
+    // Đồng hồ tròn cổ điển chính giữa đỉnh mặt tiền Chợ Đà Lạt (Ảnh 4)
+    const clockPedestal = new THREE.Mesh(
+      new THREE.BoxGeometry(2.7, 2.5, 0.75),
+      new THREE.MeshStandardMaterial({ color: 0xf4e6d2, roughness: 0.78 })
+    );
+    clockPedestal.position.set(0, 13.4, -0.35);
+    mktCrown.add(clockPedestal);
+
+    const clCanvas = document.createElement('canvas');
+    clCanvas.width = clCanvas.height = 256;
+    const clCtx = clCanvas.getContext('2d');
+    clCtx.fillStyle = '#fff9ec';
+    clCtx.beginPath(); clCtx.arc(128, 128, 116, 0, Math.PI * 2); clCtx.fill();
+    clCtx.strokeStyle = '#6e472b'; clCtx.lineWidth = 12; clCtx.stroke();
+    clCtx.strokeStyle = '#c89d66'; clCtx.lineWidth = 4;
+    clCtx.beginPath(); clCtx.arc(128, 128, 102, 0, Math.PI * 2); clCtx.stroke();
+    for(let h = 0; h < 12; h++){
+      const a = (h / 12) * Math.PI * 2 - Math.PI / 2;
+      clCtx.strokeStyle = '#3d2514';
+      clCtx.lineWidth = (h % 3 === 0) ? 7 : 3.5;
+      clCtx.beginPath();
+      clCtx.moveTo(128 + Math.cos(a) * 84, 128 + Math.sin(a) * 84);
+      clCtx.lineTo(128 + Math.cos(a) * 100, 128 + Math.sin(a) * 100);
+      clCtx.stroke();
+    }
+    // Kim chỉ 17:50 (giờ hoàng hôn Đà Lạt)
+    clCtx.strokeStyle = '#2b180c'; clCtx.lineWidth = 8; clCtx.lineCap = 'round';
+    clCtx.beginPath(); clCtx.moveTo(128, 128); clCtx.lineTo(128 - 18, 128 + 54); clCtx.stroke();
+    clCtx.lineWidth = 5;
+    clCtx.beginPath(); clCtx.moveTo(128, 128); clCtx.lineTo(128 - 68, 128 - 32); clCtx.stroke();
+    clCtx.fillStyle = '#c93b3b'; clCtx.beginPath(); clCtx.arc(128, 128, 9, 0, Math.PI * 2); clCtx.fill();
+
+    const clTex = new THREE.CanvasTexture(clCanvas);
+    clTex.colorSpace = THREE.SRGBColorSpace;
+    const clFace = new THREE.Mesh(
+      new THREE.CircleGeometry(1.05, 24),
+      new THREE.MeshStandardMaterial({ map: clTex, emissive: 0xffe6b8, emissiveMap: clTex, emissiveIntensity: 0.75 })
+    );
+    clFace.position.set(0, 13.45, -0.76);
+    clFace.rotation.y = Math.PI;
+    mktCrown.add(clFace);
+
+    // Cờ đỏ sao vàng tung bay trên đỉnh Chợ Đà Lạt (Ảnh 1, 3, 4)
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.06, 3.6, 8),
+      new THREE.MeshStandardMaterial({ color: 0xe0d6c8, metalness: 0.5, roughness: 0.4 })
+    );
+    pole.position.set(0, 16.4, -0.35);
+    mktCrown.add(pole);
+
+    const flCanvas = document.createElement('canvas');
+    flCanvas.width = 256; flCanvas.height = 170;
+    const fctx = flCanvas.getContext('2d');
+    fctx.fillStyle = '#da251d'; fctx.fillRect(0, 0, 256, 170);
+    fctx.fillStyle = '#ffff00';
+    fctx.beginPath();
+    for(let i = 0; i < 5; i++){
+      const ang = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+      const x = 128 + Math.cos(ang) * 46;
+      const y = 85 + Math.sin(ang) * 46;
+      if(i === 0) fctx.moveTo(x, y); else fctx.lineTo(x, y);
+    }
+    fctx.closePath(); fctx.fill();
+    const flTex = new THREE.CanvasTexture(flCanvas);
+    flTex.colorSpace = THREE.SRGBColorSpace;
+    const flagMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.85, 1.22, 8, 4),
+      new THREE.MeshStandardMaterial({ map: flTex, emissive: 0xda251d, emissiveMap: flTex, emissiveIntensity: 0.45, side: THREE.DoubleSide })
+    );
+    flagMesh.position.set(0.95, 17.45, -0.35);
+    mktCrown.add(flagMesh);
+    window.__DALAT_FLAG = flagMesh;
+
+    // 5 Đèn lồng đỏ truyền thống cỡ lớn treo dọc cổng chính Chợ Đà Lạt (Ảnh 1)
+    const redLanternMat = new THREE.MeshStandardMaterial({
+      color: 0xff2e2e, emissive: 0xff4518, emissiveIntensity: 2.2, roughness: 0.35
+    });
+    const goldCapMat = new THREE.MeshStandardMaterial({ color: 0xffd15c, metalness: 0.4, roughness: 0.4 });
+    for(const lx of [-7.6, -3.8, 0, 3.8, 7.6]){
+      const lg = new THREE.Group();
+      lg.position.set(lx, 3.95, -0.85);
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 10), redLanternMat);
+      body.scale.set(1.05, 0.82, 1.05);
+      lg.add(body);
+      const capT = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.08, 10), goldCapMat);
+      capT.position.y = 0.38; lg.add(capT);
+      const capB = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 0.08, 10), goldCapMat);
+      capB.position.y = -0.38; lg.add(capB);
+      const tassel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.09, 0.36, 8), goldCapMat);
+      tassel.position.y = -0.58; lg.add(tassel);
+      mktCrown.add(lg);
+    }
+
+    // Bồn hoa cẩm tú cầu hồng & tím dọc lan can tầng 2 và hai bên bậc thang mặt tiền (Ảnh 1, 3, 4)
+    for(const hx of [-13.5, -10.2, 10.2, 13.5]){
+      addHydrangeaBed(mktCrown, hx, 0.02, -1.6, 1.45, 14, true);
+    }
+  }
+
+  // ---------- 4. VỊ TRÍ LOGIC CHỢ ĐÊM ĐÀ LẠT (ẢNH 1, 3, 4): QUÁN SỮA ĐẬU NÀNH HOA SỮA + CÀ PHÊ TÙNG + DÃY SẠP BẠT SỌC ĐỎ TRẮNG ----------
+  {
+    // 4a. Quán "Sữa đậu nành Hoa Sữa" ngay góc chân Cầu thang lớn nhìn ra Bùng binh (Ảnh 3 & 4: x=-44.2, z=-3.6)
+    const hsGroup = new THREE.Group();
+    const hsY = groundH(-44.2, -3.6);
+    hsGroup.position.set(-44.2, hsY, -3.6);
+    hsGroup.rotation.y = 0.38; // xoay mặt đón thẳng hướng nhìn từ Bùng binh & Cầu thang
+    worldGroup.add(hsGroup);
+
+    // Khung quầy gỗ kem ấm + mái ngói/bạt sọc tím-đỏ-trắng đặc trưng Hoa Sữa (Ảnh 3 & 4)
+    const boothBody = new THREE.Mesh(
+      new THREE.BoxGeometry(4.2, 2.65, 2.8),
+      new THREE.MeshStandardMaterial({ color: 0xf4e3c6, roughness: 0.82 })
+    );
+    boothBody.position.set(0, 1.32, 0);
+    hsGroup.add(boothBody);
+
+    const counterFront = new THREE.Mesh(
+      new THREE.BoxGeometry(3.8, 0.95, 0.85),
+      new THREE.MeshStandardMaterial({ color: 0xfff5e4, roughness: 0.75 })
+    );
+    counterFront.position.set(0, 0.48, 1.35);
+    hsGroup.add(counterFront);
+
+    // Mái hiên sọc trắng - tím/đỏ vươn ra trước (Ảnh 3 & 4)
+    const stripeCanv = document.createElement('canvas');
+    stripeCanv.width = 256; stripeCanv.height = 64;
+    const sctx = stripeCanv.getContext('2d');
+    for(let i = 0; i < 16; i++){
+      sctx.fillStyle = (i % 2 === 0) ? '#c93b4b' : '#fff8ec';
+      sctx.fillRect(i * 16, 0, 16, 64);
+    }
+    const redWhiteStripeTex = new THREE.CanvasTexture(stripeCanv);
+    redWhiteStripeTex.colorSpace = THREE.SRGBColorSpace;
+    const hsAwning = new THREE.Mesh(
+      new THREE.BoxGeometry(4.4, 0.14, 1.75),
+      new THREE.MeshStandardMaterial({ map: redWhiteStripeTex, roughness: 0.65 })
+    );
+    hsAwning.position.set(0, 2.42, 1.45);
+    hsAwning.rotation.x = 0.26;
+    hsGroup.add(hsAwning);
+
+    // Bảng hiệu lớn trên nóc: "Sữa đậu nành Hoa Sữa" kèm hình ly sữa bốc khói (giống hệt Ảnh 3 & 4)
+    const hsSignTex = makeCozySignCanvas('Sữa đậu nành', 'Hoa Sữa', '#fff8eb', '#8c5834', '#22559c', '#d93829', '🥛');
+    const hsSignBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(4.1, 1.45, 0.18),
+      new THREE.MeshStandardMaterial({
+        map: hsSignTex, emissive: 0xffe4b5, emissiveMap: hsSignTex, emissiveIntensity: 0.95, roughness: 0.4
+      })
+    );
+    hsSignBoard.position.set(0, 3.45, 0.85);
+    hsGroup.add(hsSignBoard);
+
+    // 2 nồi inox sữa đậu nành nóng + khay bánh ngọt + dãy ghế đẩu nhựa đỏ
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0xdce2e6, metalness: 0.65, roughness: 0.28 });
+    for(const vx of [-0.85, -0.15]){
+      const vat = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.48, 12), steelMat);
+      vat.position.set(vx, 1.18, 1.35);
+      hsGroup.add(vat);
+    }
+    const redStoolMat = new THREE.MeshStandardMaterial({ color: 0xd93829, roughness: 0.6 });
+    const lowTableMat = new THREE.MeshStandardMaterial({ color: 0xd8a468, roughness: 0.75 });
+    for(const tx of [-1.1, 0.9]){
+      const tbl = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.52, 0.68), lowTableMat);
+      tbl.position.set(tx, 0.26, 2.35);
+      hsGroup.add(tbl);
+      for(const sx of [tx - 0.55, tx + 0.55]){
+        const st = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.34, 0.32), redStoolMat);
+        st.position.set(sx, 0.17, 2.35);
+        hsGroup.add(st);
+      }
+    }
+
+    // 4b. Tiệm "Cà phê Tùng" cổ điển trên tầng đồi / đầu cầu thang (Ảnh 3 & 4: x=-41.5, y=17, z=-30.5 & góc phải mặt đường x=-13.8, y=0, z=-22.5)
+    const tungSignTex = makeCozySignCanvas('Cà phê Tùng', 'Đà Lạt • Acoustic & Phin Cổ', '#4a2c18', '#d4a36a', '#fff6e0', '#ffd27d', '☕');
+    const tungPositions = [
+      { x: -41.5, y: groundH(-41.5, -31.5), z: -31.5, rotY: 0.25, sc: 1.0 },
+      { x: -13.5, y: groundH(-13.5, -23.5), z: -23.5, rotY: -0.42, sc: 0.95 }
+    ];
+    for(const tp of tungPositions){
+      const tg = new THREE.Group();
+      tg.position.set(tp.x, tp.y, tp.z);
+      tg.rotation.y = tp.rotY;
+      tg.scale.setScalar(tp.sc);
+      worldGroup.add(tg);
+
+      // Tường kem cổ điển + khung cửa gỗ ấm + cửa sổ kính phát sáng vàng ấm (Ảnh 3 & 4)
+      const wall = new THREE.Mesh(
+        new THREE.BoxGeometry(5.4, 3.8, 3.4),
+        new THREE.MeshStandardMaterial({ color: 0xebd8be, roughness: 0.85 })
+      );
+      wall.position.set(0, 1.9, 0);
+      tg.add(wall);
+
+      const woodFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(4.9, 2.35, 0.18),
+        new THREE.MeshStandardMaterial({ color: 0x4a2c18, roughness: 0.78 })
+      );
+      woodFrame.position.set(0, 1.35, 1.68);
+      tg.add(woodFrame);
+
+      const warmGlass = new THREE.Mesh(
+        new THREE.PlaneGeometry(4.4, 1.85),
+        new THREE.MeshStandardMaterial({ color: 0xffd27d, emissive: 0xffae42, emissiveIntensity: 1.55, roughness: 0.3 })
+      );
+      warmGlass.position.set(0, 1.4, 1.78);
+      tg.add(warmGlass);
+
+      const signB = new THREE.Mesh(
+        new THREE.BoxGeometry(4.5, 1.38, 0.2),
+        new THREE.MeshStandardMaterial({ map: tungSignTex, emissive: 0xffca7a, emissiveMap: tungSignTex, emissiveIntensity: 0.9, roughness: 0.45 })
+      );
+      signB.position.set(0, 3.35, 1.78);
+      tg.add(signB);
+
+      // Giàn hoa giấy tím rủ bên hông tiệm Cà phê Tùng (Ảnh 3)
+      addHydrangeaBed(tg, 2.6, 2.6, 1.5, 0.95, 10, false);
+    }
+
+    // 4c. Dãy sạp Chợ Đêm mái bạt sọc đỏ-trắng đồng bộ + bảng hiệu kem viết tay (Ảnh 1 & 4)
+    const stallSignLabels = [
+      ['Bánh tráng nướng', 'Trứng cút • Phô mai', '🍕'],
+      ['Sữa đậu nành nóng', 'Đậu xanh • Đậu phộng', '🥛'],
+      ['Khoai lang nướng', 'Bắp nướng mỡ hành', '🍠'],
+      ['Kem bơ Đà Lạt', 'Sầu riêng • Dâu tây', '🍨'],
+      ['Đặc sản Đà Lạt', 'Mứt dâu • Trà Atiso', '🍓'],
+      ['Len Đà Lạt', 'Khăn choàng • Mũ len', '🧣'],
+    ];
+    for(let si = 0; si < stalls.length; si++){
+      const s = stalls[si];
+      if(!s || !s.group) continue;
+      // Gắn bảng hiệu kem chữ rõ ràng kiểu Chibi Đà Lạt trên trán sạp cho toàn bộ các sạp khu chợ đêm
+      if(s.z > -32 && s.z < 36 && s.x > -72 && s.x < 55){
+        const lbl = stallSignLabels[si % stallSignLabels.length];
+        const stTex = makeCozySignCanvas(s.name || lbl[0], lbl[1], '#fff7e6', '#9e4730', '#b82828', '#5a381e', lbl[2]);
+        const sb = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.75, 0.62),
+          new THREE.MeshStandardMaterial({ map: stTex, emissive: 0xffe0b2, emissiveMap: stTex, emissiveIntensity: 0.85, side: THREE.DoubleSide })
+        );
+        sb.position.set(0, 2.38, 0.72);
+        sb.userData.isVendorSign = true;
+        s.group.add(sb);
+        s.cozySignMat = sb.material;
+
+        // Phủ mái bạt sọc đỏ-trắng lên trên sạp chợ đêm mặt tiền để nổi bật đúng Ảnh 1 & 4
+        if(s.z > -15 && s.z < 26 && s.x > -42 && s.x < 42){
+          const canopyTop = new THREE.Mesh(
+            new THREE.BoxGeometry(2.15, 0.09, 1.65),
+            new THREE.MeshStandardMaterial({ map: redWhiteStripeTex, roughness: 0.65 })
+          );
+          canopyTop.position.set(0, 2.52, 0.08);
+          s.group.add(canopyTop);
+        }
+      }
+    }
+  }
+
+  // ---------- 5. BÙNG BINH "ĐÀ LẠT" + VẠCH KẺ ĐƯỜNG ZEBRA + ĐÀI PHUN NƯỚC CẨM TÚ CẦU + SÂN KHẤU PERGOLA ACOUSTIC (ẢNH 1, 3, 4) ----------
+  {
+    // 5a. Bia đá khắc chữ "ĐÀ LẠT" kèm 3 cây thông + đài hoa sen + vườn cẩm tú cầu ở Bùng binh (-30, 0, -6) (Ảnh 3 & 4)
+    const rbGroup = new THREE.Group();
+    rbGroup.position.set(-30, 0, -6);
+    worldGroup.add(rbGroup);
+
+    // Vườn hoa cẩm tú cầu xanh-tím-hồng dày đặc quanh đảo bùng binh + 8 đèn sân vườn vàng ấm
+    for(let i = 0; i < 8; i++){
+      const ang = (i / 8) * Math.PI * 2;
+      const hx = Math.cos(ang) * 6.8;
+      const hz = Math.sin(ang) * 6.8;
+      addHydrangeaBed(rbGroup, hx, 0.22, hz, 1.55, 12, false);
+
+      // Đèn bollard thấp phát sáng vàng ấm quanh bồn hoa bùng binh (Ảnh 3 & 4)
+      const bol = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.52, 0.32),
+        new THREE.MeshStandardMaterial({ color: 0xfff2c6, emissive: 0xffaa33, emissiveIntensity: 2.2 })
+      );
+      bol.position.set(Math.cos(ang + 0.38) * 7.8, 0.42, Math.sin(ang + 0.38) * 7.8);
+      rbGroup.add(bol);
+    }
+
+    // Bia đá bán nguyệt khắc "ĐÀ LẠT" + hình 3 cây thông (Ảnh 3)
+    const dlStoneCanv = document.createElement('canvas');
+    dlStoneCanv.width = 512; dlStoneCanv.height = 320;
+    const dctx = dlStoneCanv.getContext('2d');
+    dctx.fillStyle = '#e5d4bc'; dctx.fillRect(0, 0, 512, 320);
+    dctx.strokeStyle = '#9c8265'; dctx.lineWidth = 14; dctx.strokeRect(10, 10, 492, 300);
+    // Vẽ 3 bóng cây thông Đà Lạt
+    dctx.fillStyle = '#3e2b1d';
+    for(const [px, sc] of [[196, 0.78], [256, 1.05], [316, 0.82]]){
+      for(let tier = 0; tier < 3; tier++){
+        const ty = 52 + tier * 26 * sc;
+        const hw = (26 + tier * 14) * sc;
+        dctx.beginPath();
+        dctx.moveTo(px, ty - 28 * sc);
+        dctx.lineTo(px - hw, ty + 14 * sc);
+        dctx.lineTo(px + hw, ty + 14 * sc);
+        dctx.closePath();
+        dctx.fill();
+      }
+      dctx.fillRect(px - 5, 52 + 78 * sc, 10, 22 * sc);
+    }
+    dctx.fillStyle = '#3a2214';
+    dctx.font = '900 74px "Segoe UI", Arial, sans-serif';
+    dctx.textAlign = 'center';
+    dctx.fillText('ĐÀ LẠT', 256, 248);
+    const dlStoneTex = new THREE.CanvasTexture(dlStoneCanv);
+    dlStoneTex.colorSpace = THREE.SRGBColorSpace;
+
+    const monumentStone = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.9, 2.1, 0.55, 20),
+      new THREE.MeshStandardMaterial({ map: dlStoneTex, roughness: 0.78 })
+    );
+    monumentStone.rotation.x = Math.PI / 2;
+    monumentStone.rotation.z = 0.25;
+    monumentStone.position.set(1.8, 1.35, -6.2);
+    rbGroup.add(monumentStone);
+
+    // Vạch kẻ đường ngựa vằn trắng (Zebra Crosswalks) quanh các ngả đường vào Bùng binh (Ảnh 3 & 4)
+    const zebraMat = new THREE.MeshBasicMaterial({ color: 0xf4eee1, transparent: true, opacity: 0.82, depthWrite: false });
+    const crosswalks = [
+      { cx: -14.5, cz: -6.0, rotY: 0, count: 6 },
+      { cx: -45.5, cz: -2.0, rotY: 0.15, count: 6 },
+      { cx: -28.0, cz: -19.5, rotY: Math.PI / 2, count: 6 },
+      { cx: -26.0, cz: 7.2, rotY: Math.PI / 2, count: 6 },
+    ];
+    for(const cw of crosswalks){
+      const cg = new THREE.Group();
+      cg.position.set(cw.cx, groundH(cw.cx, cw.cz) + 0.035, cw.cz);
+      cg.rotation.y = cw.rotY;
+      for(let i = 0; i < cw.count; i++){
+        const st = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 3.2), zebraMat);
+        st.rotation.x = -Math.PI / 2;
+        st.position.x = (i - (cw.count - 1) / 2) * 0.95;
+        cg.add(st);
+      }
+      worldGroup.add(cg);
+    }
+
+    // 5b. Đài phun nước trung tâm (27, 0, 5.2): Vòng hoa cẩm tú cầu tím-hồng bao quanh + tia nước cầu vồng hồng tím vàng (Ảnh 1)
+    const fntGarden = new THREE.Group();
+    fntGarden.position.set(27.0, 0, 5.2);
+    worldGroup.add(fntGarden);
+    for(let i = 0; i < 12; i++){
+      const ang = (i / 12) * Math.PI * 2;
+      addHydrangeaBed(fntGarden, Math.cos(ang) * 4.35, 0.02, Math.sin(ang) * 4.35, 0.95, 7, false);
+    }
+    const fntArcMatPink = new THREE.MeshBasicMaterial({ color: 0xff66cc, transparent: true, opacity: 0.78 });
+    const fntArcMatGold = new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, opacity: 0.78 });
+    for(let i = 0; i < 12; i++){
+      const ang = (i / 12) * Math.PI * 2;
+      const jetArc = new THREE.Mesh(
+        new THREE.TorusGeometry(1.45, 0.055, 8, 18, Math.PI * 0.82),
+        (i % 2 === 0) ? fntArcMatPink : fntArcMatGold
+      );
+      jetArc.position.set(Math.cos(ang) * 1.65, 0.75, Math.sin(ang) * 1.65);
+      jetArc.rotation.y = -ang;
+      jetArc.rotation.z = 0.25;
+      fntGarden.add(jetArc);
+    }
+
+    // 5c. Sân khấu Pergola gỗ "Nhạc Đà Lạt (acoustic) ♡" kèm dây đèn vàng + hoa hồng leo + bảng phấn chữ A (Ảnh 1)
+    const stagePergola = new THREE.Group();
+    stagePergola.position.set(34.2, 0, 6.2);
+    stagePergola.rotation.y = -0.45;
+    worldGroup.add(stagePergola);
+
+    const pergWoodMat = new THREE.MeshStandardMaterial({ color: 0x7c4d2b, roughness: 0.8 });
+    for(const [px, pz] of [[-1.8, -1.1], [1.8, -1.1], [-1.8, 1.1], [1.8, 1.1]]){
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.8, 0.18), pergWoodMat);
+      post.position.set(px, 1.4, pz);
+      stagePergola.add(post);
+    }
+    const beamF = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.18, 0.2), pergWoodMat);
+    beamF.position.set(0, 2.75, 1.1); stagePergola.add(beamF);
+    const beamB = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.18, 0.2), pergWoodMat);
+    beamB.position.set(0, 2.75, -1.1); stagePergola.add(beamB);
+    for(let rx = -1.6; rx <= 1.61; rx += 0.64){
+      const rafter = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 2.5), pergWoodMat);
+      rafter.position.set(rx, 2.86, 0);
+      stagePergola.add(rafter);
+    }
+    // Hoa hồng leo & cẩm tú cầu trên mái pergola + bóng đèn vàng ấm (Ảnh 1)
+    addHydrangeaBed(stagePergola, -1.5, 2.7, 1.1, 0.65, 6, false);
+    addHydrangeaBed(stagePergola, 1.5, 2.7, 1.1, 0.65, 6, false);
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe49e });
+    for(let bx = -1.5; bx <= 1.51; bx += 0.5){
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), bulbMat);
+      b.position.set(bx, 2.56, 1.1);
+      stagePergola.add(b);
+    }
+    // Bảng phấn chữ A: "Nhạc Đà Lạt (acoustic) ♡" (Ảnh 1)
+    const chalkCanv = document.createElement('canvas');
+    chalkCanv.width = 256; chalkCanv.height = 320;
+    const cctx = chalkCanv.getContext('2d');
+    cctx.fillStyle = '#26292e'; cctx.fillRect(0, 0, 256, 320);
+    cctx.strokeStyle = '#c48f52'; cctx.lineWidth = 18; cctx.strokeRect(9, 9, 238, 302);
+    cctx.fillStyle = '#fff8eb'; cctx.textAlign = 'center';
+    cctx.font = 'bold 38px "Segoe UI", Arial, sans-serif';
+    cctx.fillText('Nhạc', 128, 86);
+    cctx.fillText('Đà Lạt', 128, 138);
+    cctx.font = 'italic 30px "Segoe UI", Arial, sans-serif';
+    cctx.fillStyle = '#ffd68a';
+    cctx.fillText('(acoustic)', 128, 192);
+    cctx.font = '48px Arial, sans-serif';
+    cctx.fillStyle = '#ff85a2';
+    cctx.fillText('♡', 128, 256);
+    const chalkTex = new THREE.CanvasTexture(chalkCanv);
+    chalkTex.colorSpace = THREE.SRGBColorSpace;
+    const easel = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 1.15, 0.1),
+      new THREE.MeshStandardMaterial({ map: chalkTex, emissive: 0xfff0d0, emissiveMap: chalkTex, emissiveIntensity: 0.45 })
+    );
+    easel.position.set(2.15, 0.68, 1.25);
+    easel.rotation.y = -0.25;
+    stagePergola.add(easel);
+  }
+
+  // ---------- 6. HỒ XUÂN HƯƠNG & ĐẢO THỦY TẠ (ẢNH 2): ĐÈN ĐƯỜNG CÁNH BƯỚM VÀNG + LAN CAN ĐÁ CỔ ĐIỂN + BẾN THUYỀN + THỦY TẠ HỒNG RỰC ----------
+  {
+    // Tạo texture Cánh Bướm Vàng phát sáng (Butterfly Street Lamps — đặc trưng Ảnh 2)
+    const bfCanv = document.createElement('canvas');
+    bfCanv.width = 256; bfCanv.height = 256;
+    const bctx = bfCanv.getContext('2d');
+    bctx.clearRect(0, 0, 256, 256);
+    function drawWing(flip){
+      bctx.save();
+      bctx.translate(128, 132);
+      if(flip) bctx.scale(-1, 1);
+      // Cánh trên
+      const grd = bctx.createRadialGradient(42, -28, 6, 48, -24, 88);
+      grd.addColorStop(0, '#ffffff');
+      grd.addColorStop(0.45, '#ffe07d');
+      grd.addColorStop(0.85, '#ff9914');
+      grd.addColorStop(1, '#5c2c06');
+      bctx.fillStyle = grd;
+      bctx.strokeStyle = '#4a2408';
+      bctx.lineWidth = 7;
+      bctx.beginPath();
+      bctx.moveTo(4, -10);
+      bctx.bezierCurveTo(35, -95, 118, -92, 114, -22);
+      bctx.bezierCurveTo(110, 12, 55, 18, 4, 6);
+      bctx.closePath();
+      bctx.fill(); bctx.stroke();
+      // Cánh dưới
+      bctx.beginPath();
+      bctx.moveTo(4, 8);
+      bctx.bezierCurveTo(58, 14, 96, 52, 74, 88);
+      bctx.bezierCurveTo(52, 112, 16, 82, 4, 28);
+      bctx.closePath();
+      bctx.fill(); bctx.stroke();
+      bctx.restore();
+    }
+    drawWing(false);
+    drawWing(true);
+    const bfTex = new THREE.CanvasTexture(bfCanv);
+    bfTex.colorSpace = THREE.SRGBColorSpace;
+    const bfWingMat = new THREE.MeshBasicMaterial({
+      map: bfTex, transparent: true, alphaTest: 0.1, side: THREE.DoubleSide
+    });
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x3b2d22, metalness: 0.4, roughness: 0.6 });
+
+    // Dựng 10 Đèn đường hình Cánh Bướm dọc đường dạo bờ Bắc Hồ Xuân Hương (Ảnh 2: z=35.4, x=-346..-230)
+    for(const lx of [-346, -333, -320, -307, -294, -281, -268, -252, -240, -228]){
+      const by = groundH(lx, 35.4);
+      const lg = new THREE.Group();
+      lg.position.set(lx, by, 35.4);
+      worldGroup.add(lg);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 3.6, 8), postMat);
+      pole.position.y = 1.8;
+      lg.add(pole);
+      const wings = new THREE.Mesh(new THREE.PlaneGeometry(1.55, 1.45), bfWingMat);
+      wings.position.y = 3.55;
+      lg.add(wings);
+    }
+
+    // Lan can đá kem cổ điển (Classical Stone Balustrade) kèm bồn hoa dọc mép bờ hồ (Ảnh 2)
+    const balMat = new THREE.MeshStandardMaterial({ color: 0xefe3ce, roughness: 0.78 });
+    const railSegs = [[-344, -286], [-276, -263], [-254, -228]];
+    for(const [x0, x1] of railSegs){
+      const len = x1 - x0;
+      const cx = (x0 + x1) * 0.5;
+      const by = groundH(cx, 35.75);
+      const rg = new THREE.Group();
+      rg.position.set(cx, by, 35.75);
+      worldGroup.add(rg);
+      const topRail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.14, 0.24), balMat);
+      topRail.position.y = 0.86; rg.add(topRail);
+      const botRail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, 0.28), balMat);
+      botRail.position.y = 0.12; rg.add(botRail);
+      const steps = Math.max(2, Math.floor(len / 3.2));
+      for(let i = 0; i <= steps; i++){
+        const px = -len / 2 + (i / steps) * len;
+        const pil = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.98, 0.36), balMat);
+        pil.position.set(px, 0.49, 0);
+        rg.add(pil);
+        if(i % 2 === 1){
+          addHydrangeaBed(rg, px, 0.32, -0.35, 0.48, 5, true);
+        }
+      }
+    }
+
+    // Ki-ốt gỗ mái ngói bán vé Đạp Vịt + Mái bạt sọc đỏ trắng + Phao cứu sinh màu cam ở bến thuyền (Ảnh 2)
+    const pierKiosk = new THREE.Group();
+    pierKiosk.position.set(-264.2, groundH(-264.2, 34.5), 34.5);
+    worldGroup.add(pierKiosk);
+    const kRoof = new THREE.Mesh(
+      new THREE.ConeGeometry(2.15, 1.15, 4),
+      new THREE.MeshStandardMaterial({ color: 0xa83c28, roughness: 0.75 })
+    );
+    kRoof.position.set(0, 3.15, 0);
+    kRoof.rotation.y = Math.PI / 4;
+    pierKiosk.add(kRoof);
+
+    // 4 Phao cứu sinh màu cam-trắng treo dọc lan can bến thuyền (Ảnh 2)
+    const buoyMat = new THREE.MeshStandardMaterial({ color: 0xff6b2b, roughness: 0.5 });
+    for(const [bx, bz] of [[-261.5, 36.8], [-261.5, 39.2], [-256.5, 36.8], [-256.5, 39.2]]){
+      const buoy = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.085, 8, 16), buoyMat);
+      buoy.position.set(bx, 5.55, bz);
+      buoy.rotation.y = Math.PI / 2;
+      worldGroup.add(buoy);
+    }
+
+    // Tăng cường ánh sáng hồng-magenta rực rỡ & bóng nước lung linh cho Nhà Thủy Tạ (Ảnh 2: -250, 58)
+    const ttArchGlowMat = new THREE.MeshBasicMaterial({ color: 0xff5ec4, transparent: true, opacity: 0.85 });
+    const ttIslandGlow = new THREE.Group();
+    ttIslandGlow.position.set(-250, 5.45, 58);
+    worldGroup.add(ttIslandGlow);
+    for(let i = 0; i < 8; i++){
+      const ang = (i / 8) * Math.PI * 2;
+      addHydrangeaBed(ttIslandGlow, Math.cos(ang) * 12.8, 0.05, Math.sin(ang) * 12.8, 1.1, 8, false);
+    }
+    // Vệt phản chiếu ánh hồng Thủy Tạ lấp lánh trên mặt nước nhìn từ bờ Bắc (Ảnh 2)
+    for(let s = 0; s < 5; s++){
+      const refPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.2 - s * 0.2, 16.5),
+        new THREE.MeshBasicMaterial({ color: 0xff52b8, transparent: true, opacity: 0.24, depthWrite: false, blending: THREE.AdditiveBlending })
+      );
+      refPlane.rotation.x = -Math.PI / 2;
+      refPlane.position.set(-258 + s * 3.8, 4.948, 44.5);
+      worldGroup.add(refPlane);
+    }
+  }
+
+  // ---------- 7. ĐỒI THÔNG MỜ SƯƠNG HẬU CẢNH + NHÀ THỜ CON GÀ + THÁP TRUYỀN HÌNH ĐÀ LẠT (ẢNH 1, 2, 3, 4) ----------
+  {
+    const vistaGroup = new THREE.Group();
+    worldGroup.add(vistaGroup);
+
+    // Dãy đồi thông mờ sương bao quanh chân trời Bắc & Nam kèm ánh đèn biệt thự Đà Lạt
+    const hillMatDark = new THREE.MeshStandardMaterial({ color: 0x2d3a4a, roughness: 0.95 });
+    const hillMatMid  = new THREE.MeshStandardMaterial({ color: 0x38495c, roughness: 0.92 });
+    const mistRibbonMat = new THREE.MeshBasicMaterial({ color: 0xd8c8e8, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
+    const villaLightMat = new THREE.MeshBasicMaterial({ color: 0xffd27d });
+
+    const ridgeDefs = [
+      { x: -85, y: 18, z: 78, rx: 68, ry: 26, rz: 28, m: hillMatMid },
+      { x: 45,  y: 22, z: 88, rx: 78, ry: 32, rz: 32, m: hillMatDark },
+      { x: -260, y: 24, z: 225, rx: 140, ry: 36, rz: 38, m: hillMatDark },
+      { x: 15,  y: 26, z: -115, rx: 95, ry: 28, rz: 30, m: hillMatMid },
+    ];
+    for(const rd of ridgeDefs){
+      const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), rd.m);
+      hill.position.set(rd.x, rd.y, rd.z);
+      hill.scale.set(rd.rx, rd.ry, rd.rz);
+      vistaGroup.add(hill);
+
+      // Dải sương mù trắng tím vắt ngang sườn đồi (Ảnh 1, 3, 4)
+      const mist = new THREE.Mesh(new THREE.PlaneGeometry(rd.rx * 1.6, 9.5), mistRibbonMat);
+      mist.position.set(rd.x, rd.y + rd.ry * 0.35, rd.z - rd.rz * 0.55);
+      vistaGroup.add(mist);
+
+      // Ánh đèn vàng ấm của những ngôi nhà trên đồi Đà Lạt
+      for(let k = 0; k < 14; k++){
+        const lx = rd.x + (k - 6.5) * (rd.rx * 0.11);
+        const ly = rd.y + rd.ry * (0.25 + ((k * 3) % 5) * 0.1);
+        const lz = rd.z - rd.rz * 0.68;
+        const vl = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.65, 0.9), villaLightMat);
+        vl.position.set(lx, ly, lz);
+        vistaGroup.add(vl);
+      }
+    }
+
+    // Nhà thờ Con Gà (Chicken Church — Ảnh 3 & 4) rực sáng vàng ấm trên đồi phía sau Chợ Đà Lạt
+    const church = new THREE.Group();
+    church.position.set(-64, 30.5, 68);
+    vistaGroup.add(church);
+    const chMat = new THREE.MeshStandardMaterial({ color: 0xf2cfa0, emissive: 0xffae42, emissiveIntensity: 0.65, roughness: 0.7 });
+    const chRoofMat = new THREE.MeshStandardMaterial({ color: 0xb84a39, roughness: 0.75 });
+    const nave = new THREE.Mesh(new THREE.BoxGeometry(8.5, 6.5, 14), chMat);
+    nave.position.set(0, 3.25, 0); church.add(nave);
+    const spire = new THREE.Mesh(new THREE.BoxGeometry(3.2, 14.5, 3.2), chMat);
+    spire.position.set(0, 7.25, -5.8); church.add(spire);
+    const spireRoof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 5.5, 4), chRoofMat);
+    spireRoof.position.set(0, 17.2, -5.8); spireRoof.rotation.y = Math.PI / 4; church.add(spireRoof);
+    const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.2, 0.35), villaLightMat);
+    crossV.position.set(0, 20.6, -5.8); church.add(crossV);
+    const crossH = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.35, 0.35), villaLightMat);
+    crossH.position.set(0, 20.9, -5.8); church.add(crossH);
+
+    // Tháp Truyền Hình Đà Lạt (Đà Lạt Telecom Tower — Ảnh 1, 2, 3, 4)
+    function addTelecomTower(tx, ty, tz){
+      const tw = new THREE.Group();
+      tw.position.set(tx, ty, tz);
+      vistaGroup.add(tw);
+      const redM = new THREE.MeshStandardMaterial({ color: 0xe03c31, emissive: 0xff3b30, emissiveIntensity: 0.85 });
+      const whtM = new THREE.MeshStandardMaterial({ color: 0xfff8eb, emissive: 0xffe4b5, emissiveIntensity: 0.75 });
+      for(let seg = 0; seg < 6; seg++){
+        const rBot = 2.2 * (1 - seg * 0.13);
+        const rTop = 2.2 * (1 - (seg + 1) * 0.13);
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, 3.4, 8), (seg % 2 === 0) ? redM : whtM);
+        m.position.y = seg * 3.4 + 1.7;
+        tw.add(m);
+      }
+      const beaconLight = new THREE.Mesh(new THREE.SphereGeometry(0.65, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff2a55 }));
+      beaconLight.position.y = 21.5;
+      tw.add(beaconLight);
+    }
+    addTelecomTower(48, 44, 86);
+    addTelecomTower(-265, 48, 222);
+  }
+
+  // ---------- 8. GÓC NHÌN KHỞI ĐẦU TOÀN CẢNH CHỢ ĐÊM ĐÀ LẠT & BÙNG BINH (TRONG TRÌNH DUYỆT THẬT) ----------
+  if(!isAutomatedHarness && !localStorage.getItem('chohb3d-v1')){
+    // Đặt người chơi ngay tại quảng trường nhìn thẳng vào Bùng binh ĐÀ LẠT, Cầu thang lớn, Hoa Sữa, Cà phê Tùng & Chợ Đà Lạt (giống Ảnh 3 & 4)
+    playerState.x = -26.5;
+    playerState.z = -18.5;
+    playerState.y = groundH(-26.5, -18.5);
+    playerState.face = 0.15;
+    player.position.set(playerState.x, playerState.y, playerState.z);
+    camYaw = 3.02; // Camera nhìn về hướng +Z / Tây-Nam thấy trọn Chợ Đà Lạt, Bùng binh, Hoa Sữa & Cà phê Tùng
+    // Ẩn tutCard che giữa màn hình khi mới vào để người chơi chiêm ngưỡng trọn vẹn khung cảnh Đà Lạt
+    if(tutCardEl) tutCardEl.style.display = 'none';
+    if(guidePanelEl) guidePanelEl.style.display = '';
+  }
+
+  // ---------- 9. MINIMAP MINH HỌA PHONG CÁCH COZY CHIBI (ẢNH 3 & 4) & ĐỒNG BỘ HUD ----------
+  const _origDrawMinimap = drawMinimap;
+  drawMinimap = function(t){
+    _origDrawMinimap(t);
+    const c = mmCtx;
+    // Vẽ đè lớp bản đồ minh họa ấm áp kiểu Cozy Life-Sim (Ảnh 3)
+    c.save();
+    c.fillStyle = '#8db572'; c.fillRect(0, 0, 156, 156);
+    // Đồi thông phía Bắc & Nam
+    c.fillStyle = '#6e9956';
+    c.fillRect(0, 0, 156, 36);
+    // Hồ Xuân Hương xanh biếc
+    c.fillStyle = '#5da7c9';
+    c.beginPath();
+    c.roundRect(4, 62, 68, 76, 12);
+    c.fill();
+    c.strokeStyle = '#f2dfc1'; c.lineWidth = 2; c.stroke();
+    // Đảo Thủy Tạ
+    c.fillStyle = '#ff85c0';
+    c.beginPath(); c.arc(58, 74, 4.5, 0, Math.PI * 2); c.fill();
+    // Các tuyến đường kem ấm quanh Bùng binh & Chợ Đà Lạt
+    c.strokeStyle = '#e8d2ae'; c.lineWidth = 10; c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(18, 52); c.lineTo(142, 52);
+    c.moveTo(106, 22); c.lineTo(106, 138);
+    c.moveTo(72, 52); c.lineTo(128, 95);
+    c.stroke();
+    // Bùng binh Chợ Đà Lạt
+    c.fillStyle = '#73a959';
+    c.beginPath(); c.arc(106, 52, 11, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#fff5df'; c.lineWidth = 2; c.stroke();
+    // Tòa nhà Chợ Đà Lạt (mái đỏ cam nổi bật)
+    c.fillStyle = '#d94b38';
+    c.beginPath(); c.roundRect(88, 70, 38, 16, 5); c.fill();
+    c.strokeStyle = '#fff8eb'; c.lineWidth = 1.5; c.stroke();
+    // Nhãn địa danh minh họa như Ảnh 3 ("Chợ Đà Lạt", "Cà phê Tùng", "Hoa Sữa")
+    function drawMapPill(px, py, txt, bg, fg){
+      c.font = 'bold 8.5px "Segoe UI", Arial, sans-serif';
+      const w = c.measureText(txt).width + 8;
+      c.fillStyle = bg;
+      c.beginPath(); c.roundRect(px - w / 2, py - 6, w, 12, 5); c.fill();
+      c.fillStyle = fg;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(txt, px, py);
+    }
+    drawMapPill(107, 94, 'Chợ Đà Lạt', '#fff6e5', '#5a3218');
+    drawMapPill(126, 34, '☕ Cà phê Tùng', '#5c3b22', '#fff5df');
+    drawMapPill(74, 42, '🥛 Hoa Sữa', '#fff6e5', '#22559c');
+    drawMapPill(38, 102, 'Hồ Xuân Hương', 'rgba(255,255,255,0.88)', '#1c5a7a');
+    // Chữ N la bàn ở cạnh trên
+    drawMapPill(78, 9, 'N', '#6e472b', '#ffd98a');
+
+    // Vị trí người chơi (mũi tên đỏ-trắng nổi bật)
+    const px = Math.max(10, Math.min(146, mmX(playerState.x)));
+    const py = Math.max(10, Math.min(146, mmY(playerState.z)));
+    c.fillStyle = '#ff4757';
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 2;
+    c.beginPath(); c.arc(px, py, 5, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.restore();
+  };
+
+  // ---------- 10. KẾT NỐI COZY HOTBAR (PHÍM 1..8), CHECKLIST NHIỆM VỤ & THANH ĐỒNG HỒ / THỜI TIẾT ĐÀ LẠT ----------
+  const btnMore = document.getElementById('btnMoreTools');
+  const extraDrawer = document.getElementById('hudExtraDrawer');
+  if(btnMore && extraDrawer){
+    btnMore.addEventListener('click', () => {
+      extraDrawer.classList.toggle('open');
+      btnMore.textContent = extraDrawer.classList.contains('open') ? '✨ Thu gọn ▴' : '✨ Tiện ích ▾';
+    });
+  }
+  const cozyAvatarBtn = document.getElementById('cozyAvatarBtn');
+  if(cozyAvatarBtn){
+    cozyAvatarBtn.addEventListener('click', () => document.getElementById('btnWardrobe').click());
+  }
+  const cozyStampPill = document.getElementById('cozyStampPill');
+  if(cozyStampPill){
+    cozyStampPill.addEventListener('click', () => document.getElementById('btnPassport').click());
+  }
+  const cozyWeatherCard = document.getElementById('cozyWeatherCard');
+  if(cozyWeatherCard){
+    cozyWeatherCard.addEventListener('click', () => document.getElementById('btnDayNight').click());
+  }
+
+  // Click vào từng mục trong thẻ "📋 Nhiệm vụ hôm nay" để dịch chuyển tới đúng địa điểm
+  document.querySelectorAll('#questPanel .qpItem').forEach(item => {
+    item.addEventListener('click', () => {
+      const parts = (item.getAttribute('data-tp') || '').split(',').map(Number);
+      if(parts.length >= 2){
+        playerState.x = parts[0]; playerState.z = parts[1];
+        playerState.y = groundH(parts[0], parts[1]);
+        player.position.set(playerState.x, playerState.y, playerState.z);
+        if(!Number.isNaN(parts[2])) camYaw = parts[2];
+        checkZone();
+        toast('📍 Đã ghé tới điểm nhiệm vụ!');
+      }
+    });
+  });
+
+  // 8 ô Cozy Hotbar ở đáy màn hình (bấm chuột hoặc phím 1..8)
+  function activateHotbarSlot(slotNum){
+    document.querySelectorAll('#cozyHotbar .hbSlot').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-slot') === String(slotNum));
+    });
+    if(slotNum === 1){
+      document.getElementById('btnSelfie').click();
+    } else if(slotNum === 2){
+      playerState.x = -26.5; playerState.z = -18.5; playerState.y = groundH(-26.5, -18.5);
+      player.position.set(playerState.x, playerState.y, playerState.z); camYaw = 3.02;
+      toast('🪻 Bùng binh Hoa Cẩm Tú Cầu & Chợ Đà Lạt!');
+    } else if(slotNum === 3){
+      playerState.x = -41.5; playerState.z = -27.5; playerState.y = groundH(-41.5, -27.5);
+      player.position.set(playerState.x, playerState.y, playerState.z); camYaw = 0.25;
+      toast('☕ Đã tới tiệm Cà phê Tùng cổ điển!');
+    } else if(slotNum === 4){
+      playerState.x = -42.5; playerState.z = -1.2; playerState.y = groundH(-42.5, -1.2);
+      player.position.set(playerState.x, playerState.y, playerState.z); camYaw = 3.14;
+      toast('🥛 Đã tới Sữa đậu nành Hoa Sữa & Phố Bánh tráng nướng!');
+    } else if(slotNum === 5){
+      playerState.x = -256; playerState.z = 32.5; playerState.y = groundH(-256, 32.5);
+      player.position.set(playerState.x, playerState.y, playerState.z); camYaw = 3.14;
+      toast('🦢 Đã tới Bờ Hồ Xuân Hương & Đảo Thủy Tạ!');
+    } else if(slotNum === 6){
+      document.getElementById('btnPassport').click();
+    } else if(slotNum === 7){
+      document.getElementById('btnBag').click();
+    } else if(slotNum === 8){
+      document.getElementById('btnWardrobe').click();
+    }
+  }
+  document.querySelectorAll('#cozyHotbar .hbSlot').forEach(btn => {
+    btn.addEventListener('click', () => activateHotbarSlot(Number(btn.getAttribute('data-slot'))));
+  });
+  window.addEventListener('keydown', e => {
+    if(anyModalOpen()) return;
+    if(e.code >= 'Digit1' && e.code <= 'Digit8'){
+      activateHotbarSlot(Number(e.code.replace('Digit', '')));
+    }
+  });
+
+  // ---------- 11. HỆ THỐNG NHẤP NHÁY NGẪU NHIÊN CHO TOÀN BỘ BIỂN HIỆU QUẦY SẠP KHU CHỢ ĐÊM (RANDOMIZED VENDOR SIGN FLICKER) ----------
+  const vendorSignFlickers = [];
+  window.__VENDOR_SIGN_FLICKERS = vendorSignFlickers;
+  {
+    const seenMats = new Set();
+    const winMatSet = new Set(typeof winMats !== 'undefined' ? winMats : []);
+    let seedIdx = 1;
+    function nextRand(){
+      seedIdx = (seedIdx * 1664525 + 1013904223) >>> 0;
+      return (seedIdx & 0xfffffff) / 0x10000000;
+    }
+    function registerVendorSignMat(mat, baseI, dayI, stallRef, opts){
+      if(!mat || seenMats.has(mat) || winMatSet.has(mat)) return;
+      seenMats.add(mat);
+      // Bật phát sáng emissive trên chính texture chữ của biển hiệu nếu chưa có
+      if(mat.map && (!mat.emissive || (mat.emissive.r === 0 && mat.emissive.g === 0 && mat.emissive.b === 0))){
+        mat.emissive = new THREE.Color(opts && opts.tint ? opts.tint : 0xffe0a6);
+        mat.emissiveMap = mat.map;
+        mat.needsUpdate = true;
+      }
+      vendorSignFlickers.push({
+        mat,
+        stall: stallRef || null,
+        isHaloOpacity: Boolean(opts && opts.isHaloOpacity),
+        baseI: baseI || 0.92,
+        dayI: (dayI !== undefined) ? dayI : 0.08,
+        ph: nextRand() * Math.PI * 2,
+        f1: 2.1 + nextRand() * 4.4,
+        f2: 5.5 + nextRand() * 7.8,
+        f3: 15.0 + nextRand() * 19.0,
+        buzzAmp: 0.04 + nextRand() * 0.07,
+        dipSpeed: 0.65 + nextRand() * 1.45,
+        dipPhase: nextRand() * Math.PI * 2,
+        dipThresh: 1.06 + nextRand() * 0.22,
+        dipDepth: 0.26 + nextRand() * 0.36,
+        lastIntensity: baseI || 0.92,
+      });
+    }
+
+    // 11a. Đăng ký toàn bộ 45 sạp hàng trong khu Chợ Đêm & Chợ Hòa Bình (biển tên sạp, bảng giá, biển Chibi, đèn lồng & bóng đèn treo)
+    const stallSignTintByCat = {
+      banhtrang: 0xffcf86,
+      khoai:     0xffb86c,
+      xiennuong: 0xffa860,
+      suadaunanh:0xfff0b8,
+      kembo:     0xc8ffe0,
+      dau:       0xffadc6,
+      mut:       0xffd28a,
+      atiso:     0xb8f2be,
+      dolen:     0xffc2d9,
+      luuniem:   0xffe09e,
+      hoa:       0xffb8e2,
+    };
+    for(let i = 0; i < stalls.length; i++){
+      const s = stalls[i];
+      if(!s || !s.group) continue;
+      const tint = stallSignTintByCat[s.cat] || 0xffe0a6;
+      s.group.traverse(ch => {
+        if(!ch.isMesh || !ch.material || !ch.geometry) return;
+        const gType = ch.geometry.type || '';
+        const p = ch.geometry.parameters || {};
+        // Biển tên chính của sạp (makeStallSign: PlaneGeometry 4.2x0.95 tại y=2.5), biển Chibi (1.75x0.62) & bảng giá (0.62x0.39)
+        const isMainStallSign = (gType === 'PlaneGeometry' && Math.abs((p.width || 0) - 4.2) < 0.1 && Math.abs((p.height || 0) - 0.95) < 0.1);
+        const isPriceTag = (gType === 'PlaneGeometry' && Math.abs((p.width || 0) - 0.62) < 0.08 && Math.abs((p.height || 0) - 0.39) < 0.08);
+        const isCozyBoard = Boolean(ch.userData && ch.userData.isVendorSign);
+        if(isMainStallSign || isPriceTag || isCozyBoard){
+          if(seenMats.has(ch.material)){
+            ch.material = ch.material.clone();
+          }
+          registerVendorSignMat(ch.material, isPriceTag ? 0.72 : (s.special ? 1.25 : 0.96), 0.1, s, { tint });
+        }
+      });
+      if(s.lanternMat) registerVendorSignMat(s.lanternMat, s.special ? 1.45 : 0.95, 0.15, s, { tint: 0xffaa44 });
+      if(s.bigLanternMat) registerVendorSignMat(s.bigLanternMat, 1.35, 0.18, s, { tint: 0xff6633 });
+      if(s.bulb && s.bulb.bulbMat) registerVendorSignMat(s.bulb.bulbMat, 1.85, 0.08, s, { tint: 0xffdf88 });
+      if(s.bulb && s.bulb.haloMat) registerVendorSignMat(s.bulb.haloMat, 0.34, 0.0, s, { isHaloOpacity: true });
+    }
+
+    // 11b. Đăng ký các biển hiệu sạp chợ đêm ven đường Nguyễn Thị Minh Khai (buildDecorStall), biển khu vực, biển tiệm Hoa Sữa, Cà phê Tùng & shophouse
+    const worldPos = new THREE.Vector3();
+    worldGroup.traverse(obj => {
+      if(!obj.isMesh || !obj.material || !obj.geometry) return;
+      const mat = obj.material;
+      if(seenMats.has(mat) || winMatSet.has(mat)) return;
+      if(!mat.map || !mat.map.isCanvasTexture) return;
+      const p = obj.geometry.parameters || {};
+      const w = p.width || 0;
+      const h = p.height || 0;
+      // Chỉ chọn các biển hiệu (chiều rộng 0.5..14m, chiều cao 0.25..2.2m) nằm trên tầm biển quảng cáo
+      if(w < 0.5 || w > 14.5 || h < 0.25 || h > 2.2) return;
+      obj.getWorldPosition(worldPos);
+      if(worldPos.y < 0.55 || worldPos.y > 24.0) return;
+      // Chỉ áp dụng trong phạm vi khu Chợ Đêm, Quảng trường Hòa Bình, dốc Lê Đại Hành & ven bờ Bắc Hồ Xuân Hương
+      if(worldPos.x < -360 || worldPos.x > 85 || worldPos.z < -85 || worldPos.z > 75) return;
+      registerVendorSignMat(mat, 0.95, 0.1, null, { tint: 0xffdfa0 });
+    });
+
+    // 11c. Đăng ký các hộp đèn vẫy dọc phố (window.__vSignMats) & khung đèn hiệu (signGlowMats)
+    if(Array.isArray(window.__vSignMats)){
+      for(const vm of window.__vSignMats){
+        registerVendorSignMat(vm, 0.92, 0.08, null, { tint: 0xffe4a8 });
+      }
+    }
+    if(typeof signGlowMats !== 'undefined' && Array.isArray(signGlowMats)){
+      for(const sm of signGlowMats){
+        registerVendorSignMat(sm, 1.05, 0.12, null, { tint: 0xffd27d });
+      }
+    }
+  }
+
+  // Cập nhật liên tục Đồng hồ Đà Lạt, Nhiệt độ, Cấp độ Lv, Trái tim, Cờ Tổ Quốc & Hiệu ứng nhấp nháy biển hiệu chợ đêm
+  const _cozyPrevTW = tickWater;
+  tickWater = function(t){
+    _cozyPrevTW(t);
+    // Cờ đỏ sao vàng tung bay nhẹ trên đỉnh Chợ Đà Lạt
+    if(window.__DALAT_FLAG){
+      window.__DALAT_FLAG.rotation.y = Math.sin(t * 2.6) * 0.14;
+    }
+
+    // Hiệu ứng nhấp nháy ngẫu nhiên (Randomized Vendor Sign Flicker) cho toàn bộ biển hiệu sạp chợ đêm
+    const nightMarketActive = (typeof isNight !== 'undefined' && isNight) || (typeof gameHourF === 'number' && (gameHourF >= 17.25 || gameHourF <= 5.75));
+    for(let i = 0; i < vendorSignFlickers.length; i++){
+      const e = vendorSignFlickers[i];
+      const closed = Boolean(e.stall && e.stall.closed);
+      if(nightMarketActive && !closed){
+        // Dao động đa tần số + rung chấn chấn lưu đèn neon/huỳnh quang + sụt áp ngẫu nhiên chớp nhoáng
+        const wave = 0.88 + 0.12 * Math.sin(t * e.f1 + e.ph) * Math.cos(t * e.f2 + e.ph * 1.31);
+        const buzz = e.buzzAmp * Math.sin(t * e.f3 + e.ph * 2.7);
+        const dipSignal = Math.sin(t * e.dipSpeed + e.dipPhase) + 0.38 * Math.cos(t * (e.dipSpeed * 2.63) + e.ph);
+        let flickerMult = wave + buzz;
+        if(dipSignal > e.dipThresh){
+          // Nhấp nháy ngẫu nhiên khi biển hiệu chập chờn điện áp về đêm
+          flickerMult *= (e.dipDepth + Math.random() * 0.32);
+        } else {
+          flickerMult += (Math.random() - 0.5) * 0.045;
+        }
+        const targetVal = Math.max(0.08, e.baseI * flickerMult);
+        e.lastIntensity = targetVal;
+        if(e.isHaloOpacity){
+          e.mat.opacity = Math.min(0.65, targetVal);
+        } else if(e.mat.emissiveIntensity !== undefined){
+          e.mat.emissiveIntensity = targetVal;
+        }
+      } else {
+        const offVal = closed ? 0.02 : e.dayI;
+        e.lastIntensity = offVal;
+        if(e.isHaloOpacity){
+          e.mat.opacity = 0.0;
+        } else if(e.mat.emissiveIntensity !== undefined){
+          e.mat.emissiveIntensity = offVal;
+        }
+      }
+    }
+
+    // Đồng bộ thanh Top-Right và Avatar Badge
+    const xuMirror = document.getElementById('cozyXuMirror');
+    if(xuMirror) xuMirror.textContent = (state.xu || 0).toLocaleString('vi-VN');
+    const lvBadge = document.getElementById('cozyLvBadge');
+    if(lvBadge) lvBadge.textContent = 'Lv.' + Math.max(12, levelFromXp(G.xp));
+    const hh = Math.floor(gameHourF) % 24;
+    const mm = Math.floor((gameHourF % 1) * 60);
+    const clkEl = document.getElementById('cwClock');
+    if(clkEl) clkEl.textContent = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+    const perEl = document.getElementById('cwPeriod');
+    if(perEl){
+      perEl.textContent = (hh >= 17 && hh <= 19) ? 'Chiều tối' : (hh >= 20 || hh <= 4) ? 'Đêm sương' : (hh <= 8) ? 'Bình minh' : 'Ban ngày';
+    }
+    const tmpMirror = document.getElementById('cwTempMirror');
+    const tvEl = document.getElementById('tempVal');
+    if(tmpMirror && tvEl) tmpMirror.textContent = tvEl.textContent || '15°C';
+  };
+}
 
 animate();
 setTimeout(() => toast('👋 Chào mừng tới Chợ Hòa Bình 3D! Đi dạo, đóng dấu hộ chiếu (P) và ăn hết chợ đêm Đà Lạt nhé'), 700);
