@@ -988,21 +988,52 @@ def build_cafe():
     export("cafe")
 
 # ============================================================
-#  CÂY THÔNG — thân + cành + 4 tầng tán jitter hữu cơ. Cao ~7m
+#  PINE-MAP (12/11/2026): tầng tán thông dạng MÚI — thay đĩa/cone trơn
+#  stylized. Thông Đà Lạt thật (research/29 + ảnh 18/25/36): tán ô gồm
+#  các chùm cành tỏa vòng, vành tán lượn sóng không đều, mép tầng võng
+#  nhẹ; mỗi tầng = 1 múi tâm + 5 múi vòng (cầu dẹt elip, lệch tâm,
+#  jitter đỉnh) -> bóng tán đọc "cây thật", hết hình đĩa UFO/cone đều.
+# ============================================================
+def _lobe_tier(z, R, mat, rng, flat=0.19):
+    parts = []
+    c = sphere("tmpTierC", R * 0.55, (0, 0, z + 0.04), mat, scale=(1, 1, flat), seg=14, ring=8)
+    for v in c.data.vertices:
+        v.co.x += rng.uniform(-0.05, 0.05); v.co.y += rng.uniform(-0.05, 0.05); v.co.z += rng.uniform(-0.02, 0.02)
+    parts.append(c)
+    a0 = rng.uniform(0, 6.283)
+    for k in range(5):
+        a = a0 + k * 6.28318 / 5 + rng.uniform(-0.15, 0.15)
+        rr = R * rng.uniform(0.48, 0.60)
+        lr = R * rng.uniform(0.40, 0.50)
+        s = sphere("tmpTierL", lr, (math.cos(a) * rr, math.sin(a) * rr, z - rng.uniform(0.02, 0.13)), mat,
+                   scale=(rng.uniform(0.9, 1.18), rng.uniform(0.85, 1.05), flat), seg=12, ring=8)
+        for v in s.data.vertices:
+            v.co.x += rng.uniform(-0.05, 0.05); v.co.y += rng.uniform(-0.05, 0.05); v.co.z += rng.uniform(-0.025, 0.025)
+        parts.append(s)
+    return parts
+
+# ============================================================
+#  CÂY THÔNG — PINE-MAP: thân CAO TRẦN (kesiya: thân trần ~60% chiều
+#  cao) + 3 tầng tán múi + chỏm đỉnh. Cao ~7,4 như bản cũ (giữ nguyên
+#  mọi scale đã đặt khắp map). Trước đây: 4 cone chồng đều (thông nón).
 # ============================================================
 def build_pine():
     clear_scene()
-    cyl("Trunk", 0.13, 0.22, 2.4, (0, 0, 1.2), MATS["Trunk"], verts=9)
+    rng = random.Random(20261112)
+    cyl("Trunk", 0.13, 0.24, 4.3, (0, 0, 2.15), MATS["Trunk"], verts=9)
     for i in range(3):
-        a = i * 2.1
-        br = cyl("Branch", 0.04, 0.06, 1.1, (math.cos(a) * 0.5, math.sin(a) * 0.5, 1.9 + i * 0.3), MATS["Trunk"], verts=6)
-        br.rotation_euler = (math.sin(a) * 1.1, -math.cos(a) * 1.1, 0)
-    layers = [(1.55, 2.7, 3.0, "PineDark"), (1.25, 2.3, 4.3, "PineMid"), (0.95, 2.0, 5.5, "PineLight"), (0.60, 1.6, 6.6, "PineLight")]
-    for r, h, z, mn in layers:
-        c = cone("Canopy", r, h, (0, 0, z), MATS[mn], verts=10)
-        for v in c.data.vertices:
-            v.co.x += random.uniform(-0.07, 0.07)
-            v.co.y += random.uniform(-0.07, 0.07)
+        a = i * 2.1 + 0.5
+        br = cyl("Branch", 0.035, 0.055, 1.25, (math.cos(a) * 0.55, math.sin(a) * 0.55, 4.3 + i * 0.28), MATS["Trunk"], verts=6)
+        br.rotation_euler = (math.sin(a) * 1.05, -math.cos(a) * 1.05, 0)
+    parts = []
+    parts += _lobe_tier(5.00, 1.95, MATS["PineDark"], rng)
+    parts += _lobe_tier(5.95, 1.55, MATS["PineMid"], rng)
+    parts += _lobe_tier(6.80, 1.12, MATS["PineLight"], rng)
+    tuft = sphere("tmpTuft", 0.52, (0, 0, 7.12), MATS["PineLight"], scale=(1, 1, 0.38), seg=12, ring=8)
+    for v in tuft.data.vertices:
+        v.co.x += rng.uniform(-0.04, 0.04); v.co.y += rng.uniform(-0.04, 0.04)
+    parts.append(tuft)
+    join_into(parts, "Canopy")
     export("pine")
 
 # ============================================================
@@ -1606,12 +1637,16 @@ def _xh_bridge():
 
 def _xh_pine_umbrella():
     """Thông Đà Lạt CHUẨN (lệnh Chung Hy 21:32 11/11): thân CAO THẲNG + tán
-    Ô/DẸT phân tầng — KHÔNG dùng thông nón. 3 đĩa tán dẹt chồng tầng, thân 5,2."""
+    Ô/DẸT phân tầng — KHÔNG dùng thông nón. Thân 5,2; 3 tầng bán kính/cao
+    giữ nguyên footprint XH-3R (2.25@5.05 / 1.72@5.95 / 1.18@6.70).
+    PINE-MAP (12/11/2026): mỗi tầng đĩa trơn -> tầng MÚI (_lobe_tier):
+    vành tán lượn sóng, mép võng — hết bóng đĩa stylized (nợ XH-2)."""
     tr = cyl("PUTTrunk", 0.13, 0.20, 5.2, (0, 0, 2.6), MATS["Trunk"], verts=10, bevel=0.01)
+    rng = random.Random(20261112)
     layers = []
-    for (r, z, m) in [(2.25, 5.05, "PineDark"), (1.72, 5.95, "PineMid"), (1.18, 6.70, "PineLight")]:
-        s = sphere("tmpPULayer", r, (0, 0, z), MATS[m], scale=(1, 1, 0.17), seg=16, ring=8)
-        layers.append(s)
+    layers += _lobe_tier(5.05, 2.25, MATS["PineDark"], rng, flat=0.17)
+    layers += _lobe_tier(5.95, 1.72, MATS["PineMid"], rng, flat=0.17)
+    layers += _lobe_tier(6.70, 1.18, MATS["PineLight"], rng, flat=0.17)
     can = join_into(layers, "PUCanopy")
     root = bpy.data.objects.new("PineUmbrella", None)
     bpy.context.collection.objects.link(root)
