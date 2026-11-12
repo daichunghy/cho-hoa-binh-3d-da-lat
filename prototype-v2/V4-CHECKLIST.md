@@ -2296,3 +2296,39 @@ diag 900 SẠCH · SEED_SAVE 300 SẠCH (save cũ chohb3d-v1 nạp nguyên, dấ
 ### Nợ / ngoài phạm vi vòng này (ghi rõ)
 - Màu mặt tiền L'angfarm mới (0x1b4332) + biển La Tulipe sửa chữ: của Argon, chưa đối chiếu đo lại theo ảnh thật — để vòng REALISM-INT/STAIR rà.
 - KHÔNG đẩy GitHub, KHÔNG upload (theo lệnh vòng). XH-5 chưa bắt đầu (dấu lake đã xong sớm qua merge này — XH-5 chỉ còn photo spots/hoàn thiện đêm hồ theo kế hoạch).
+
+## XH-5 — TÍCH HỢP HỒ (phần còn lại) + SỬA LỖI TỰ ĐI MÀI ĐẢO — 12/11/2026 — **XONG, ĐỦ BỘ CỔNG XANH**
+Backup: index.html.bak-xh5-20261112 (bản MERGE-ARGON, md5 2e59c110). Phạm vi rà theo KE_HOACH_HO_XUAN_HUONG §5/§7/§9: phần đã có qua XH-4C + MERGE (dấu 'lake' 10 dấu, photo thuyta/ybridge, magenta + vệt phản chiếu + tint nước theo giờ, minimap có hồ + điểm ảnh) KHÔNG làm lại. Chỉ làm phần thiếu thật:
+
+### 1. Photo spot 'lake' — giữa hồ, chỉ chụp trên thuyền (KE_HOACH §5/§7)
+- PHOTO_SPOTS thêm { id:'lake', x:−390, z:115, boat:true } (tổng 8 → **9 điểm**); vòng đánh dấu nổi ở y 4,95 trên mặt nước (photoPts dùng 4,95 riêng cho spot boat thay groundH đáy hồ). Save cũ an toàn (G.photos là dict theo id).
+- Tương tác: nhánh boatOn trong scan — đang chèo mà vào r7 quanh điểm thì prompt E = **chụp ảnh 'lake'** (thắng 'boatride'); chụp xong E trở lại trả thuyền như cũ. Kiểm chứng E2E trong harness (mục 5 dưới): prompt = 'photo', bấm E → G.photos['lake'] = true.
+
+### 2. Nhiệm vụ vòng hồ (KE_HOACH §5 — nợ ghi ở XH-4)
+- 4 mốc ảo r26: Tây (−520,115) / Bắc (−390,50) / Đông (−248,118) / Nam (−390,178) — đều trong biên thuyền XH-4, ngoài vòng đảo r17. Qua đủ 4 (thứ tự tùy ý) → **+30 Xu + 15 XP** + toast; toast tiến độ n/4 mỗi mốc mới. Chỉ đếm khi người chơi tự chèo (boatOn && !boatAuto — autopilot về bến không tính); trạng thái sống trong phiên chèo, rời thuyền là reset, KHÔNG vào save (như trạng thái thuê). Móc trong wrapper tickWater cuối file (khối XH-5), không sửa tickBoat — test_xh4_boat PASS nguyên.
+
+### 3. Ambience khu hồ (KE_HOACH §7)
+- ambZone() thêm nhánh ĐẦU TIÊN: khung hồ (x ≤ −200, z 30..200) → murmur 0,22 / low 0,3 / sizzle 0 / **water 0,85** / **gust 0,55** (gió + nước vỗ bờ là chính). Số harness: water hồ 0,0383 so với phố 0,0068 (gấp 5,6×), murmur hồ < phố. Khung không chồng trục ăn/bùng binh (bùng binh z ≈ −6, phố ăn x ≥ −200).
+
+### 4. Hoàn thiện đêm hồ — đèn lồng thuyền
+- Đèn lồng amber tại local (0, 1.62, 0.55) gắn làm con của thuyền người chơi + 2 thuyền NPC (MERGE_CRUISERS): đêm emissive 2,6 + halo sprite opacity ~0,5 nhấp nháy nhẹ; ngày emissive 0,15 / halo 0. Cập nhật trong cùng wrapper tickWater XH-5. (Phản chiếu đêm chính — tint nước, vệt magenta, vệt đèn bướm, wet edge — đã có từ XH-4C, giữ nguyên.)
+
+### 5. SỬA LỖI TỰ ĐI (PATHING) — nguyên nhân đo được, sửa tận gốc
+**Hiện tượng (chơi thử live 03:57 12/11):** tự đi chặng 1 từ spawn dừng hẳn, không đi tiếp.
+**Tái hiện bằng harness animate thật (scripts/test_xh5_pathing.mjs — lái rAF + performance.now giả lập, NPC/xe chạy thật):** tuyến trục đi thông, NHƯNG sau khi check chặng 1 chạm ở frame 1441, `autoWalk.active` vẫn true vĩnh viễn và người chơi **mài tại (−28, 4.85)** — mép bắc của collider đảo vòng xoay {x −40.4..−19.6, z −16.4..4.4} — vì **đích cuối (−28,0) nằm TRONG đảo** (guide (−30,−6) cũng vậy: tâm đảo). autoWalk chỉ kết thúc khi vào 1,4u quanh đích — không bao giờ đạt — và **không có bất kỳ cơ chế chống kẹt/kết thúc dự phòng nào**. Đây là lỗi logic waypoint thuần (không phải va chạm NPC: người chơi vốn không có va chạm NPC — đã rà mọi điểm ghi playerState).
+**Sửa (2 lớp, không đụng va chạm NPC toàn cục, không dời vị trí khóa):**
+- **awProjectTarget()**: findAwPath chiếu đích cuối tới điểm collide-ổn-định gần nhất (quét vòng r 1,5→12 quanh đích, vòng nhỏ nhất có điểm ổn định, chọn điểm gần nút path trước nhất). Chặng 1: (−28,0) → **(−30.3, 5.5)** mép tây-bắc đảo. Rà mọi đích hành trình: guide4/tut2/tut3 vốn ổn định (không đổi); guide3 (−27,10.15) lệch 0,85u và guide5 (26.8,−52) lệch 0,15u do mép collider — chiếu về điểm tới-được gần nhất (trước đây cũng mài ở mức tương ứng, nay hết).
+- **Lưới chống kẹt trong autoWalkInput(dt)**: cửa sổ 1,1s mà tịnh tiến < 0,35u → bỏ qua waypoint đó; là điểm cuối thì kết thúc tự đi êm (check chặng theo vị trí tự hoàn thành). autoWalkTo reset bộ đếm; gọi từ animate với dt thật.
+**Bằng chứng sau sửa (test_xh5_pathing, cả 2 đích):** tut (−28,0): tới vùng check frame 1441, đi tiếp tới điểm chiếu và **tự kết thúc (active=false) tại (−31.64, 5.39)**, cách tâm đảo 6,5m; guide (−30,−6): kết thúc tại (−35.94, 4.90), dist 12,4 < r13. Trước sửa cùng harness: mài vô hạn tại (−28, 4.85), stall detector nổ ở frame 1860.
+
+### Cổng (bản cuối sau sửa)
+diag 900 SẠCH · SEED_SAVE 300 SẠCH · soak 1800 SẠCH · package + standalone diag 300 SẠCH (GAME_ROOT=/tmp/xh5/sa), standalone **5.508.746 byte** < trần 10.485.760 · traffic **26/26** · audit_ground **0 lỗi cứng / 0 nhảy lưới** (cảnh báo mềm wanderer băng làn — có từ trước) · test_bd2 PASS · check_sweep3 PASS · test_real1 PASS · **test_xh4_boat ALL PASS** (hệ thuyền XH-4 nguyên vẹn) · **test_xh5_pathing PASS** (2 đích) + **FEATURES PASS** (photo lake E2E, vòng hồ +30 đúng 1 lần, autopilot không tính mốc, ambience hồ trội nước 5,6×). NPC census giữ 484.
+
+### Nghiệm thu — render MÔ PHỎNG theo thông số code (scripts/render_xh5.py, Cycles/ACES/OIDN; KHÔNG phải screenshot game)
+- renders/xh5-lake-night.png: hồ về đêm từ đường dạo — Thủy Tạ magenta + vệt phản chiếu trên nước chàm đêm, thuyền thiên nga neo ở cầu bến, thuyền NPC phía xa, cột đèn bướm mép khung (vệt magenta trong game là sprite gradient mềm — harness vẽ phẳng nên thành mảng cứng, chỉ mang tính mô phỏng vị trí/quy mô).
+- renders/xh5-photospot.png: từ sau thuyền người chơi tại điểm 'lake' (−390,115) — người chèo + đèn lồng thuyền phát sáng + quầng icon điểm chụp phía trên thuyền, Thủy Tạ magenta + hàng đèn bờ phía xa.
+- renders/xh5-roundabout.png: nhân vật đứng tại điểm dừng cuối của tự đi sau sửa (−31.64, 5.39) nhìn vào đảo vòng xoay + tượng đài lên đèn.
+
+### Nợ / ngoài phạm vi (ghi rõ)
+- Companion vẫn chưa ngồi cùng thuyền (nợ từ XH-4, XH-5 không đổi — brief vòng này không yêu cầu).
+- KHÔNG đẩy GitHub, KHÔNG upload (theo lệnh vòng).

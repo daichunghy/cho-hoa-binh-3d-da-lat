@@ -5884,7 +5884,8 @@ function startAmbience(){
 function ambZone(){
   const x = playerState.x, z = playerState.z, y = playerState.y;
   let m = 0.7, l = 0.4, s = 0, w = 0.15, g = 0.15; // mặc định: sân/quảng trường
-  if(x >= -62 && x <= -50 && z >= -31 && z <= -1){ m = 0.6; l = 0.35; s = 0.45; g = 0.1; } // bậc tam cấp (LAYOUT-FIX-1: thang tam -56) — KIỂM TRƯỚC phố ăn (hình chữ nhật này chồng lấn dãy sạp bắc z -15,7, để sau sẽ bị phố ăn nuốt)
+  if(x <= -200 && z >= 30 && z <= 200){ m = 0.22; l = 0.3; s = 0; w = 0.85; g = 0.55; } // XH-5 (KE_HOACH §7): khu HỒ — gió + nước vỗ bờ là chính, rì rầm phố chỉ còn xa; kiểm TRƯỚC mọi nhánh phố (khung hồ x<=-200, z 30..200 không chồng trục ăn/bùng binh)
+  else if(x >= -62 && x <= -50 && z >= -31 && z <= -1){ m = 0.6; l = 0.35; s = 0.45; g = 0.1; } // bậc tam cấp (LAYOUT-FIX-1: thang tam -56) — KIỂM TRƯỚC phố ăn (hình chữ nhật này chồng lấn dãy sạp bắc z -15,7, để sau sẽ bị phố ăn nuốt)
   else if(x >= -200 && x <= 43 && z >= -24 && z <= 34){ m = 1; l = 0.5; g = 0.1; if(Math.abs(z + 19.7) < 5 || Math.abs(z - 30) < 5) s = 1; } // BLENDER-DEEP-2: phố ăn theo 2 hàng sạp mới (-19.7 / 30)
   else if(x >= -206 && x < -200){ m = 0.35; l = 0.45; g = 0.25; } // GEOMETRY-2: quanh bùng binh đầu chợ (vắng hơn phố ăn)
   const fd = Math.hypot(x - 27, z - 5.2); if(fd < 16){ const k = 1 - fd / 16; w = Math.max(w, k); m = Math.max(m * (1 - k * 0.3), 0.55); } // đài phun (tâm mới 27,5.2)
@@ -6301,11 +6302,12 @@ const PHOTO_SPOTS = [
   { id:'stage', name:'Góc Hát Đà Lạt', x:24.6, z:-48.5 },
   { id:'thuyta', name:'Nhà Thủy Tạ — Hồ Xuân Hương', x:-250, z:44.5 },
   { id:'ybridge', name:'Cầu chữ Y ngắm Hồ Xuân Hương', x:-282, z:40.2 },
+  { id:'lake', name:'Giữa hồ Xuân Hương — trên thuyền thiên nga', x:-390, z:115, boat:true }, // XH-5 (KE_HOACH §5/§7): điểm giữa hồ — chỉ chụp được khi đang trên thuyền
   { id:'terrace', name:'Sân thượng chợ — điểm bí mật', x:17.5, z:9.6, secret:true },
 ];
 const photoPts = [];
 for(const p of PHOTO_SPOTS){
-  const y = groundH(p.x, p.z);
+  const y = p.boat ? 4.95 : groundH(p.x, p.z); // XH-5: điểm 'lake' giữa hồ — vòng nổi trên mặt nước 4,9 (groundH đáy hồ không dùng)
   const grp = new THREE.Group(); grp.position.set(p.x, y, p.z); worldGroup.add(grp);
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 1.2, 24),
     new THREE.MeshBasicMaterial({ color:0xffd94d, transparent:true, opacity:0.6, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending }));
@@ -7359,20 +7361,55 @@ AW_EDGES.push([7,16],[16,17],[17,18],[7,19],[19,20],[20,21],[14,22],[22,23],[23,
 const AW_ADJ = AW_NODES.map(() => []);
 for(const e of AW_EDGES){ AW_ADJ[e[0]].push(e[1]); AW_ADJ[e[1]].push(e[0]); }
 function awNearest(x, z){ let bi = 0, bd = 1e18; for(let i = 0; i < AW_NODES.length; i++){ const d = Math.hypot(AW_NODES[i][0] - x, AW_NODES[i][1] - z); if(d < bd){ bd = d; bi = i; } } return bi; }
+function awProjectTarget(tx, tz, refX, refZ){
+  // XH-5 (sửa lỗi tự đi mài đảo): đích nằm TRONG collider thì collide() đẩy người chơi ra
+  // vô hạn ở mép — tự đi không bao giờ tới được ngưỡng 1,4u. Hai đích chặng 1 đều trúng:
+  // tut (-28,0) và guide (-30,-6) nằm trong box đảo vòng xoay (x -40.4..-19.6, z -16.4..4.4).
+  // Chiếu đích tới điểm collide-ỔN-ĐỊNH gần nhất: quét vòng r 1,5 -> 12 quanh đích, lấy vòng
+  // nhỏ nhất có điểm ổn định, trong vòng chọn điểm gần điểm tham chiếu (nút path trước) nhất.
+  const c0 = collide(tx, tz);
+  if(Math.abs(c0[0] - tx) < 0.01 && Math.abs(c0[1] - tz) < 0.01) return { x:tx, z:tz };
+  for(let r = 1.5; r <= 12.01; r += 1.5){
+    let best = null, bd = 1e18;
+    for(let k = 0; k < 16; k++){
+      const a = k / 16 * Math.PI * 2, px = tx + Math.cos(a) * r, pz = tz + Math.sin(a) * r;
+      const c = collide(px, pz);
+      if(Math.abs(c[0] - px) < 0.01 && Math.abs(c[1] - pz) < 0.01){
+        const d = Math.hypot(px - refX, pz - refZ);
+        if(d < bd){ bd = d; best = { x:px, z:pz }; }
+      }
+    }
+    if(best) return best;
+  }
+  return { x:tx, z:tz };
+}
 function findAwPath(tx, tz){
   const s = awNearest(playerState.x, playerState.z), e = awNearest(tx, tz);
   const prev = new Array(AW_NODES.length).fill(-1); prev[s] = s;
   const q = [s];
   while(q.length){ const u = q.shift(); if(u === e) break; for(const v of AW_ADJ[u]) if(prev[v] < 0){ prev[v] = u; q.push(v); } }
-  if(prev[e] < 0) return [{ x:tx, z:tz }];
+  if(prev[e] < 0) return [awProjectTarget(tx, tz, playerState.x, playerState.z)];
   const idx = []; let u = e; while(u !== s){ idx.push(u); u = prev[u]; } idx.push(s); idx.reverse();
   const path = idx.map(i => ({ x:AW_NODES[i][0], z:AW_NODES[i][1] }));
-  path.push({ x:tx, z:tz });
+  const last = path[path.length - 1];
+  path.push(awProjectTarget(tx, tz, last ? last.x : playerState.x, last ? last.z : playerState.z)); // XH-5: đích cuối luôn là điểm tới-được
   return path;
 }
-const autoWalk = { active:false, path:[], i:0 };
-function autoWalkTo(tx, tz){ autoWalk.path = findAwPath(tx, tz); autoWalk.i = 0; autoWalk.active = true; }
-function autoWalkInput(){
+const autoWalk = { active:false, path:[], i:0, wT:0, wx:0, wz:0 };
+function autoWalkTo(tx, tz){ autoWalk.path = findAwPath(tx, tz); autoWalk.i = 0; autoWalk.active = true; autoWalk.wT = 0; autoWalk.wx = playerState.x; autoWalk.wz = playerState.z; }
+function autoWalkInput(dt){
+  // XH-5: LƯỚI CHỐNG KẸT — cửa sổ 1,1s mà tịnh tiến < 0,35u = điểm đang nhắm không tới được
+  // (mài mép collider): bỏ qua điểm đó; nếu là điểm CUỐI thì kết thúc tự đi êm (coi như đã tới
+  // sát nhất có thể — check chặng r13/r14 của Hành trình tự hoàn thành theo vị trí).
+  if(dt){
+    autoWalk.wT += dt;
+    if(Math.hypot(playerState.x - autoWalk.wx, playerState.z - autoWalk.wz) > 0.35){ autoWalk.wx = playerState.x; autoWalk.wz = playerState.z; autoWalk.wT = 0; }
+    else if(autoWalk.wT > 1.1){
+      autoWalk.wT = 0; autoWalk.wx = playerState.x; autoWalk.wz = playerState.z;
+      if(autoWalk.i < autoWalk.path.length - 1) autoWalk.i++;
+      else { autoWalk.active = false; return { ix:0, iy:0 }; }
+    }
+  }
   while(autoWalk.i < autoWalk.path.length){
     const p = autoWalk.path[autoWalk.i];
     const dx = p.x - playerState.x, dz = p.z - playerState.z;
@@ -8022,7 +8059,7 @@ function animate(){
     // V4.7: TỰ ĐI — có thao tác tay (hoặc đang cưỡi xe/ngồi ghế) là hủy ngay
     if(autoWalk.active){
       if(Math.hypot(ix, iy) > 0.08 || riding > 0 || sitting > 0) autoWalk.active = false;
-      else { const aw = autoWalkInput(); ix = aw.ix; iy = aw.iy; }
+      else { const aw = autoWalkInput(dt); ix = aw.ix; iy = aw.iy; }
     }
   }
   const len = Math.hypot(ix, iy);
@@ -8299,7 +8336,11 @@ function animate(){
     if(oNpc && oNpc.g.visible){ const dOrd = Math.hypot(playerState.x - oNpc.g.position.x, playerState.z - oNpc.g.position.z);
       if(dOrd < 3.2 && (!currentInteract || dOrd < currentInteract.d)) currentInteract = { type:'order', d:dOrd }; } }
   if(riding > 0) currentInteract = { type:'ride', d:0 };
-  else if(boatOn) currentInteract = { type:'boatride', d:0 }; // XH-4: đang chèo — E = trả thuyền (tryReturnBoat tự nhắc về bến nếu chưa gần slip)
+  else if(boatOn){ // XH-4: đang chèo — E = trả thuyền; XH-5: gần điểm giữa hồ thì E = chụp ảnh 'lake' trước (chụp xong E trở lại trả thuyền)
+    const lp = photoPts.find(pp => pp.def.id === 'lake');
+    if(lp && photoVisible(lp) && Math.hypot(playerState.x - lp.def.x, playerState.z - lp.def.z) < 7) currentInteract = { type:'photo', d:0, pt:lp };
+    else currentInteract = { type:'boatride', d:0 };
+  }
   else {
     for(const pp of photoPts){
       if(!photoVisible(pp)) continue;
@@ -9683,6 +9724,51 @@ if(_rbEl) _rbEl.addEventListener('click', () => {
   if(boatAuto){ toast('🛶 Thuyền đang tự trôi về bến — sắp tới rồi!'); return; }
   if(boatNearSlip()) tryReturnBoat(); else startBoatAuto();
 });
+
+// ================= XH-5 (12/11): TÍCH HỢP HỒ — NHIỆM VỤ VÒNG HỒ + ĐÈN LỒNG THUYỀN ĐÊM =================
+// (Dấu 'lake' + 2 photo spot thuyta/ybridge đã vào qua MERGE-ARGON; photo spot 'lake' giữa hồ +
+// ambience khu hồ + sửa tự đi nằm ở các khối XH-5 tương ứng. Khối này đặt CUỐI file như XH-3S/4C:
+// bọc tickWater sau mọi wrapper trước, chỉ chạy khi các registry đã tồn tại — tránh TDZ.)
+// --- Nhiệm vụ hồ (KE_HOACH §5): chèo qua đủ 4 mốc ảo quanh hồ (Tây/Bắc... thứ tự tùy ý) -> +30 Xu.
+// Trạng thái chỉ sống trong phiên chèo (không vào save — như trạng thái thuê XH-4); autopilot
+// tự về bến KHÔNG tính mốc (chỉ đếm khi người chơi tự chèo: boatOn && !boatAuto).
+const XH5_LAP_PTS = [[-520, 115], [-390, 50], [-248, 118], [-390, 178]]; // Tây (gần đập) / Bắc giữa hồ / Đông / Nam — đều trong biên thuyền XH-4, ngoài vòng đảo r17
+const xh5Lap = { seen:new Set(), done:false };
+function xh5LapTick(){
+  if(!boatOn){ if(xh5Lap.seen.size || xh5Lap.done){ xh5Lap.seen.clear(); xh5Lap.done = false; } return; }
+  if(boatAuto || xh5Lap.done) return;
+  for(let i = 0; i < XH5_LAP_PTS.length; i++){
+    if(!xh5Lap.seen.has(i) && Math.hypot(boatState.x - XH5_LAP_PTS[i][0], boatState.z - XH5_LAP_PTS[i][1]) < 26){
+      xh5Lap.seen.add(i);
+      if(xh5Lap.seen.size < 4) toast('🚣 Vòng hồ Xuân Hương: đã qua ' + xh5Lap.seen.size + '/4 mốc');
+    }
+  }
+  if(xh5Lap.seen.size >= 4){
+    xh5Lap.done = true;
+    gainXu(30); gainXP(15);
+    toast('🚣 ĐẠP ĐỦ MỘT VÒNG HỒ XUÂN HƯƠNG! +30 Xu', 'stamp');
+  }
+}
+// --- Hoàn thiện đêm hồ: đèn lồng ấm trên thuyền (người chơi + 2 thuyền NPC dạo hồ) —
+// ngày tắt hẳn (opacity 0), đêm cháy ấm + halo nhấp nháy nhẹ; gắn làm CON của thuyền nên tự đi theo.
+const XH5_LANTERNS = [];
+function xh5BoatLantern(boat){
+  if(!boat) return;
+  const lm = new THREE.MeshStandardMaterial({ color:0x554411, emissive:0xffb84d, emissiveIntensity:0.15, roughness:0.4 });
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), lm);
+  lamp.position.set(0, 1.62, 0.55); boat.add(lamp);
+  const sm = new THREE.SpriteMaterial({ map:haloTex, color:0xffc46b, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending });
+  const halo = new THREE.Sprite(sm); halo.scale.set(1.6, 1.6, 1); halo.position.copy(lamp.position); boat.add(halo);
+  XH5_LANTERNS.push({ lm, sm, ph: XH5_LANTERNS.length * 1.7 });
+}
+xh5BoatLantern(LAKE_PLAYER_BOAT);
+for(const nc of MERGE_CRUISERS) xh5BoatLantern(nc.boat);
+const _xh5TW = tickWater;
+tickWater = function(t){
+  _xh5TW(t);
+  for(const L of XH5_LANTERNS){ L.lm.emissiveIntensity = isNight ? 2.6 : 0.15; L.sm.opacity = isNight ? 0.5 + Math.sin(t * 2.3 + L.ph) * 0.06 : 0; }
+  xh5LapTick();
+};
 
 animate();
 setTimeout(() => toast('👋 Chào mừng tới Chợ Hòa Bình 3D! Đi dạo, đóng dấu hộ chiếu (P) và ăn hết chợ đêm Đà Lạt nhé'), 700);
